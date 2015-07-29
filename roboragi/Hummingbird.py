@@ -64,4 +64,3 @@ def getClosestAnime(searchText, animeList):
         return None
     except:
         return None
-

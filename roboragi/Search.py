@@ -80,7 +80,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
         mal = None
         
         if (ani is not None):
-            hb = Hummingbird.getAnimeDetails(ani['title_english'])
+            hb = Hummingbird.getAnimeDetails(ani['title_romaji'])
         else:
             hb = Hummingbird.getAnimeDetails(searchText)
             if (hb is not None):

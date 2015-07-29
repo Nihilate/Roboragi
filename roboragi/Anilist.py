@@ -42,7 +42,7 @@ def setup():
         global access_token
         access_token = request.json()['access_token']
         print('Access token set')
-    except:
+    except Exception as e:
         print('Error getting Anilist token')
 
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext
