@@ -52,8 +52,9 @@ def buildMangaReply(searchText, isExpanded, baseComment):
                 else:
                     titleToAdd = ani['title_english']
                     mu = MU.getMangaURL(ani['title_romaji'])
-                
-                DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
+
+                if (str(baseComment.subreddit).lower is not 'nihilate'):
+                    DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
                 pass
@@ -106,7 +107,8 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 else:
                     titleToAdd = ani['title_romaji']
 
-                DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
+                if (str(baseComment.subreddit).lower is not 'nihilate'):
+                    DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
                 pass
