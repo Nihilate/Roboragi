@@ -55,3 +55,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Roboragi-specific stuff
+Config.py
