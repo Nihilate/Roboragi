@@ -37,6 +37,9 @@ reddit = praw.Reddit(USERAGENT)
 #There's probably a better way to do this. Might move it to the backend database at some point
 subredditlist = 'roboragi+akatsukinoyona+amv+angelbeats+animebazaar+animecirclejerk+animedeals+animedubs+animefigures+animegifs+animehaiku+animeicons+animemashups+animemusic+animenews+animenocontext+animephonewallpapers+animeranks+animesketch+animesuggest+animethemes+animevectorwallpapers+animewallpaper+animeworldproblems+araragi+awwnime+berserk+bishoujosenshi+bishounen+bleach+bokunoheroacademia+clannad+claymore+crunchyroll+drrr+ecchi+endcard+eurekaseven+evangelion+gundam+gunime+gunpla+hentai+hetalia+hunterxhunter+imouto+japaneseanimation+japaneseanimation+kemonomimi+killlakill+kingdom+kitsunemimi+loghorizon+manga+mangaswap+melanime+metaanime+moescape+naruto+nekomimi+nihilate+nisekoi+nogamenolife+nsfwanimegifs+onepiece+onetruthprevails+oreimo+otaku+pantsu+patchuu+pokemoe+pokemon+pokeporn+postyourmal+precure+qualityanime+railgun+rurounikenshin+rwby+sabagebu+seinen+shingekinokyojin+souleater+spacebrothers+spiceandwolf+stardustcrusaders+sukebei+thelastairbender+theothersideofthewell+toradora+toriko+touhou+trigger+trueanime+twgok+twodeeart+typemoon+visualnovels+vocaloid+waifu+watchinganime+weeaboo+weeabootales+yaoi+yuri+zettairyouiki'
 
+#the subreddits where expanded requests are disabled
+disableexpanded = ['nihilate', 'animesuggest']
+
 #Sets up Reddit for PRAW
 def setupReddit():
     try:
@@ -90,14 +93,22 @@ def start():
 
             #Expanded Anime
             for match in re.finditer("\{{2}([^}]*)\}{2}", comment.body, re.S):
-                if hasExpandedRequest:
-                    break
-                reply = Search.buildAnimeReply(match.group(1), True, comment)
+                if (str(comment.subreddit).lower() not in disableexpanded):
+                    if hasExpandedRequest:
+                        break
+                    reply = Search.buildAnimeReply(match.group(1), True, comment)
 
-                if not (reply is None):
-                    hasExpandedRequest = True
-                    animeArray = [reply]
-                    mangaArray = []
+                    if not (reply is None):
+                        hasExpandedRequest = True
+                        animeArray = [reply]
+                        mangaArray = []
+                else:
+                    if hasExpandedRequest:
+                        break
+                    reply = Search.buildAnimeReply(match.group(1), False, comment)
+
+                    if (reply is not None) and (len(animeArray) + len(mangaArray) < 10):
+                        animeArray.append(reply)
 
             #Normal Anime  
             for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))", comment.body, re.S):
@@ -110,14 +121,22 @@ def start():
 
             #Expanded Manga
             for match in re.finditer("\<{2}([^>]*)\>{2}", comment.body, re.S):
-                if hasExpandedRequest:
-                    break;
-                reply = Search.buildMangaReply(match.group(1), True, comment)
+                if (str(comment.subreddit).lower() not in disableexpanded):
+                    if hasExpandedRequest:
+                        break;
+                    reply = Search.buildMangaReply(match.group(1), True, comment)
 
-                if not (reply is None):
-                    hasExpandedRequest = True
-                    animeArray = []
-                    mangaArray = [reply]
+                    if not (reply is None):
+                        hasExpandedRequest = True
+                        animeArray = []
+                        mangaArray = [reply]
+                else:
+                    if hasExpandedRequest:
+                        break
+                    reply = Search.buildMangaReply(match.group(1), False, comment)
+
+                    if (reply is not None) and (len(animeArray) + len(mangaArray) < 10):
+                        mangaArray.append(reply)
 
             #Normal Manga
             for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
@@ -183,7 +202,7 @@ def start():
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):
-            commentReply += '\n\n---\n\n^(Linking multiple things? Use {single} <braces>!)\n\n [^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| ^[Issue/mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi)'
+            commentReply += '\n\n---\n\n [^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| ^[Issue/mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi)'
 
             try:
                 comment.reply(commentReply)
