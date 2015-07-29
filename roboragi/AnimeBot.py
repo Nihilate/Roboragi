@@ -81,9 +81,9 @@ def start():
         #The "hasExpandedRequest" variable puts a stop on any other requests (since you can only have one expanded request in a comment)
         hasExpandedRequest = False
         
-        #This checks for requests.
-        #First up when check all known tags for the !stats request.
-        if re.search('\{{2}!stats\}{2}|(?<=(?<!\{)\{)!stats(?=\}(?!\}))|\<{2}!stats\>{2}|(?<=(?<!\<)\<)!stats(?=\>(?!\>))', comment.body, re.S) is not None
+        #This checks for requests. First up we check all known tags for the !stats request
+        # Assumes tag begins and ends with a whitespace OR at the string beginning/end
+        if re.search('(?<=^|\s)({!stats}|{{!stats}}|<!stats>|<<!stats>>)(?=$|\s)', comment.body, re.S) is not None
             commentReply = CommentBuilder.buildStatsComment(comment.subreddit)
         else:
 
