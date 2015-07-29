@@ -183,7 +183,7 @@ def start():
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):
-            commentReply += '\n\n---\n\n^(Linking multiple things? Use {single} <braces>!)\n\n [^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| ^[Issue/mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') | [Source](https://github.com/Nihilate/Roboragi)'
+            commentReply += '\n\n---\n\n^(Linking multiple things? Use {single} <braces>!)\n\n [^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| ^[Issue/mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi)'
 
             try:
                 comment.reply(commentReply)
