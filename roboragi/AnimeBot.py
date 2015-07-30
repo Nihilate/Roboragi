@@ -83,7 +83,7 @@ def start():
         
         #This checks for requests. First up we check all known tags for the !stats request
         # Assumes tag begins and ends with a whitespace OR at the string beginning/end
-        if re.search('(?<=^|\s)({!stats}|{{!stats}}|<!stats>|<<!stats>>)(?=$|\s)', comment.body, re.S) is not None
+        if re.search('(^|\s)({!stats}|{{!stats}}|<!stats>|<<!stats>>)($|\s|.)', comment.body, re.S) is not None:
             commentReply = CommentBuilder.buildStatsComment(comment.subreddit)
         else:
 
