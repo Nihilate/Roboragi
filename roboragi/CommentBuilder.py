@@ -64,7 +64,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
             except:
                 pass
 
-            status = ani['airing_status']
+            status = ani['airing_status'].title()
 
             try:
                 if ani['title_japanese'] is not None:

@@ -81,6 +81,13 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
         
         if (ani is not None):
             hb = Hummingbird.getAnimeDetails(ani['title_romaji'])
+
+            if (hb is None):
+                for synonym in ani['synonyms']:
+                    hb = Hummingbird.getAnimeDetails(synonym)
+                    if hb is not None:
+                        break
+                hb = Hummingbird.getAnimeDetails(ani['title_english'])
         else:
             hb = Hummingbird.getAnimeDetails(searchText)
             if (hb is not None):
@@ -90,8 +97,13 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
             mal = MAL.getAnimeDetails(searchText)
             if (mal is not None):
                 hb = Hummingbird.getAnimeDetails(mal['title'])
+                if (hb is None):
+                    hb = Hummingbird.getAnimeDetails(mal['english'])
+
                 if (ani is None):
                     ani = Anilist.getAnimeDetails(mal['title'])
+                    if (ani is None):
+                        ani = Anilist.getAnimeDetails(mal['english'])
 
         try:
             if ani is not None:
