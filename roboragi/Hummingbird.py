@@ -29,24 +29,21 @@ def getClosestAnime(searchText, animeList):
     try:
         animeNameList = []
         
-        for anime in animeList:
-            
-            if not ('ona' in anime['show_type'].lower()):
-                animeNameList.append(anime['title'].lower())
+        for anime in animeList:            
+            animeNameList.append(anime['title'].lower())
 
-                if anime['alternate_title'] is not None:
-                    animeNameList.append(anime['alternate_title'].lower())
+            if anime['alternate_title'] is not None:
+                animeNameList.append(anime['alternate_title'].lower())
 
         closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.95)[0]
         
 
         for anime in animeList:
-            if not ('ona' in anime['show_type'].lower()):
-                if anime['title'].lower() == closestNameFromList.lower():
+            if anime['title'].lower() == closestNameFromList.lower():
+                return anime
+            elif anime['alternate_title'] is not None:
+                if anime['alternate_title'].lower() == closestNameFromList.lower():
                     return anime
-                elif anime['alternate_title'] is not None:
-                    if anime['alternate_title'].lower() == closestNameFromList.lower():
-                        return anime
 
         return None
     except:

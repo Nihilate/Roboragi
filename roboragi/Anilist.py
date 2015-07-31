@@ -94,26 +94,24 @@ def getClosestAnime(searchText, animeList):
         #For each anime series, add all the titles/synonyms to an array and do a fuzzy string search to find the one closest to our search text.
         #We also fill out an array that doesn't contain the synonyms. This is to protect against shows with multiple adaptations and similar synonyms (e.g. Haiyore Nyaruko-San)
         for anime in animeList:
-            if not ('ona' in anime['type'].lower()):
-                animeNameList.append(anime['title_english'].lower())
-                animeNameList.append(anime['title_romaji'].lower())
+            animeNameList.append(anime['title_english'].lower())
+            animeNameList.append(anime['title_romaji'].lower())
 
-                animeNameListNoSyn.append(anime['title_english'].lower())
-                animeNameListNoSyn.append(anime['title_romaji'].lower())
+            animeNameListNoSyn.append(anime['title_english'].lower())
+            animeNameListNoSyn.append(anime['title_romaji'].lower())
 
-                for synonym in anime['synonyms']:
-                     animeNameList.append(synonym.lower())
-
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.95)[0]
+            for synonym in anime['synonyms']:
+                 animeNameList.append(synonym.lower())
+        
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.90)[0]
         
         for anime in animeList:
-            if not ('ona' in anime['type'].lower()):
-                if (anime['title_english'].lower() == closestNameFromList.lower()) or (anime['title_romaji'].lower() == closestNameFromList.lower()):
-                    return anime
-                else:
-                    for synonym in anime['synonyms']:
-                        if (synonym.lower() == closestNameFromList.lower()) and (synonym.lower() not in animeNameListNoSyn):
-                            return anime
+            if (anime['title_english'].lower() == closestNameFromList.lower()) or (anime['title_romaji'].lower() == closestNameFromList.lower()):
+                return anime
+            else:
+                for synonym in anime['synonyms']:
+                    if (synonym.lower() == closestNameFromList.lower()) and (synonym.lower() not in animeNameListNoSyn):
+                        return anime
 
         return None
     except:
