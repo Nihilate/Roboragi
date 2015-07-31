@@ -38,7 +38,7 @@ reddit = praw.Reddit(USERAGENT)
 subredditlist = 'roboragi+akatsukinoyona+amv+angelbeats+animebazaar+animecirclejerk+animedeals+animedubs+animefigures+animegifs+animehaiku+animeicons+animemashups+animemusic+animenews+animenocontext+animephonewallpapers+animeranks+animesketch+animesuggest+animethemes+animevectorwallpapers+animewallpaper+animeworldproblems+araragi+awwnime+berserk+bishoujosenshi+bishounen+bleach+bokunoheroacademia+clannad+claymore+crunchyroll+drrr+ecchi+endcard+eurekaseven+evangelion+gundam+gunime+gunpla+hentai+hetalia+hunterxhunter+imouto+japaneseanimation+japaneseanimation+kemonomimi+killlakill+kingdom+kitsunemimi+loghorizon+manga+mangaswap+melanime+metaanime+moescape+naruto+nekomimi+nihilate+nisekoi+nogamenolife+nsfwanimegifs+onepiece+onetruthprevails+oreimo+otaku+pantsu+patchuu+pokemoe+pokemon+pokeporn+postyourmal+precure+qualityanime+railgun+rurounikenshin+rwby+sabagebu+seinen+shingekinokyojin+souleater+spacebrothers+spiceandwolf+stardustcrusaders+sukebei+thelastairbender+theothersideofthewell+toradora+toriko+touhou+trigger+trueanime+twgok+twodeeart+typemoon+visualnovels+vocaloid+waifu+watchinganime+weeaboo+weeabootales+yaoi+yuri+zettairyouiki'
 
 #the subreddits where expanded requests are disabled
-disableexpanded = ['nihilate', 'animesuggest']
+disableexpanded = ['animesuggest']
 
 #Sets up Reddit for PRAW
 def setupReddit():
