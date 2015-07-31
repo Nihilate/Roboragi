@@ -18,20 +18,7 @@ def getAnimeDetails(searchText):
         if not (closestAnime is None):
             return closestAnime
         else:
-            for anime in request.json():
-                try:
-                    if ('tv' in anime['show_type'].lower()):
-                        nameList = []
-
-                        nameList.append(anime['title'].lower())
-                        nameList.append(anime['alternate_title'].lower())
-                        
-                        if not (difflib.get_close_matches(searchText.lower(), nameList, 1, 0.9)[0] is None):
-                            return anime
-                except Exception as e:
-                    pass
-
-            return request.json()[0]
+            return None
             
     except Exception as e:
         return None

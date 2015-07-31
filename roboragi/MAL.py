@@ -52,7 +52,7 @@ def getAnimeDetails(searchText):
             title_english = anime.find('english').text
 
             synonyms = None
-            if not (anime.find('synonyms').text is None):
+            if (anime.find('synonyms').text is not None):
                 synonyms = (anime.find('synonyms').text).split(";")
 
             episodes = anime.find('episodes').text

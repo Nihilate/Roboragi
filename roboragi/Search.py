@@ -85,10 +85,12 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
             hb = Hummingbird.getAnimeDetails(searchText)
             if (hb is not None):
                ani = Anilist.getAnimeDetails(hb['title'])
-            else:
-                mal = MAL.getAnimeDetails(searchText)
-                if (mal is not None):
-                    hb = Hummingbird.getAnimeDetails(mal['title'])
+
+        if (hb is None):
+            mal = MAL.getAnimeDetails(searchText)
+            if (mal is not None):
+                hb = Hummingbird.getAnimeDetails(mal['title'])
+                if (ani is None):
                     ani = Anilist.getAnimeDetails(mal['title'])
 
         try:
