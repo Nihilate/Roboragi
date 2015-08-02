@@ -94,7 +94,9 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
             status = hb['status']
             
             hbURL = hb['url']
-            malURL = 'http://myanimelist.net/anime/' + str(hb['mal_id'])
+
+            if (hb['mal_id'] is not None):
+                malURL = 'http://myanimelist.net/anime/' + str(hb['mal_id'])
 
             if (hb['genres'] is not None) and (not genres):
                 for genre in hb['genres']:
