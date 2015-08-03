@@ -35,7 +35,7 @@ except ImportError:
 reddit = praw.Reddit(USERAGENT)
 
 #There's probably a better way to do this. Might move it to the backend database at some point
-subredditlist = 'roboragi+amv+animebazaar+animecirclejerk+animedeals+animedubs+animefigures+animegifs+animehaiku+animeicons+animemashups+animemusic+animenews+animenocontext+animephonewallpapers+animeranks+animesketch+animesuggest+animethemes+animevectorwallpapers+animewallpaper+animeworldproblems+awwnime+bishounen+crunchyroll+ecchi+endcard+evangelion+hentai+imouto+japaneseanimation+japaneseanimation+kemonomimi+kitsunemimi+manga+mangaswap+melanime+metaanime+moescape+nekomimi+nihilate+nsfwanimegifs+otaku+pantsu+patchuu+postyourmal+qualityanime+seinen+trueanime+vocaloid+waifu+watchinganime+weeaboo+weeabootales+yaoi+yuri+zettairyouiki'
+subredditlist = 'roboragi+amv+animebazaar+animecirclejerk+animedeals+animedubs+animefigures+animegifs+animehaiku+animeicons+animemashups+animemusic+animenews+animenocontext+animephonewallpapers+animeranks+animesketch+animesuggest+animethemes+animevectorwallpapers+animewallpaper+animeworldproblems+awwnime+bishounen+crunchyroll+ecchi+endcard+hentai+imouto+japaneseanimation+japaneseanimation+kemonomimi+kitsunemimi+manga+mangaswap+melanime+metaanime+moescape+nekomimi+nihilate+nsfwanimegifs+otaku+pantsu+patchuu+postyourmal+qualityanime+seinen+trueanime+vocaloid+waifu+watchinganime+weeaboo+weeabootales+yaoi+yuri+zettairyouiki'
 
 #the subreddits where expanded requests are disabled
 disableexpanded = ['animesuggest']
