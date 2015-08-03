@@ -118,7 +118,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 titleToAdd = ''
                 if ani is None:
                     titleToAdd = hb['title']
-                else if hb is not None:
+                elif hb is not None:
                     titleToAdd = ani['title_romaji']
                 else:
                     titleToAdd = mal['title']
