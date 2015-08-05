@@ -65,7 +65,7 @@ def start():
 
     for comment in comment_stream:
 
-        #Is the comment valid (i.e. it's not made by Roboragi and I haven't seen it already). If yes, add it to the "already seen pile" and keep going. If no, skip it.
+        #Is the comment valid (i.e. it's not made by Roboragi and I haven't seen it already). If no, try to add it to the "already seen pile" and skip to the next comment. If yes, keep going.
         if not (Search.isValidComment(comment, reddit)):
             try:
                 if not (DatabaseHandler.commentExists(comment.id)):
@@ -207,14 +207,13 @@ def start():
             try:
                 comment.reply(commentReply)
                 print("Comment made.\n")
-            except:
-                traceback.print_exc()
-                pass
-            finally:
+
                 try:
                     DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, True)
                 except:
                     traceback.print_exc()
+            except:
+                traceback.print_exc()
         else:
             try:
                 DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, False)
