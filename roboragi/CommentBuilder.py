@@ -227,11 +227,9 @@ def buildMangaComment(isExpanded, mal, ani, mu):
             chapters = mal['chapters']
 
         if ani is not None:
-            if title is None:
-                title = ani['title_english']
+            title = ani['title_english']
             aniURL = 'http://anilist.co/manga/' + str(ani['id'])
-            if desc is None:
-                desc = ani['description']
+            desc = ani['description']
             status = ani['publishing_status'].title()
 
             try:
