@@ -21,7 +21,7 @@ except ImportError:
 access_token = ''
 
 escape_table = {
-     "&": "&amp;",
+     "&": " ",
      "!": " ",
      "\'": "\\'",
      '\"': '\\"',
