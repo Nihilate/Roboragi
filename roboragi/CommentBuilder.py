@@ -224,7 +224,11 @@ def buildMangaComment(isExpanded, mal, ani, mu):
             malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
             desc = mal['synopsis']
             status = mal['status']
-            chapters = mal['chapters']
+
+            if (mal['chapters'] == 0)
+                chapters = 'Unknown'
+            else:
+                chapters = mal['chapters']
 
         if ani is not None:
             if title is None:
@@ -289,12 +293,16 @@ def buildMangaComment(isExpanded, mal, ani, mu):
             comment += '\n\n^(**Status:** ' + status
             if str(chapters) is not 'Unknown':
                 comment += ' | **Chapters:** ' + str(chapters)
-            comment += ' | **Genres:** '
+
+            if (genres is not []):
+                comment += ' | **Genres:** '
         else:
             comment += '\n\n^(Status: ' + status
             if str(chapters) is not 'Unknown':
                 comment += ' | Chapters: ' + str(chapters)
-            comment += ' | Genres: '
+
+            if (genres is not []):
+                comment += ' | Genres: '
 
         if not (genres == []):
             for i, genre in enumerate(genres):
