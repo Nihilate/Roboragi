@@ -225,10 +225,13 @@ def buildMangaComment(isExpanded, mal, ani, mu):
             desc = mal['synopsis']
             status = mal['status']
 
-            if (mal['chapters'] == 0)
+            try:
+                if (int(mal['chapters']) == 0):
+                    chapters = 'Unknown'
+                else:
+                    chapters = mal['chapters']
+            except:
                 chapters = 'Unknown'
-            else:
-                chapters = mal['chapters']
 
         if ani is not None:
             if title is None:
@@ -288,29 +291,28 @@ def buildMangaComment(isExpanded, mal, ani, mu):
                         comment += ' '
                     comment += '^^' + word
 
-        #----- INFO LINE -----#            
+        #----- INFO LINE -----#
+            
         if (isExpanded):
             comment += '\n\n^(**Status:** ' + status
             if str(chapters) is not 'Unknown':
                 comment += ' | **Chapters:** ' + str(chapters)
 
-            if (genres is not []):
+            if genres:
                 comment += ' | **Genres:** '
         else:
             comment += '\n\n^(Status: ' + status
             if str(chapters) is not 'Unknown':
                 comment += ' | Chapters: ' + str(chapters)
 
-            if (genres is not []):
+            if genres:
                 comment += ' | Genres: '
 
-        if not (genres == []):
+        if genres:
             for i, genre in enumerate(genres):
                 if i is not 0:
                     comment += ', '
                 comment += genre
-        else:
-            comment += 'None'
             
         if (isExpanded) and (stats is not None):
             comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],2)) + '% ^of ^all ^requests'
