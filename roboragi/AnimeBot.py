@@ -80,6 +80,9 @@ def start():
 
         #The "hasExpandedRequest" variable puts a stop on any other requests (since you can only have one expanded request in a comment)
         hasExpandedRequest = False
+
+        #ignores all "code" markup (i.e. anything between backticks)
+        comment.body = re.sub(r"\`(?s)(.*?)\`", "", comment.body)
         
         #This checks for requests. First up we check all known tags for the !stats request
         # Assumes tag begins and ends with a whitespace OR at the string beginning/end

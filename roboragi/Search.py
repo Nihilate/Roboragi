@@ -58,6 +58,13 @@ def buildMangaReply(searchText, isExpanded, baseComment):
             except:
                 traceback.print_exc()
                 pass
+
+            if ani is not None:
+                if ani['adult'] is True:
+                    print("NSFW ENTRY")
+                    mal = None
+                    ani = None
+                    mu = None
             
             return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu)
     
@@ -128,6 +135,13 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
             except:
                 traceback.print_exc()
                 pass
+
+            if ani is not None:
+                if ani['adult'] is True:
+                    print("NSFW ENTRY")
+                    mal = None
+                    hb = None
+                    ani = None
             
             return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani)
 
