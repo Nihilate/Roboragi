@@ -176,6 +176,7 @@ def getMangaDetails(searchText):
         if not (closestManga is None):
             return closestManga
         else:
+            print("?")
             return mangaList[0]
 
     except:
@@ -195,8 +196,8 @@ def getClosestManga(searchText, mangaList):
                 
             if not (manga['synonyms'] is None):
                 for synonym in manga['synonyms']:
-                    nameList.append(synonym.lower())
-
+                    nameList.append(synonym.lower().strip())
+        
         closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.95)[0]
 
         for manga in mangaList:
@@ -208,7 +209,7 @@ def getClosestManga(searchText, mangaList):
             else:
                 if not (manga['synonyms'] is None):
                     for synonym in manga['synonyms']:
-                        if synonym.lower() == closestNameFromList.lower():
+                        if synonym.lower().strip() == closestNameFromList.lower():
                             return manga
 
         return None
