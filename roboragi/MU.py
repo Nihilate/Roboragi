@@ -3,37 +3,54 @@ MU.py
 Handles all MangaUpdates information
 '''
 
-from html.parser import HTMLParser
+from pyquery import PyQuery as pq
 import requests
+import difflib
 
-MULink = None
+def findClosestManga(searchText, mangaList):
+    try:
+        nameList = []
 
-#Parses the HTML scraped from MU and gives us the first URL to a series it gives us.
-class MUParser(HTMLParser):
-    global MULink
-    
-    def handle_starttag(self, tag, attrs):
-        global MULink
+        for manga in mangaList:
+            nameList.append(manga['title'].lower())
 
-        for attr in attrs:
-            try:
-                if ('https://www.mangaupdates.com/series.html?id=' in attr[1]) and (MULink is None):
-                    MULink = attr[1]
-            except:
-                pass
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.9)
 
-#Searches MU and returns the very first manga series it finds. NOT IDEAL.
+        for manga in mangaList:
+            if manga['title'].lower() == closestNameFromList[0].lower():
+                return manga
+
+        return None
+    except:
+        return None
+
 def getMangaURL(searchText):
     try:
-        global MULink
-        MULink = None
-        
         payload = {'search': searchText}
-        searchtext = requests.get('https://www.mangaupdates.com/series.html', params=payload)
-            
-        parser = MUParser()
-        parser.feed(searchtext.text)
+        html = requests.get('https://mangaupdates.com/series.html', params=payload)
 
-        return MULink
-    except Exception as e:
+        mu = pq(html.text)
+
+        mangaList = []
+
+        for thing in mu.find('.series_rows_table tr'):
+            title = pq(thing).find('.col1').text()
+            url = pq(thing).find('.col1 a').attr('href')
+            genres = pq(thing).find('.col2').text()
+            year = pq(thing).find('.col3').text()
+            rating = pq(thing).find('.col4').text()
+            
+            if title:
+                data = { 'title': title,
+                        'url': url,
+                        'genres': genres,
+                        'year': year,
+                        'rating': rating }
+
+                mangaList.append(data)
+
+        closest = findClosestManga(searchText, mangaList)
+        return closest['url']
+    
+    except:
         return None
