@@ -120,7 +120,7 @@ def getClosestAnime(searchText, animeList):
 #MAL's XML is a piece of crap. There has to be a better way to do this.
 def convertShittyXML(text):
     text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
-    text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø')
+    text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
     
     return text
 
@@ -176,7 +176,6 @@ def getMangaDetails(searchText):
         if not (closestManga is None):
             return closestManga
         else:
-            print("?")
             return mangaList[0]
 
     except:
@@ -206,11 +205,12 @@ def getClosestManga(searchText, mangaList):
             elif not (manga['english'] is None):
                 if (manga['english'].lower() == closestNameFromList.lower()):
                     return manga
-            else:
-                if not (manga['synonyms'] is None):
-                    for synonym in manga['synonyms']:
-                        if synonym.lower().strip() == closestNameFromList.lower():
-                            return manga
+
+        for manga in mangaList:
+            if not (manga['synonyms'] is None):
+                for synonym in manga['synonyms']:
+                    if synonym.lower().strip() == closestNameFromList.lower():
+                        return manga
 
         return None
     except Exception as e:

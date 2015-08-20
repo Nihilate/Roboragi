@@ -109,18 +109,14 @@ def start():
                     if hasExpandedRequest:
                         break
                     reply = Search.buildAnimeReply(match.group(1), False, comment)
-
-                    if (reply is not None) and (len(animeArray) + len(mangaArray) < 10):
-                        animeArray.append(reply)
+                    animeArray.append(reply)
 
             #Normal Anime  
             for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))", comment.body, re.S):
                 if hasExpandedRequest:
                     break
                 reply = Search.buildAnimeReply(match.group(1), False, comment)
-
-                if (reply is not None) and (len(animeArray) + len(mangaArray) < 10):
-                    animeArray.append(reply)
+                animeArray.append(reply)
 
             #Expanded Manga
             for match in re.finditer("\<{2}([^>]*)\>{2}", comment.body, re.S):
@@ -137,18 +133,14 @@ def start():
                     if hasExpandedRequest:
                         break
                     reply = Search.buildMangaReply(match.group(1), False, comment)
-
-                    if (reply is not None) and (len(animeArray) + len(mangaArray) < 10):
-                        mangaArray.append(reply)
+                    mangaArray.append(reply)
 
             #Normal Manga
             for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
                 if hasExpandedRequest:
                     break
                 reply = Search.buildMangaReply(match.group(1), False, comment)
-
-                if (reply is not None) and (len(animeArray) + len(mangaArray) < 10):
-                    mangaArray.append(reply)
+                mangaArray.append(reply)
 
                 
             #Here is where we create the final reply to be posted
@@ -202,6 +194,10 @@ def start():
                 if not (mangaReply['title'] in postedMangaTitles):
                     postedMangaTitles.append(mangaReply['title'])
                     commentReply += mangaReply['comment']
+
+            #If there are more than 10 requests, shorten them all 
+            if not (commentReply is '') and (len(animeArray) + len(mangaArray) >= 10):
+                commentReply = re.sub(r"\^\((.*?)\)", "", commentReply, flags=re.M)
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):

@@ -158,10 +158,11 @@ def getClosestManga(searchText, mangaList):
             if not ('one shot' in manga['type'].lower()):
                 if (manga['title_english'].lower() == closestNameFromList.lower()) or (manga['title_romaji'].lower() == closestNameFromList.lower()):
                     return manga
-                else:
-                    for synonym in manga['synonyms']:
-                        if synonym.lower() == closestNameFromList.lower():
-                            return manga
+
+        for manga in mangaList:                
+            for synonym in manga['synonyms']:
+                if synonym.lower() == closestNameFromList.lower():
+                    return manga
 
         return None
     except Exception as e:

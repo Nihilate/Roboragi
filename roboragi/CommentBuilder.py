@@ -117,7 +117,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
         #---------- BUILDING THE COMMENT ----------#
                 
         #----- TITLE -----#
-        comment += '**' + title + '** - ('
+        comment += '**' + title.strip() + '** - ('
 
         #----- LINKS -----#
         urlComments = []
@@ -261,7 +261,7 @@ def buildMangaComment(isExpanded, mal, ani, mu):
         #---------- BUILDING THE COMMENT ----------#
                 
         #----- TITLE -----#
-        comment += '**' + title + '** - ('
+        comment += '**' + title.strip() + '** - ('
 
         #----- LINKS -----#
         urlComments = []
