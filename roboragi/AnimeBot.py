@@ -78,9 +78,6 @@ def start():
         animeArray = []
         mangaArray = []
 
-        #The "hasExpandedRequest" variable puts a stop on any other requests (since you can only have one expanded request in a comment)
-        hasExpandedRequest = False
-
         #ignores all "code" markup (i.e. anything between backticks)
         comment.body = re.sub(r"\`(?s)(.*?)\`", "", comment.body)
         
@@ -94,29 +91,36 @@ def start():
             #If it's an expanded request, build a reply using the data in the braces, clear the arrays, add the reply to the relevant array and ignore everything else.
             #If it's a normal request, build a reply using the data in the braces, add the reply to the relevant array.
 
+
+            #Counts the number of expanded results vs total results. If it's not just a single expanded result, they all get turned into normal requests.
+            numOfRequest = 0
+            numOfExpandedRequest = 0
+            forceNormal = False
+
+            for match in re.finditer("\{{2}([^}]*)\}{2}|\<{2}([^>]*)\>{2}", comment.body, re.S):
+                numOfRequest += 1
+                numOfExpandedRequest += 1
+                
+            for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))|(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
+                numOfRequest += 1
+
+            if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
+                forceNormal = True
+
             #Expanded Anime
             for match in re.finditer("\{{2}([^}]*)\}{2}", comment.body, re.S):
-                if (str(comment.subreddit).lower() not in disableexpanded):
-                    if hasExpandedRequest:
-                        break
-                    reply = Search.buildAnimeReply(match.group(1), True, comment)
+                reply = ''
 
-                    if not (reply is None):
-                        hasExpandedRequest = True
-                        animeArray = [reply]
-                        mangaArray = []
-                else:
-                    if hasExpandedRequest:
-                        break
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
                     reply = Search.buildAnimeReply(match.group(1), False, comment)
+                else:
+                    reply = Search.buildAnimeReply(match.group(1), True, comment)                    
 
-                    if (reply is not None):
-                        animeArray.append(reply)
+                if (reply is not None):
+                    animeArray.append(reply)
 
             #Normal Anime  
             for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))", comment.body, re.S):
-                if hasExpandedRequest:
-                    break
                 reply = Search.buildAnimeReply(match.group(1), False, comment)
                 
                 if (reply is not None):
@@ -124,27 +128,18 @@ def start():
 
             #Expanded Manga
             for match in re.finditer("\<{2}([^>]*)\>{2}", comment.body, re.S):
-                if (str(comment.subreddit).lower() not in disableexpanded):
-                    if hasExpandedRequest:
-                        break;
+                reply = ''
+                
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildMangaReply(match.group(1), False, comment)
+                else:
                     reply = Search.buildMangaReply(match.group(1), True, comment)
 
-                    if not (reply is None):
-                        hasExpandedRequest = True
-                        animeArray = []
-                        mangaArray = [reply]
-                else:
-                    if hasExpandedRequest:
-                        break
-                    reply = Search.buildMangaReply(match.group(1), False, comment)
-
-                    if (reply is not None):
-                        mangaArray.append(reply)
+                if (reply is not None):
+                    mangaArray.append(reply)
 
             #Normal Manga
             for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
-                if hasExpandedRequest:
-                    break
                 reply = Search.buildMangaReply(match.group(1), False, comment)
 
                 if (reply is not None):
