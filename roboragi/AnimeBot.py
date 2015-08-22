@@ -89,7 +89,7 @@ def start():
         if re.search('(^|\s)({!stats}|{{!stats}}|<!stats>|<<!stats>>)($|\s|.)', comment.body, re.S) is not None:
             commentReply = CommentBuilder.buildStatsComment(comment.subreddit)
         else:
-
+            
             #The basic algorithm here is:
             #If it's an expanded request, build a reply using the data in the braces, clear the arrays, add the reply to the relevant array and ignore everything else.
             #If it's a normal request, build a reply using the data in the braces, add the reply to the relevant array.
@@ -109,14 +109,18 @@ def start():
                     if hasExpandedRequest:
                         break
                     reply = Search.buildAnimeReply(match.group(1), False, comment)
-                    animeArray.append(reply)
+
+                    if (reply is not None):
+                        animeArray.append(reply)
 
             #Normal Anime  
             for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))", comment.body, re.S):
                 if hasExpandedRequest:
                     break
                 reply = Search.buildAnimeReply(match.group(1), False, comment)
-                animeArray.append(reply)
+                
+                if (reply is not None):
+                    animeArray.append(reply)
 
             #Expanded Manga
             for match in re.finditer("\<{2}([^>]*)\>{2}", comment.body, re.S):
@@ -133,14 +137,18 @@ def start():
                     if hasExpandedRequest:
                         break
                     reply = Search.buildMangaReply(match.group(1), False, comment)
-                    mangaArray.append(reply)
+
+                    if (reply is not None):
+                        mangaArray.append(reply)
 
             #Normal Manga
             for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
                 if hasExpandedRequest:
                     break
                 reply = Search.buildMangaReply(match.group(1), False, comment)
-                mangaArray.append(reply)
+
+                if (reply is not None):
+                    mangaArray.append(reply)
 
                 
             #Here is where we create the final reply to be posted

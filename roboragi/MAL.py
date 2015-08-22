@@ -176,7 +176,7 @@ def getMangaDetails(searchText):
         if not (closestManga is None):
             return closestManga
         else:
-            return mangaList[0]
+            return None
 
     except:
         traceback.print_exc()
