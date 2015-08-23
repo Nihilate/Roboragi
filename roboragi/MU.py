@@ -14,7 +14,7 @@ def findClosestManga(searchText, mangaList):
         for manga in mangaList:
             nameList.append(manga['title'].lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.9)
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.85)
 
         for manga in mangaList:
             if manga['title'].lower() == closestNameFromList[0].lower():
