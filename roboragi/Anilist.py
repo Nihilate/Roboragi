@@ -62,7 +62,7 @@ def getAnimeDetails(searchText):
         if (closestAnime is not None):
             return closestAnime
         else:
-            return requests.json()[0]
+            return None
             
     except Exception as e:
         #traceback.print_exc()
@@ -134,7 +134,7 @@ def getMangaDetails(searchText):
         if (closestManga is not None):
             return requests.get("https://anilist.co/api/manga/" + str(closestManga['id']), params={'access_token':access_token}).json()
         else:
-            return requests.get("https://anilist.co/api/manga/" + str(request.json()[0]['id']), params={'access_token':access_token}).json()
+            return None
         
     except Exception as e:
         traceback.print_exc()
