@@ -152,7 +152,7 @@ def getClosestManga(searchText, mangaList):
             for synonym in manga['synonyms']:
                  mangaNameList.append(synonym.lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.95)[0]
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.9)[0]
         
         for manga in mangaList:
             if not ('one shot' in manga['type'].lower()):

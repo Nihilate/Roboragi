@@ -102,7 +102,7 @@ def getClosestAnime(searchText, animeList):
             for synonym in anime['synonyms']:
                 nameList.append(synonym.lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.95)[0]
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.90)[0]
 
         for anime in animeList:
             if (anime['title'].lower() == closestNameFromList.lower()) or (anime['english'].lower() == closestNameFromList.lower()):
@@ -121,6 +121,7 @@ def getClosestAnime(searchText, animeList):
 def convertShittyXML(text):
     text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
     text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
+    text = text.replace('&agrave;', 'à') 
     
     return text
 
@@ -197,7 +198,7 @@ def getClosestManga(searchText, mangaList):
                 for synonym in manga['synonyms']:
                     nameList.append(synonym.lower().strip())
         
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.95)[0]
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.90)[0]
 
         for manga in mangaList:
             if (manga['title'].lower() == closestNameFromList.lower()):
