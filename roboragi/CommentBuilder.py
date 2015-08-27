@@ -35,6 +35,8 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
         title = None
         jTitle = None
 
+        cType = None
+
         malURL = None
         hbURL = None
         aniURL = None
@@ -52,6 +54,9 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
 
         if not (mal is None):
             desc = mal['synopsis']
+
+            if mal['type']:
+                cType = mal['type']
             
             malURL = 'http://myanimelist.net/anime/' + str(mal['id'])
 
@@ -60,6 +65,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
             aniURL = 'http://anilist.co/anime/' + str(ani['id'])
 
             try:
+                cType = ani['type']
                 desc = ani['description']
             except:
                 pass
@@ -92,6 +98,9 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
             title = hb['title']
             desc = hb['synopsis']
             status = hb['status']
+
+            if hb['show_type']:
+                cType = hb['show_type']
             
             hbURL = hb['url']
 
@@ -151,9 +160,29 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
 
         #----- INFO LINE -----#            
         if (isExpanded):
-            comment += '\n\n^(**Status:** ' + status + ' | **Episodes:** ' + str(episodes) + ' | **Genres:** '
+            comment += '\n\n^('
+
+            if cType:
+                comment += '**' + cType + '** | '
+            
+            comment += '**Status:** ' + status
+
+            if cType != 'Movie':
+                comment += ' | **Episodes:** ' + str(episodes)
+
+            comment += ' | **Genres:** '
         else:
-            comment += '\n\n^(Status: ' + status + ' | Episodes: ' + str(episodes) + ' | Genres: '
+            comment += '\n\n^('
+
+            if cType:
+                comment += cType + ' | '
+
+            comment += 'Status: ' + status
+
+            if cType != 'Movie':
+                comment += ' | Episodes: ' + str(episodes)
+
+            comment += ' | Genres: '
 
         if not (genres == []):
             for i, genre in enumerate(genres):
@@ -209,12 +238,15 @@ def buildMangaComment(isExpanded, mal, ani, mu):
         title = None
         jTitle = None
 
+        cType = None
+
         malURL = None
         aniURL = None
         muURL = mu
 
         status = None
         chapters = None
+        volumes = None
         genres = []
         
         desc = None
@@ -225,6 +257,8 @@ def buildMangaComment(isExpanded, mal, ani, mu):
             desc = mal['synopsis']
             status = mal['status']
 
+            cType = mal['type']
+
             try:
                 if (int(mal['chapters']) == 0):
                     chapters = 'Unknown'
@@ -233,12 +267,19 @@ def buildMangaComment(isExpanded, mal, ani, mu):
             except:
                 chapters = 'Unknown'
 
+            try:
+                volumes = mal['volumes']
+            except:
+                volumes = 'Unknown'
+
         if ani is not None:
             if title is None:
                 title = ani['title_english']
             aniURL = 'http://anilist.co/manga/' + str(ani['id'])
             desc = ani['description']
             status = ani['publishing_status'].title()
+
+            cType = ani['type']
 
             try:
                 if ani['title_japanese'] is not None:
@@ -249,6 +290,11 @@ def buildMangaComment(isExpanded, mal, ani, mu):
                         chapters = 'Unknown'
                     else:
                         chapters = ani['total_chapters']
+
+                if ani['total_volumes'] is not None:
+                    volumes = ani['total_volumes']
+                else:
+                    volumes = 'Unknown'
 
                 if ani['genres'] is not None:
                     genres = ani['genres']
@@ -292,18 +338,42 @@ def buildMangaComment(isExpanded, mal, ani, mu):
                     comment += '^^' + word
 
         #----- INFO LINE -----#
-            
+        
         if (isExpanded):
-            comment += '\n\n^(**Status:** ' + status
-            if str(chapters) is not 'Unknown':
-                comment += ' | **Chapters:** ' + str(chapters)
+            comment += '\n\n^('
+
+            if cType:
+                if cType == 'Novel':
+                    cType = 'Light Novel'
+                    
+                comment += '**' + cType + '** | '
+
+            comment += '**Status:** ' + status
+
+            if (cType != 'Light Novel'):
+                if str(chapters) is not 'Unknown':
+                    comment += ' | **Chapters:** ' + str(chapters)
+            else:
+                comment += ' | **Volumes:** ' + str(volumes)
 
             if genres:
                 comment += ' | **Genres:** '
         else:
-            comment += '\n\n^(Status: ' + status
-            if str(chapters) is not 'Unknown':
-                comment += ' | Chapters: ' + str(chapters)
+            comment += '\n\n^('
+
+            if cType:
+                if cType == 'Novel':
+                    cType = 'Light Novel'
+                    
+                comment += cType + ' | '
+
+            comment += 'Status: ' + status
+
+            if (cType != 'Light Novel'):
+                if str(chapters) is not 'Unknown':
+                    comment += ' | Chapters: ' + str(chapters)
+            else:
+                comment += ' | Volumes: ' + str(volumes)
 
             if genres:
                 comment += ' | Genres: '

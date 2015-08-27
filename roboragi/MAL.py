@@ -121,7 +121,7 @@ def getClosestAnime(searchText, animeList):
 def convertShittyXML(text):
     text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
     text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
-    text = text.replace('&agrave;', 'à') 
+    text = text.replace('&agrave;', 'à').replace('&egrave;', 'è').replace('&dagger;', '†')
     
     return text
 
