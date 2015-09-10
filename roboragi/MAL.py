@@ -85,7 +85,7 @@ def getAnimeDetails(searchText):
             return animeList[0]
         
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Given a list, it finds the closest anime series it can.
@@ -114,7 +114,7 @@ def getClosestAnime(searchText, animeList):
 
         return None
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #MAL's XML is a piece of crap. There has to be a better way to do this.
@@ -180,7 +180,7 @@ def getMangaDetails(searchText):
             return None
 
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Used to determine the closest manga to a given search term in a list
@@ -215,7 +215,7 @@ def getClosestManga(searchText, mangaList):
 
         return None
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 setup()

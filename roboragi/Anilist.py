@@ -22,7 +22,6 @@ access_token = ''
 
 escape_table = {
      "&": " ",
-     "!": " ",
      "\'": "\\'",
      '\"': '\\"',
      '/': ' ',
@@ -137,7 +136,7 @@ def getMangaDetails(searchText):
             return None
         
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Used to determine the closest manga to a given search term in a list
@@ -166,7 +165,7 @@ def getClosestManga(searchText, mangaList):
 
         return None
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 setup()

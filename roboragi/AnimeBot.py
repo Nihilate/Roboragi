@@ -204,7 +204,7 @@ def start():
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):
-            commentReply += '\n\n---\n\n[^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| ^[Issue/mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New Feature:) [^Edited ^comments ^can ^be ^reprocessed.](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now)'
+            commentReply += '\n\n---\n\n[^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| [^Edit](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now) ^| ^[Mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New Feature:) [^Now ^available ^Reddit-wide](https://www.reddit.com/r/Roboragi/comments/3ke553/announcement_roboragi_can_be_used_nearly_anywhere)'
 
             try:
                 comment.reply(commentReply)
@@ -234,6 +234,6 @@ while 1:
     try:        
         start()
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
 
         setupReddit()
