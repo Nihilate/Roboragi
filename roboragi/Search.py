@@ -61,7 +61,43 @@ def buildMangaReply(searchText, isExpanded, baseComment):
 
             if ani is not None:
                 if ani['adult'] is True:
-                    print("NSFW ENTRY")
+                    mal = None
+                    ani = None
+                    mu = None
+            
+            return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu)
+    
+    except Exception as e:
+        traceback.print_exc()
+        return None
+
+#Builds a manga search for a specific series by a specific author
+def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
+    try:        
+        ani = Anilist.getMangaWithAuthor(searchText, authorName)
+        mal = None
+        mu = None
+        
+        if not (ani is None):
+            mal = MAL.getMangaCloseToDescription(searchText, ani['description'])
+            mu = MU.getMangaWithAuthor(searchText, authorName)
+
+        if (ani is not None):
+            try:
+                titleToAdd = ''
+                if mal is not None:
+                    titleToAdd = mal['title']
+                else:
+                    titleToAdd = ani['title_english']
+
+                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
+                    DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
+            except:
+                traceback.print_exc()
+                pass
+
+            if ani is not None:
+                if ani['adult'] is True:
                     mal = None
                     ani = None
                     mu = None

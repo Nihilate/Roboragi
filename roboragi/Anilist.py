@@ -117,6 +117,55 @@ def getClosestAnime(searchText, animeList):
         #traceback.print_exc()
         return None
 
+#Makes a search for a manga series using a specific author
+def getMangaWithAuthor(searchText, authorName):
+    try:
+        htmlSearchText = escape(searchText)
+        
+        request = requests.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token})
+        
+        if request.status_code == 401:
+            setup()
+            request = requests.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token})
+        
+        closestManga = getListOfCloseManga(searchText, request.json())
+        fullMangaList = []
+
+        for manga in closestManga:
+            try:
+                fullManga = requests.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token})
+
+                if fullManga.status_code == 401:
+                    setup()
+                    fullManga = requests.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token})
+
+                fullMangaList.append(fullManga.json())
+            except:
+                pass
+
+        potentialHits = []
+        for manga in fullMangaList:
+            for staff in manga['staff']:
+                isRightName = True
+                fullStaffName = staff['name_first'] + ' ' + staff['name_last']
+                authorNamesSplit = authorName.split(' ')
+
+                for name in authorNamesSplit:
+                    if not (name.lower() in fullStaffName.lower()):
+                        isRightName = False
+
+                if isRightName:
+                    potentialHits.append(manga)
+
+        if potentialHits:
+            return getClosestManga(searchText, potentialHits)
+
+        return None
+        
+    except Exception as e:
+        traceback.print_exc()
+        return None
+
 #Returns the closest manga series given a specific search term
 def getMangaDetails(searchText):
     try:
@@ -137,6 +186,35 @@ def getMangaDetails(searchText):
         
     except Exception as e:
         #traceback.print_exc()
+        return None
+
+#Used to determine the closest manga to a given search term in a list
+def getListOfCloseManga(searchText, mangaList):
+    try:
+        ratio = 0.90
+        returnList = []
+        
+        for manga in mangaList:
+            alreadyExists = False
+            for thing in returnList:
+                if int(manga['id']) == int(thing['id']):
+                    alreadyExists = True
+                    break
+            if (alreadyExists):
+                continue
+            
+            if round(difflib.SequenceMatcher(lambda x: x == "", manga['title_english'].lower(), searchText.lower()).ratio(), 3) >= ratio:
+                returnList.append(manga)
+            elif round(difflib.SequenceMatcher(lambda x: x == "", manga['title_romaji'].lower(), searchText.lower()).ratio(), 3) >= ratio:
+                returnList.append(manga)
+            elif not (manga['synonyms'] is None):
+                for synonym in manga['synonyms']:
+                    if round(difflib.SequenceMatcher(lambda x: x == "", synonym.lower(), searchText.lower()).ratio(), 3) >= ratio:
+                        returnList.append(manga)
+                        break
+        return returnList
+    except Exception as e:
+        traceback.print_exc()
         return None
 
 #Used to determine the closest manga to a given search term in a list

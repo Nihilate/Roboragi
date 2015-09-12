@@ -30,8 +30,12 @@ mal = requests.Session()
 
 #Sets up the connection to MAL.
 def setup():
+    print("Setting up MAL")
     mal_payload = {'username':MALUSER, 'password':MALPASSWORD, 'cookie':1, 'sublogin':'Login'}
     mal.headers.update({'Authorization': MALAUTH, 'User-Agent':MALUSERAGENT})
+
+    #I know this line is stupid. MAL's screwing up and the first request ALWAYS fails, no matter what. Need to get it out of the way early.
+    request = mal.get('http://myanimelist.net/api/manga/search.xml?q=Berserk')
 
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext. MAL returns XML (bleh) so we have to convert it ourselves.
 def getAnimeDetails(searchText):
@@ -125,6 +129,79 @@ def convertShittyXML(text):
     
     return text
 
+#Used to check if two descriptions are relatively close. This is used in place of author searching because MAL don't give authors at any point.
+def getClosestFromDescription(mangaList, descriptionToCheck):
+    try:
+        descList = []
+        for manga in mangaList:
+            descList.append(manga['synopsis'].lower())
+
+        closestNameFromList = difflib.get_close_matches(descriptionToCheck.lower(), descList, 1, 0.1)[0]
+
+        for manga in mangaList:
+            if (closestNameFromList == manga['synopsis'].lower()):
+                return manga
+        
+    except:
+        return None
+
+#Since MAL doesn't give me an author, I make a search using similar descriptions instead. Super janky.
+def getMangaCloseToDescription(searchText, descriptionToCheck):
+    try:
+        try:
+            request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip())
+        except:
+            setup()
+            request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip())
+
+        convertedRequest = convertShittyXML(request.text)
+        rawList = ET.fromstring(convertedRequest)
+
+        mangaList = []
+        
+        for manga in rawList.findall('./entry'):
+            mangaID = manga.find('id').text
+            title = manga.find('title').text
+            title_english = manga.find('english').text
+
+            synonyms = None
+            if not (manga.find('synonyms').text is None):
+                synonyms = (manga.find('synonyms').text).split(";")
+
+            chapters = manga.find('chapters').text
+            volumes = manga.find('volumes').text
+            mangaType = manga.find('type').text
+            status = manga.find('status').text
+            start_date = manga.find('start_date').text
+            end_date = manga.find('end_date').text
+            synopsis = manga.find('synopsis').text
+            image = manga.find('image').text
+
+            data = {'id': mangaID,
+                     'title': title,
+                     'english': title_english,
+                     'synonyms': synonyms,
+                     'chapters': chapters,
+                     'volumes': volumes,
+                     'type': mangaType,
+                     'status': status,
+                     'start_date': start_date,
+                     'end_date': end_date,
+                     'synopsis': synopsis,
+                     'image': image }
+
+            mangaList.append(data)
+
+        closeManga = getListOfCloseManga(searchText, mangaList)
+
+        return getClosestFromDescription(closeManga, descriptionToCheck)
+
+        return None
+    except:
+        traceback.print_exc()
+        return None
+    
+
 #Returns the closest manga series given a specific search term. Again, MAL returns XML, so we conver it ourselves
 def getMangaDetails(searchText):
     try:
@@ -180,6 +257,30 @@ def getMangaDetails(searchText):
             return None
 
     except:
+        #traceback.print_exc()
+        return None
+
+#Returns a list of manga with titles very close to the search text. Current unused because MAL's API is shit and doesn't return author names.
+def getListOfCloseManga(searchText, mangaList):
+    try:
+        ratio = 0.90
+        returnList = []
+        
+        for manga in mangaList:          
+            if round(difflib.SequenceMatcher(lambda x: x == "", manga['title'].lower(), searchText.lower()).ratio(), 3) >= ratio:
+                returnList.append(manga)
+            elif not (manga['english'] is None):
+                if round(difflib.SequenceMatcher(lambda x: x == "", manga['english'].lower(), searchText.lower()).ratio(), 3) >= ratio:
+                    returnList.append(manga)
+            elif not (manga['synonyms'] is None):
+                for synonym in manga['synonyms']:
+                    if round(difflib.SequenceMatcher(lambda x: x == "", synonym, searchText.lower()).ratio(), 3) >= ratio:
+                        returnList.append(manga)
+                        break
+
+        return returnList
+        
+    except Exception as e:
         #traceback.print_exc()
         return None
 

@@ -127,7 +127,8 @@ def start():
                     animeArray.append(reply)
 
             #Expanded Manga
-            for match in re.finditer("\<{2}([^>]*)\>{2}", comment.body, re.S):
+            #NORMAL EXPANDED
+            for match in re.finditer("\<{2}([^>]*)\>{2}($|\s)", comment.body, re.S):
                 reply = ''
                 
                 if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
@@ -138,13 +139,32 @@ def start():
                 if (reply is not None):
                     mangaArray.append(reply)
 
+            #AUTHOR SEARCH EXPANDED
+            for match in re.finditer("\<{2}([^>]*)\>{2}:\(([^)]*)\)", comment.body, re.S):
+                reply = ''
+                
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
+                else:
+                    reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), True, comment)
+
+                if (reply is not None):
+                    mangaArray.append(reply)
+
             #Normal Manga
-            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
+            #NORMAL
+            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)\>($|\s)", comment.body, re.S):
                 reply = Search.buildMangaReply(match.group(1), False, comment)
 
                 if (reply is not None):
                     mangaArray.append(reply)
 
+            #AUTHOR SEARCH
+            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)\>:\(([^)]*)\)", comment.body, re.S):
+                reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
+
+                if (reply is not None):
+                    mangaArray.append(reply)
                 
             #Here is where we create the final reply to be posted
 
@@ -204,8 +224,8 @@ def start():
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):
-            commentReply += '\n\n---\n\n[^How ^to ^use](http://www.reddit.com/r/Roboragi/wiki/index#wiki_how_do_i_use_it.3F) ^| ^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[Subreddit](http://www.reddit.com/r/Roboragi/) ^| [^Edit](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now) ^| ^[Mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New Feature:) [^Now ^available ^Reddit-wide](https://www.reddit.com/r/Roboragi/comments/3ke553/announcement_roboragi_can_be_used_nearly_anywhere)'
-
+            commentReply += '\n\n---\n\n^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[/r/](http://www.reddit.com/r/Roboragi/) ^| [^Edit](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now) ^| ^[Mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=https://www.reddit.com/r/manga/comments/3knp2l/looking_for_a_manga/cuyxqxz) ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New:) [^Available ^Reddit-wide](https://www.reddit.com/r/Roboragi/comments/3ke553/announcement_roboragi_can_be_used_nearly_anywhere) ^+ [^author ^search ^for ^manga](https://www.reddit.com/r/Roboragi/comments/3kntf8/announcement_for_more_accurate_manga_results_you/)'
+            
             try:
                 comment.reply(commentReply)
                 print("Comment made.\n")
