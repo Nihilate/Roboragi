@@ -128,7 +128,7 @@ def start():
 
             #Expanded Manga
             #NORMAL EXPANDED
-            for match in re.finditer("\<{2}([^>]*)\>{2}($|\s)", comment.body, re.S):
+            for match in re.finditer("\<{2}([^>]*)\>{2}(?!(:|\>))", comment.body, re.S):
                 reply = ''
                 
                 if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
@@ -140,7 +140,7 @@ def start():
                     mangaArray.append(reply)
 
             #AUTHOR SEARCH EXPANDED
-            for match in re.finditer("\<{2}([^>]*)\>{2}:\(([^)]*)\)", comment.body, re.S):
+            for match in re.finditer("\<{2}([^>]*)\>{2}:\(([^)]+)\)", comment.body, re.S):
                 reply = ''
                 
                 if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
@@ -153,14 +153,14 @@ def start():
 
             #Normal Manga
             #NORMAL
-            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)\>($|\s)", comment.body, re.S):
+            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]+)\>(?!(:|\>))", comment.body, re.S):
                 reply = Search.buildMangaReply(match.group(1), False, comment)
 
                 if (reply is not None):
                     mangaArray.append(reply)
 
             #AUTHOR SEARCH
-            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)\>:\(([^)]*)\)", comment.body, re.S):
+            for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)\>:\(([^)]+)\)", comment.body, re.S):
                 reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
 
                 if (reply is not None):
