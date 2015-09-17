@@ -159,12 +159,12 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
         if (ani is not None) or (hb is not None) or (mal is not None):
             try:
                 titleToAdd = ''
-                if ani is None:
-                    titleToAdd = hb['title']
-                elif hb is not None:
-                    titleToAdd = ani['title_romaji']
-                else:
+                if mal:
                     titleToAdd = mal['title']
+                if hb:
+                    titleToAdd = hb['title']
+                if ani:
+                    titleToAdd = ani['title_romaji']
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)

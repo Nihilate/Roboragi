@@ -34,9 +34,6 @@ def setup():
     mal_payload = {'username':MALUSER, 'password':MALPASSWORD, 'cookie':1, 'sublogin':'Login'}
     mal.headers.update({'Authorization': MALAUTH, 'User-Agent':MALUSERAGENT})
 
-    #I know this line is stupid. MAL's screwing up and the first request ALWAYS fails, no matter what. Need to get it out of the way early.
-    request = mal.get('http://myanimelist.net/api/manga/search.xml?q=Berserk')
-
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext. MAL returns XML (bleh) so we have to convert it ourselves.
 def getAnimeDetails(searchText):
     try:
@@ -83,10 +80,7 @@ def getAnimeDetails(searchText):
 
         closestAnime = getClosestAnime(searchText, animeList)
 
-        if not (closestAnime is None):
-            return closestAnime
-        else:
-            return animeList[0]
+        return closestAnime
         
     except Exception as e:
         #traceback.print_exc()
