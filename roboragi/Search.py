@@ -197,7 +197,7 @@ def isBotAParent(comment, reddit):
             
     except:
         traceback.print_exc()
-        return True
+        return False
 
 #Checks if the comment is valid (i.e. not already seen, not a post by Roboragi and the parent commenter isn't Roboragi)
 def isValidComment(comment, reddit):
