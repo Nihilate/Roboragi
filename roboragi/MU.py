@@ -128,4 +128,5 @@ def getMangaURL(searchText):
         return closest['url']
     
     except:
+        traceback.print_exc()
         return None
