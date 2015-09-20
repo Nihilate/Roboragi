@@ -21,7 +21,6 @@ def getAnimeDetails(searchText):
             return None
             
     except Exception as e:
-        traceback.print_exc()
         return None
 
 #Sometimes the "right" anime isn't at the top of the list, so we get the titles

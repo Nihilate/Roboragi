@@ -64,7 +64,7 @@ def getAnimeDetails(searchText):
             return None
             
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Gets the "full" anime details (which aren't displayed when we search using the basic function). Gives us cool data like time until the next episode is aired.
@@ -185,7 +185,7 @@ def getMangaDetails(searchText):
             return None
         
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Used to determine the closest manga to a given search term in a list
