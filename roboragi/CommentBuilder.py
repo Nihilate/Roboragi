@@ -7,6 +7,7 @@ import re
 from os import linesep
 import traceback
 import DatabaseHandler
+import pprint
 
 #Removes the (Source: MAL) or (Written by X) bits from the decriptions in the databases
 def cleanupDescription(desc):    

@@ -20,6 +20,7 @@ PASSWORD = ''
 USERAGENT = ''
 REDDITAPPID = ''
 REDDITAPPSECRET = ''
+REFRESHTOKEN = ''
 #
 
 try:
@@ -29,6 +30,7 @@ try:
     USERAGENT = Config.useragent
     REDDITAPPID = Config.redditappid
     REDDITAPPSECRET = Config.redditappsecret
+    REFRESHTOKEN = Config.refreshtoken
 except ImportError:
     pass
 
@@ -43,18 +45,12 @@ disableexpanded = ['animesuggest']
 #Sets up Reddit for PRAW
 def setupReddit():
     try:
-        print('Getting Reddit access token')
+        print('Setting up Reddit')
         reddit.set_oauth_app_info(client_id=REDDITAPPID, client_secret=REDDITAPPSECRET, redirect_uri='http://127.0.0.1:65010/' 'authorize_callback')
-
-        client_auth = requests.auth.HTTPBasicAuth(REDDITAPPID, REDDITAPPSECRET)
-        post_data = {"grant_type": "password", "username": USERNAME, "password": PASSWORD}
-        headers = {"User-Agent": USERAGENT}
-        response = requests.post("https://www.reddit.com/api/v1/access_token", auth=client_auth, data=post_data, headers=headers)
-
-        reddit.set_access_credentials(set(['identity', 'read', 'submit']), response.json()['access_token'])
-        print('Access token set\n')
-    except:
-        print('Error with setting up Reddit')
+        reddit.refresh_access_information(REFRESHTOKEN)
+        print('Reddit successfully set up')
+    except Exception as e:
+        print('Error with setting up Reddit: ' + str(e))
 
 #The main function
 def start():
@@ -254,6 +250,4 @@ while 1:
     try:        
         start()
     except Exception as e:
-        #traceback.print_exc()
-
-        setupReddit()
+        traceback.print_exc()
