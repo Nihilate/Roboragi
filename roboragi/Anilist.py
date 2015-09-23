@@ -25,7 +25,8 @@ escape_table = {
      "\'": "\\'",
      '\"': '\\"',
      '/': ' ',
-     '-': ' '
+     '-': ' ',
+     '!': '\!'
      }
 
 #Anilist's database doesn't like weird symbols when searching it, so you have to escape or replace a bunch of stuff.
