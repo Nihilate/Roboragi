@@ -228,7 +228,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
 
         return dictToReturn
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Builds a manga comment from MAL/Anilist/MangaUpdates data
@@ -410,7 +410,7 @@ def buildMangaComment(isExpanded, mal, ani, mu):
         
         return dictToReturn
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Builds a stats comment

@@ -14,6 +14,11 @@ import DatabaseHandler
 import traceback
 import time
 
+import sqlite3
+import json
+
+import pprint
+
 USERNAME = ''
 
 try:
@@ -22,27 +27,55 @@ try:
 except ImportError:
     pass
 
+sqlConn = sqlite3.connect('synonyms.db')
+sqlCur = sqlConn.cursor()
+
+try:
+    sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Manga" and lower(name) = ?', ["despair simulator"])
+except sqlite3.Error as e:
+    print(e)
+
 #Builds a manga reply from multiple sources
 def buildMangaReply(searchText, isExpanded, baseComment):
     try:
-        #Basic breakdown:
-        #If Anilist finds something, use it to find the MAL version.
-        #If hits either MAL or Ani, use it to find the MU version.
-        #If it hits either, add it to the request-tracking DB.
-        
-        ani = Anilist.getMangaDetails(searchText)
+        ani = None
         mal = None
         mu = None
         
-        if not (ani is None):
-            mal = MAL.getMangaDetails(ani['title_romaji'])
+        try:
+            sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Manga" and lower(name) = ?', [searchText.lower()])
+        except sqlite3.Error as e:
+            print(e)
+
+        alternateLinks = sqlCur.fetchone()
+
+        if (alternateLinks):
+            synonym = json.loads(alternateLinks[0])
+
+            if (synonym['mal']):
+                mal = MAL.getMangaDetails(synonym['mal'])
+            if (synonym['ani']):
+                ani = Anilist.getMangaDetails(synonym['ani'])
+            if (synonym['mu']):
+                mu = MU.getMangaURL(synonym['mu'])
 
         else:
-            mal = MAL.getMangaDetails(searchText)
+            #Basic breakdown:
+            #If Anilist finds something, use it to find the MAL version.
+            #If hits either MAL or Ani, use it to find the MU version.
+            #If it hits either, add it to the request-tracking DB.
+            ani = Anilist.getMangaDetails(searchText)
+            
+            if not (ani is None):
+                mal = MAL.getMangaDetails(ani['title_romaji'])
 
-            if not (mal is None):
-                ani = Anilist.getMangaDetails(mal['title'])
+            else:
+                mal = MAL.getMangaDetails(searchText)
 
+                if not (mal is None):
+                    ani = Anilist.getMangaDetails(mal['title'])
+
+        #----- Finally... -----#
         if (ani is not None) or (mal is not None):
             try:
                 titleToAdd = ''
@@ -59,14 +92,14 @@ def buildMangaReply(searchText, isExpanded, baseComment):
                 traceback.print_exc()
                 pass
 
-            if ani is not None:
-                if ani['adult'] is True:
-                    mal = None
-                    ani = None
-                    mu = None
-            
-            return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu)
-    
+        if ani is not None:
+            if ani['adult'] is True:
+                mal = None
+                ani = None
+                mu = None
+        
+        return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu)
+        
     except Exception as e:
         traceback.print_exc()
         return None
@@ -111,43 +144,64 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
 #Builds an anime reply from multiple sources
 def buildAnimeReply(searchText, isExpanded, baseComment):
     try:
-        #Basic breakdown:
-        #If Anilist finds something, use it to find the HB version.
-        #If we can't find it, try with HB and use it to try and "refind" Anilist
-        #If we hit HB, we don't need to look for MAL, since we can get the MAL ID from within HB. If we don't hit HB, find MAL on its own.
-        #If, at the end, we have something from Anilist, get the full set of Anilist data
-        #If it hits anything, add it to the request-tracking DB.
-        
-        ani = Anilist.getAnimeDetails(searchText)
-        hb = None
+
         mal = None
+        hb = None
+        ani = None
         
-        if (ani is not None):
-            hb = Hummingbird.getAnimeDetails(ani['title_romaji'])
+        try:
+            sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Anime" and lower(name) = ?', [searchText.lower()])
+        except sqlite3.Error as e:
+            print(e)
+
+        alternateLinks = sqlCur.fetchone()
+
+        if (alternateLinks):
+            synonym = json.loads(alternateLinks[0])
+
+            if (synonym['mal']):
+                mal = MAL.getAnimeDetails(synonym['mal'])
+            if (synonym['hb']):
+                hb = Hummingbird.getAnimeDetails(synonym['hb'])
+            if (synonym['ani']):
+                ani = Anilist.getAnimeDetails(synonym['ani'])
+        else:
+            #Basic breakdown:
+            #If Anilist finds something, use it to find the HB version.
+            #If we can't find it, try with HB and use it to try and "refind" Anilist
+            #If we hit HB, we don't need to look for MAL, since we can get the MAL ID from within HB. If we don't hit HB, find MAL on its own.
+            #If, at the end, we have something from Anilist, get the full set of Anilist data
+            #If it hits anything, add it to the request-tracking DB.
+            
+            ani = Anilist.getAnimeDetails(searchText)
+            
+            if (ani is not None):
+                hb = Hummingbird.getAnimeDetails(ani['title_romaji'])
+
+                if (hb is None):
+                    for synonym in ani['synonyms']:
+                        hb = Hummingbird.getAnimeDetails(synonym)
+                        if hb is not None:
+                            break
+                    hb = Hummingbird.getAnimeDetails(ani['title_english'])
+            else:
+                hb = Hummingbird.getAnimeDetails(searchText)
+                if (hb is not None):
+                   ani = Anilist.getAnimeDetails(hb['title'])
 
             if (hb is None):
-                for synonym in ani['synonyms']:
-                    hb = Hummingbird.getAnimeDetails(synonym)
-                    if hb is not None:
-                        break
-                hb = Hummingbird.getAnimeDetails(ani['title_english'])
-        else:
-            hb = Hummingbird.getAnimeDetails(searchText)
-            if (hb is not None):
-               ani = Anilist.getAnimeDetails(hb['title'])
+                mal = MAL.getAnimeDetails(searchText)
+                if (mal is not None):
+                    hb = Hummingbird.getAnimeDetails(mal['title'])
+                    if (hb is None):
+                        hb = Hummingbird.getAnimeDetails(mal['english'])
 
-        if (hb is None):
-            mal = MAL.getAnimeDetails(searchText)
-            if (mal is not None):
-                hb = Hummingbird.getAnimeDetails(mal['title'])
-                if (hb is None):
-                    hb = Hummingbird.getAnimeDetails(mal['english'])
-
-                if (ani is None):
-                    ani = Anilist.getAnimeDetails(mal['title'])
                     if (ani is None):
-                        ani = Anilist.getAnimeDetails(mal['english'])
+                        ani = Anilist.getAnimeDetails(mal['title'])
+                        if (ani is None):
+                            ani = Anilist.getAnimeDetails(mal['english'])
 
+        #----- Finally... -----#
         try:
             if ani is not None:
                 aniFull = Anilist.getFullAnimeDetails(ani['id'])
@@ -172,14 +226,14 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 traceback.print_exc()
                 pass
 
-            if ani is not None:
-                if ani['adult'] is True:
-                    print("NSFW ENTRY")
-                    mal = None
-                    hb = None
-                    ani = None
-            
-            return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani)
+        if ani is not None:
+            if ani['adult'] is True:
+                print("NSFW ENTRY")
+                mal = None
+                hb = None
+                ani = None
+        
+        return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani)
 
     except Exception as e:
         traceback.print_exc()
