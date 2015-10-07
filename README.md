@@ -1,5 +1,5 @@
 # Roboragi
-Roboragi is a Reddit bot which creates anime and manga links from MAL, Hummingbird, Anilist and MangaUpdates when requested.
+Roboragi is a Reddit bot (found at [/u/Roboragi](https://www.reddit.com/user/Roboragi/) which creates anime and manga links from MAL, Hummingbird, Anilist and MangaUpdates when requested.
 
 ## Technical info
 Roboragi is written in Python for use with Python 3. There's a requirements.txt if you want to test it out yourself, but you'll need to create a Config.py with your own information and set up a PostgreSQL database. I **highly** recommend changing the subredditlist variable in AnimeBot.py to a private subreddit that only you and the bot have access to (otherwise you'll respond to everything the actual Roboragi bot does).
