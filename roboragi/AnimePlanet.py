@@ -4,8 +4,6 @@ import difflib
 import traceback
 import pprint
 
-searchText = "bakemonogatari"
-
 BASE_URL = "http://www.anime-planet.com"
 
 def getAnimeURL(searchText):
