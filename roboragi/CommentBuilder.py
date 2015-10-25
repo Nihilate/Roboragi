@@ -29,7 +29,7 @@ def cleanupDescription(desc):
     return reply
 
 #Builds an anime comment from MAL/HB/Anilist data
-def buildAnimeComment(isExpanded, mal, hb, ani):
+def buildAnimeComment(isExpanded, mal, hb, ani, ap):
     try:
         comment = ''
 
@@ -41,6 +41,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
         malURL = None
         hbURL = None
         aniURL = None
+        apURL = ap
         
         youtubeTrailer = None
 
@@ -134,6 +135,8 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
         
         if malURL is not None:
             urlComments.append('[MAL](' + malURL + ')')
+        if apURL is not None:
+            urlComments.append('[AP](' + apURL + ')')
         if hb is not None:
             urlComments.append('[HB](' + hbURL + ')')
         if ani is not None:
@@ -215,6 +218,8 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
         receipt = '(A) Request successful: ' + title + ' - '
         if malURL is not None:
             receipt += 'MAL '
+        if ap is not None:
+            receipt += 'AP '
         if hb is not None:
             receipt += 'HB '
         if ani is not None:
@@ -232,7 +237,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani):
         return None
 
 #Builds a manga comment from MAL/Anilist/MangaUpdates data
-def buildMangaComment(isExpanded, mal, ani, mu):
+def buildMangaComment(isExpanded, mal, ani, mu, ap):
     try:
         comment = ''
 
@@ -244,6 +249,7 @@ def buildMangaComment(isExpanded, mal, ani, mu):
         malURL = None
         aniURL = None
         muURL = mu
+        apURL = ap
 
         status = None
         chapters = None
@@ -315,6 +321,8 @@ def buildMangaComment(isExpanded, mal, ani, mu):
         
         if malURL is not None:
             urlComments.append('[MAL](' + malURL + ')')
+        if apURL is not None:
+            urlComments.append('[AP](' + apURL + ')')
         if aniURL is not None:
             urlComments.append('[ANI](' + aniURL + ')')
         if muURL is not None:
@@ -398,6 +406,8 @@ def buildMangaComment(isExpanded, mal, ani, mu):
         receipt = '(M) Request successful: ' + title + ' - '
         if malURL is not None:
             receipt += 'MAL '
+        if muURL is not None:
+            receipt += 'AP '
         if ani is not None:
             receipt += 'ANI '
         if muURL is not None:
