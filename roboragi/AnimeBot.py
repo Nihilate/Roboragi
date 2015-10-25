@@ -167,48 +167,26 @@ def start():
             #The final comment reply. We add stuff to this progressively.
             commentReply = ''
 
-            #If we have anime AND manga in one reply we format stuff a little differently
-            multipleTypes = False
-
             #Basically just to keep track of people posting the same title multiple times (e.g. {Nisekoi}{Nisekoi}{Nisekoi})
             postedAnimeTitles = []
             postedMangaTitles = []
-            
-            if (len(animeArray) > 0) and (len(mangaArray) > 0):
-                multipleTypes = True
-                commentReply += '**Anime**\n\n'
 
             #Adding all the anime to the final comment. If there's manga too we split up all the paragraphs and indent them in Reddit markup by adding a '>', then recombine them
             for i, animeReply in enumerate(animeArray):
                 if not (i is 0):
                     commentReply += '\n\n'
-                    
-                if multipleTypes:
-                    splitSections = re.split('\s{2,}',animeReply['comment'])
-                    newSections = []
-                    for section in splitSections:
-                        newSections.append('>' + section)
-                    animeReply['comment'] = '\n\n'.join(newSections)
 
                 if not (animeReply['title'] in postedAnimeTitles):
                     postedAnimeTitles.append(animeReply['title'])
                     commentReply += animeReply['comment']
                 
 
-            if multipleTypes:
-                commentReply += '\n\n**Manga**\n\n'
+            commentReply += '\n\n'
 
             #Adding all the manga to the final comment
             for i, mangaReply in enumerate(mangaArray):
                 if not (i is 0):
                     commentReply += '\n\n'
-
-                if multipleTypes:
-                    splitSections = re.split('\s{2,}',mangaReply['comment'])
-                    newSections = []
-                    for section in splitSections:
-                        newSections.append('>' + section)
-                    mangaReply['comment'] = '\n\n'.join(newSections)
                 
                 if not (mangaReply['title'] in postedMangaTitles):
                     postedMangaTitles.append(mangaReply['title'])
