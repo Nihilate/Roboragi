@@ -97,8 +97,9 @@ def getClosestAnime(searchText, animeList):
             if not (anime['english'] is None):
                 nameList.append(anime['english'].lower())
 
-            for synonym in anime['synonyms']:
-                nameList.append(synonym.lower())
+            if anime['synonyms']:
+                for synonym in anime['synonyms']:
+                    nameList.append(synonym.lower())
 
         closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.90)[0]
 
