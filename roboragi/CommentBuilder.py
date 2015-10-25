@@ -136,7 +136,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap):
         if malURL is not None:
             urlComments.append('[MAL](' + malURL + ')')
         if apURL is not None:
-            urlComments.append('[AP](' + apURL + ')')
+            urlComments.append('[A-P](' + apURL + ')')
         if hb is not None:
             urlComments.append('[HB](' + hbURL + ')')
         if ani is not None:
@@ -322,7 +322,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
         if malURL is not None:
             urlComments.append('[MAL](' + malURL + ')')
         if apURL is not None:
-            urlComments.append('[AP](' + apURL + ')')
+            urlComments.append('[A-P](' + apURL + ')')
         if aniURL is not None:
             urlComments.append('[ANI](' + aniURL + ')')
         if muURL is not None:

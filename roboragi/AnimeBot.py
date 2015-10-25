@@ -87,7 +87,6 @@ def start():
             #If it's an expanded request, build a reply using the data in the braces, clear the arrays, add the reply to the relevant array and ignore everything else.
             #If it's a normal request, build a reply using the data in the braces, add the reply to the relevant array.
 
-
             #Counts the number of expanded results vs total results. If it's not just a single expanded result, they all get turned into normal requests.
             numOfRequest = 0
             numOfExpandedRequest = 0
@@ -181,7 +180,8 @@ def start():
                     commentReply += animeReply['comment']
                 
 
-            commentReply += '\n\n'
+            if postedAnimeTitles and postedMangaTitles:
+                commentReply += '\n\n'
 
             #Adding all the manga to the final comment
             for i, mangaReply in enumerate(mangaArray):
@@ -198,7 +198,7 @@ def start():
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):
-            commentReply += '\n\n---\n\n^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[/r/](http://www.reddit.com/r/Roboragi/) ^| [^Edit](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now) ^| ^[Mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New:) [^New ^manual ^redirection ^database](https://www.reddit.com/r/Roboragi/comments/3n35w7/annoucement_roboragi_now_has_its_own_synonym/) ^+ [^available ^Reddit-wide](https://www.reddit.com/r/Roboragi/comments/3ke553/announcement_roboragi_can_be_used_nearly_anywhere)'
+            commentReply += '\n\n---\n\n^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[/r/](http://www.reddit.com/r/Roboragi/) ^| [^Edit](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now) ^| ^[Mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New:) [^Anime-Planet ^joins ^the ^fray!](https://www.reddit.com/r/Roboragi/comments/3q634m/announcement_roboragi_now_supports_animeplanet/)'
             
             try:
                 comment.reply(commentReply)
