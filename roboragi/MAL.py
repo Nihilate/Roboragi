@@ -42,8 +42,9 @@ def getAnimeDetails(searchText):
         except:
             setup()
             request = mal.get('http://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip())
-        
-        rawList = ET.fromstring(request.text.encode('utf-8'))
+            
+        convertedRequest = convertShittyXML(request.text)
+        rawList = ET.fromstring(convertedRequest)
 
         animeList = []
         
