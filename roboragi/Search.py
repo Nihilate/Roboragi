@@ -4,6 +4,7 @@ Returns a built comment created from multiple databases when given a search term
 '''
 
 import MAL
+import AnimePlanet as AniP
 import Hummingbird
 import Anilist
 import MU
@@ -41,6 +42,7 @@ def buildMangaReply(searchText, isExpanded, baseComment):
         ani = None
         mal = None
         mu = None
+        ap = None
         
         try:
             sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Manga" and lower(name) = ?', [searchText.lower()])
@@ -51,13 +53,15 @@ def buildMangaReply(searchText, isExpanded, baseComment):
 
         if (alternateLinks):
             synonym = json.loads(alternateLinks[0])
-
+            
             if (synonym['mal']):
                 mal = MAL.getMangaDetails(synonym['mal'])
             if (synonym['ani']):
                 ani = Anilist.getMangaDetails(synonym['ani'])
             if (synonym['mu']):
                 mu = MU.getMangaURL(synonym['mu'])
+            if (synonym['ap']):
+                ap = AniP.getMangaURL(synonym['ap'])
 
         else:
             #Basic breakdown:
@@ -73,7 +77,7 @@ def buildMangaReply(searchText, isExpanded, baseComment):
                 mal = MAL.getMangaDetails(searchText)
 
                 if not (mal is None):
-                    ani = Anilist.getMangaDetails(mal['title'])
+                    ani = Anilist.getMangaDetails(mal['title'])    
 
         #----- Finally... -----#
         if (ani is not None) or (mal is not None):
@@ -86,6 +90,29 @@ def buildMangaReply(searchText, isExpanded, baseComment):
                     titleToAdd = ani['title_english']
                     mu = MU.getMangaURL(ani['title_romaji'])
 
+                #Do the anime-planet stuff
+                if mal and not ap:
+                    if mal['title'] and not ap:
+                        ap = AniP.getMangaURL(mal['title'])
+                    if mal['english'] and not ap:
+                        ap = AniP.getMangaURL(mal['english'])
+                    if mal['synonyms'] and not ap:
+                        for synonym in mal['synonyms']:
+                            if ap:
+                                break
+                            ap = AniP.getMangaURL(synonym)
+
+                if ani and not ap:
+                    if ani['title_english'] and not ap:
+                        ap = AniP.getMangaURL(ani['title_english'])
+                    if ani['title_romaji'] and not ap:
+                        ap = AniP.getMangaURL(ani['title_romaji'])
+                    if ani['synonyms'] and not ap:
+                        for synonym in ani['synonyms']:
+                            if ap:
+                                break
+                            ap = AniP.getMangaURL(synonym)
+
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
                     DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
             except:
@@ -97,8 +124,9 @@ def buildMangaReply(searchText, isExpanded, baseComment):
                 mal = None
                 ani = None
                 mu = None
+                ap = None
         
-        return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu)
+        return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu, ap)
         
     except Exception as e:
         traceback.print_exc()
@@ -110,12 +138,17 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
         ani = Anilist.getMangaWithAuthor(searchText, authorName)
         mal = None
         mu = None
+        ap = None
         
-        if not (ani is None):
+        if ani:
             mal = MAL.getMangaCloseToDescription(searchText, ani['description'])
-            mu = MU.getMangaWithAuthor(searchText, authorName)
+            ap = AniP.getMangaURL(ani['title_english'], authorName)
+        else:
+            ap = AniP.getMangaURL(searchText, authorName)
 
-        if (ani is not None):
+        mu = MU.getMangaWithAuthor(searchText, authorName)
+
+        if ani:
             try:
                 titleToAdd = ''
                 if mal is not None:
@@ -134,8 +167,9 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
                     mal = None
                     ani = None
                     mu = None
+                    ap = None
             
-            return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu)
+            return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu, ap)
     
     except Exception as e:
         traceback.print_exc()
@@ -148,6 +182,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
         mal = None
         hb = None
         ani = None
+        ap = None
         
         try:
             sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Anime" and lower(name) = ?', [searchText.lower()])
@@ -165,6 +200,8 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 hb = Hummingbird.getAnimeDetails(synonym['hb'])
             if (synonym['ani']):
                 ani = Anilist.getAnimeDetails(synonym['ani'])
+            if (synonym['ap']):
+                ap = AniP.getAnimeURL(synonym['ap'])
         else:
             #Basic breakdown:
             #If Anilist finds something, use it to find the HB version.
@@ -189,17 +226,39 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 if (hb is not None):
                    ani = Anilist.getAnimeDetails(hb['title'])
 
-            if (hb is None):
-                mal = MAL.getAnimeDetails(searchText)
-                if (mal is not None):
+            #Doing MAL stuff
+            if not mal:
+                if hb:
+                    mal = MAL.getAnimeDetails(hb['title'])
+
+                    if not mal and hb['alternate_title']:
+                        if (hb['alternate_title']):
+                            mal = MAL.getAnimeDetails(hb['alternate_title'])
+                        
+                if ani and not mal:
+                    mal = MAL.getAnimeDetails(ani['title_romaji'])
+
+                    if not mal:
+                        mal = MAL.getAnimeDetails(ani['title_english'])
+
+                    if not mal and ani['synonyms']:
+                        for synonym in ani['synonyms']:
+                            if mal:
+                                break
+                            mal = MAL.getAnimeDetails(synonym)
+
+                if not mal:
+                    mal = MAL.getAnimeDetails(searchText)
+
+                if mal and not hb:
                     hb = Hummingbird.getAnimeDetails(mal['title'])
-                    if (hb is None):
+                    if not hb:
                         hb = Hummingbird.getAnimeDetails(mal['english'])
 
-                    if (ani is None):
-                        ani = Anilist.getAnimeDetails(mal['title'])
-                        if (ani is None):
-                            ani = Anilist.getAnimeDetails(mal['english'])
+                if mal and not ani:
+                    ani = Anilist.getAnimeDetails(mal['title'])
+                    if not ani:
+                        ani = Anilist.getAnimeDetails(mal['english'])
 
         #----- Finally... -----#
         try:
@@ -220,6 +279,37 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 if ani:
                     titleToAdd = ani['title_romaji']
 
+                #Do Anime-Planet stuff
+                if mal and not ap:
+                    if mal['title'] and not ap:
+                        ap = AniP.getAnimeURL(mal['title'])
+                    if mal['english'] and not ap:
+                        ap = AniP.getAnimeURL(mal['english'])
+                    if mal['synonyms'] and not ap:
+                        print(mal['synonyms'])
+                        for synonym in mal['synonyms']:
+                            if ap:
+                                break
+                            ap = AniP.getAnimeURL(synonym)
+
+                if hb and not ap:
+                    if hb['title'] and not ap:
+                        ap = AniP.getAnimeURL(hb['title'])
+                    if hb['alternate_title'] and not ap:
+                        hb = AniP.getAnimeURL(hb['alternate_title'])
+                
+                if ani and not ap:
+                    if ani['title_english'] and not ap:
+                        ap = AniP.getAnimeURL(ani['title_english'])
+                    if ani['title_romaji'] and not ap:
+                        ap = AniP.getAnimeURL(ani['title_romaji'])
+                    if ani['synonyms'] and not ap:
+                        print(ani['synonyms'])
+                        for synonym in ani['synonyms']:
+                            if ap:
+                                break
+                            ap = AniP.getAnimeURL(synonym)
+
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
             except:
@@ -232,8 +322,9 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                 mal = None
                 hb = None
                 ani = None
+                ap = None
         
-        return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani)
+        return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani, ap)
 
     except Exception as e:
         traceback.print_exc()
