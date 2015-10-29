@@ -37,7 +37,7 @@ except sqlite3.Error as e:
     print(e)
 
 #Builds a manga reply from multiple sources
-def buildMangaReply(searchText, isExpanded, baseComment):
+def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
     try:
         ani = None
         mal = None
@@ -113,7 +113,7 @@ def buildMangaReply(searchText, isExpanded, baseComment):
                                 break
                             ap = AniP.getMangaURL(synonym)
 
-                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
+                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
@@ -133,7 +133,7 @@ def buildMangaReply(searchText, isExpanded, baseComment):
         return None
 
 #Builds a manga search for a specific series by a specific author
-def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
+def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment, blockTracking=False):
     try:        
         ani = Anilist.getMangaWithAuthor(searchText, authorName)
         mal = None
@@ -156,7 +156,7 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
                 else:
                     titleToAdd = ani['title_english']
 
-                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
+                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
@@ -176,7 +176,7 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment):
         return None
 
 #Builds an anime reply from multiple sources
-def buildAnimeReply(searchText, isExpanded, baseComment):
+def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
     try:
 
         mal = None
@@ -296,7 +296,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                     if hb['title'] and not ap:
                         ap = AniP.getAnimeURL(hb['title'])
                     if hb['alternate_title'] and not ap:
-                        hb = AniP.getAnimeURL(hb['alternate_title'])
+                        ap = AniP.getAnimeURL(hb['alternate_title'])
                 
                 if ani and not ap:
                     if ani['title_english'] and not ap:
@@ -310,7 +310,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment):
                                 break
                             ap = AniP.getAnimeURL(synonym)
 
-                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi'):
+                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
