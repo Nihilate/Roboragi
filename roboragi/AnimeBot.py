@@ -199,8 +199,8 @@ def start():
 
         #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
         if not (commentReply is ''):
-            commentReply += '\n\n---\n\n^[FAQ](http://www.reddit.com/r/Roboragi/wiki/index) ^| ^[/r/](http://www.reddit.com/r/Roboragi/) ^| [^Edit](https://www.reddit.com/r/Roboragi/comments/3i82q0/by_mentioning_his_username_roboragi_can_now) ^| ^[Mistake?](http://www.reddit.com/r/Roboragi/submit?selftext=true&title=[ISSUE]&text=' + comment.permalink + ') ^| ^[Source](https://github.com/Nihilate/Roboragi) ^| ^(New:) [^Anime-Planet ^joins ^the ^fray!](https://www.reddit.com/r/Roboragi/comments/3q634m/announcement_roboragi_now_supports_animeplanet/)'
-            
+            commentReply += Config.getSignature(comment.permalink)
+                        
             try:
                 comment.reply(commentReply)
                 print("Comment made.\n")
