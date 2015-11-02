@@ -54,7 +54,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap):
         
         desc = None
 
-        if not (mal is None):
+        if mal:
             desc = mal['synopsis']
 
             if mal['type']:
@@ -106,7 +106,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap):
             
             hbURL = hb['url']
 
-            if (hb['mal_id'] is not None):
+            if hb['mal_id'] and not malURL:
                 malURL = 'http://myanimelist.net/anime/' + str(hb['mal_id'])
 
             if (hb['genres'] is not None) and (not genres):
