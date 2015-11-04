@@ -83,35 +83,41 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
         if (ani is not None) or (mal is not None):
             try:
                 titleToAdd = ''
-                if mal is not None:
+                if mal:
                     titleToAdd = mal['title']
-                    mu = MU.getMangaURL(mal['title'])
                 else:
                     titleToAdd = ani['title_english']
-                    mu = MU.getMangaURL(ani['title_romaji'])
 
-                #Do the anime-planet stuff
-                if mal and not ap:
-                    if mal['title'] and not ap:
-                        ap = AniP.getMangaURL(mal['title'])
-                    if mal['english'] and not ap:
-                        ap = AniP.getMangaURL(mal['english'])
-                    if mal['synonyms'] and not ap:
-                        for synonym in mal['synonyms']:
-                            if ap:
-                                break
-                            ap = AniP.getMangaURL(synonym)
+                
+                if not alternateLinks:
+                    #MU stuff
+                    if mal:
+                        mu = MU.getMangaURL(ani['title_romaji'])
+                    else:
+                        mu = MU.getMangaURL(mal['title'])
 
-                if ani and not ap:
-                    if ani['title_english'] and not ap:
-                        ap = AniP.getMangaURL(ani['title_english'])
-                    if ani['title_romaji'] and not ap:
-                        ap = AniP.getMangaURL(ani['title_romaji'])
-                    if ani['synonyms'] and not ap:
-                        for synonym in ani['synonyms']:
-                            if ap:
-                                break
-                            ap = AniP.getMangaURL(synonym)
+                    #Do the anime-planet stuff
+                    if mal and not ap:
+                        if mal['title'] and not ap:
+                            ap = AniP.getMangaURL(mal['title'])
+                        if mal['english'] and not ap:
+                            ap = AniP.getMangaURL(mal['english'])
+                        if mal['synonyms'] and not ap:
+                            for synonym in mal['synonyms']:
+                                if ap:
+                                    break
+                                ap = AniP.getMangaURL(synonym)
+
+                    if ani and not ap:
+                        if ani['title_english'] and not ap:
+                            ap = AniP.getMangaURL(ani['title_english'])
+                        if ani['title_romaji'] and not ap:
+                            ap = AniP.getMangaURL(ani['title_romaji'])
+                        if ani['synonyms'] and not ap:
+                            for synonym in ani['synonyms']:
+                                if ap:
+                                    break
+                                ap = AniP.getMangaURL(synonym)
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
