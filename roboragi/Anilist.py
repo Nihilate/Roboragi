@@ -36,12 +36,10 @@ def escape(text):
 #Sets up the connection to Anilist. You need a token to get stuff from them, which expires every hour.
 def setup():
     try:
-        print('Getting Anilist access token')
         request = requests.post('https://anilist.co/api/auth/access_token', params={'grant_type':'client_credentials', 'client_id':ANICLIENT, 'client_secret':ANISECRET})
 
         global access_token
         access_token = request.json()['access_token']
-        print('Access token set')
     except Exception as e:
         print('Error getting Anilist token')
 

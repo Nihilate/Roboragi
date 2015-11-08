@@ -30,7 +30,6 @@ mal = requests.Session()
 
 #Sets up the connection to MAL.
 def setup():
-    print("Setting up MAL")
     mal_payload = {'username':MALUSER, 'password':MALPASSWORD, 'cookie':1, 'sublogin':'Login'}
     mal.headers.update({'Authorization': MALAUTH, 'User-Agent':MALUSERAGENT})
 
