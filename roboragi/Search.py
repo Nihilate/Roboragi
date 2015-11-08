@@ -80,7 +80,7 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                     ani = Anilist.getMangaDetails(mal['title'])    
 
         #----- Finally... -----#
-        if (ani is not None) or (mal is not None):
+        if ani or mal:
             try:
                 titleToAdd = ''
                 if mal:
@@ -92,9 +92,9 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if not alternateLinks:
                     #MU stuff
                     if mal:
-                        mu = MU.getMangaURL(ani['title_romaji'])
-                    else:
                         mu = MU.getMangaURL(mal['title'])
+                    else:
+                        mu = MU.getMangaURL(ani['title_romaji'])
 
                     #Do the anime-planet stuff
                     if mal and not ap:
@@ -292,7 +292,6 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     if mal['english'] and not ap:
                         ap = AniP.getAnimeURL(mal['english'])
                     if mal['synonyms'] and not ap:
-                        print(mal['synonyms'])
                         for synonym in mal['synonyms']:
                             if ap:
                                 break
@@ -310,7 +309,6 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     if ani['title_romaji'] and not ap:
                         ap = AniP.getAnimeURL(ani['title_romaji'])
                     if ani['synonyms'] and not ap:
-                        print(ani['synonyms'])
                         for synonym in ani['synonyms']:
                             if ap:
                                 break
