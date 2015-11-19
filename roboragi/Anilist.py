@@ -101,7 +101,7 @@ def getClosestAnime(searchText, animeList):
             for synonym in anime['synonyms']:
                  animeNameList.append(synonym.lower())
         
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.90)[0]
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.95)[0]
         
         for anime in animeList:
             if (anime['title_english'].lower() == closestNameFromList.lower()) or (anime['title_romaji'].lower() == closestNameFromList.lower()):
@@ -228,7 +228,7 @@ def getClosestManga(searchText, mangaList):
             for synonym in manga['synonyms']:
                  mangaNameList.append(synonym.lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.9)[0]
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.95)[0]
         
         for manga in mangaList:
             if not ('one shot' in manga['type'].lower()):
