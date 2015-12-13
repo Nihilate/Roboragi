@@ -20,8 +20,8 @@ def getAnimeURL(searchText):
         animeList = []
 
         #If it's taken us to the search page
-        if ap.find('.pillFilters.pure-g'):
-            for entry in ap.find('.card.entry.pure-u-1-6'):
+        if ap.find('.cardDeck.pure-g.cd-narrow[data-type="anime"]'):
+            for entry in ap.find('.card.pure-1-6'):
                 entryTitle = pq(entry).find('a').text()
                 entryURL = pq(entry).find('a').attr('href')
                 
@@ -66,8 +66,8 @@ def getMangaURL(searchText, authorName=None):
         mangaList = []
 
         #If it's taken us to the search page
-        if ap.find('.pillFilters.pure-g'):
-            for entry in ap.find('.card.entry.pure-u-1-6'):
+        if ap.find('.cardDeck.pure-g.cd-narrow[data-type="manga"]'):
+            for entry in ap.find('.card.pure-1-6'):
                 entryTitle = pq(entry).find('a').text()
                 entryURL = pq(entry).find('a').attr('href')
                 
