@@ -124,13 +124,6 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
             except:
                 traceback.print_exc()
                 pass
-
-        if ani is not None:
-            if ani['adult'] is True:
-                mal = None
-                ani = None
-                mu = None
-                ap = None
         
         return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu, ap)
         
@@ -167,13 +160,6 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment, b
             except:
                 traceback.print_exc()
                 pass
-
-            if ani is not None:
-                if ani['adult'] is True:
-                    mal = None
-                    ani = None
-                    mu = None
-                    ap = None
             
             return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu, ap)
     
@@ -318,15 +304,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
-                pass
-
-        if ani is not None:
-            if ani['adult'] is True:
-                print("NSFW ENTRY")
-                mal = None
-                hb = None
-                ani = None
-                ap = None
+                pass6
         
         return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani, ap)
 
