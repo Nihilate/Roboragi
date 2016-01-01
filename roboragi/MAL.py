@@ -120,7 +120,7 @@ def getClosestAnime(searchText, animeList):
 def convertShittyXML(text):
     text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
     text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
-    text = text.replace('&agrave;', 'à').replace('&egrave;', 'è').replace('&dagger;', '†')
+    text = text.replace('&agrave;', 'à').replace('&egrave;', 'è').replace('&dagger;', '†').replace('&sup2;', '²')
     
     return text
 
@@ -206,7 +206,7 @@ def getMangaDetails(searchText):
             setup()
             request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip())
 
-        convertedRequest = convertShittyXML(request.text)
+        convertedRequest = convertShittyXML(request.text)    
         rawList = ET.fromstring(convertedRequest)
 
         mangaList = []
@@ -252,7 +252,7 @@ def getMangaDetails(searchText):
             return None
 
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
 
 #Returns a list of manga with titles very close to the search text. Current unused because MAL's API is shit and doesn't return author names.
