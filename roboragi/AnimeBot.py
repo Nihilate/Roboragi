@@ -46,7 +46,7 @@ subredditlist = 'JapaneseASMR+PockyKiss+porn_irl+anime_irl+roboragi+amv+animebaz
 disableexpanded = ['animesuggest']
 
 #subreddits I'm actively avoiding
-banned = ['anime']
+exiled = ['anime']
 
 #Sets up Reddit for PRAW
 def setupReddit():
@@ -64,8 +64,8 @@ def process_pms():
         if (msg.subject == 'username mention'):
             if (('{' and '}') in msg.body) or (('<' and '>') in msg.body):
                 try:
-                    if str(msg.subreddit).lower() in banned:
-                        print('Request from banned subreddit.')
+                    if str(msg.subreddit).lower() in exiled:
+                        print('Edit request from exiled subreddit: ' + str(msg.subreddit) + '\n')
                         msg.mark_as_read()
                         continue
 
@@ -90,14 +90,17 @@ def process_pms():
 
                     commentReply = process_comment(mentionedComment, True)
 
-                    if (commentReply):                           
-                        if commentToEdit:
-                            commentToEdit.edit(commentReply)
-                            print('Comment edited.\n')
-                        else:
-                            mentionedComment.reply(commentReply)
-                            print('Comment made.\n')
-
+                    try:
+                        if (commentReply):
+                            if commentToEdit:
+                                commentToEdit.edit(commentReply)
+                                print('Comment edited.\n')
+                            else:
+                                mentionedComment.reply(commentReply)
+                                print('Comment made.\n')
+                    except praw.errors.Forbidden:
+                        print('Edit equest from banned subreddit: ' + str(msg.subreddit) + '\n')
+                    
                     msg.mark_as_read()
 
                 except Exception as e:
@@ -234,20 +237,22 @@ def process_comment(comment, is_edit=False):
     #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
     if not (commentReply is ''):
         commentReply += Config.getSignature(comment.permalink)
-                    
-        try:
-            if is_edit:
-                return commentReply
-            else:
+
+        if is_edit:
+            return commentReply
+        else:
+            try:
                 comment.reply(commentReply)
                 print("Comment made.\n")
+            except praw.errors.Forbidden:
+                print('Request from banned subreddit: ' + str(comment.subreddit) + '\n')
+            except Exception:
+                traceback.print_exc()
 
-                try:
-                    DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, True)
-                except:
-                    traceback.print_exc()
-        except:
-            traceback.print_exc()
+            try:
+                DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, True)
+            except:
+                traceback.print_exc()
     else:
         try:
             if is_edit:
