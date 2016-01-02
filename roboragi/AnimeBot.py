@@ -15,15 +15,6 @@ import CommentBuilder
 import DatabaseHandler
 import Config
 
-# --- Config Variables ---
-USERNAME = ''
-PASSWORD = ''
-USERAGENT = ''
-REDDITAPPID = ''
-REDDITAPPSECRET = ''
-REFRESHTOKEN = ''
-#
-
 TIME_BETWEEN_PM_CHECKS = 60 #in seconds
 
 try:
@@ -34,13 +25,11 @@ try:
     REDDITAPPID = Config.redditappid
     REDDITAPPSECRET = Config.redditappsecret
     REFRESHTOKEN = Config.refreshtoken
+    SUBREDDITLIST = Config.get_formatted_subreddit_list()
 except ImportError:
     pass
 
 reddit = praw.Reddit(user_agent=USERNAME)
-
-#There's probably a better way to do this. Might move it to the backend database at some point
-subredditlist = 'JapaneseASMR+PockyKiss+porn_irl+anime_irl+roboragi+amv+animebazaar+animecirclejerk+animedeals+animedubs+animefigures+animegifs+animehaiku+animeicons+animemashups+animemusic+animenews+animenocontext+animephonewallpapers+animeranks+animesketch+animesuggest+animethemes+animevectorwallpapers+animewallpaper+animeworldproblems+awwnime+bishounen+crunchyroll+ecchi+endcard+hentai+imouto+japaneseanimation+japaneseanimation+kemonomimi+kitsunemimi+manga+mangaswap+melanime+metaanime+moescape+nekomimi+nihilate+nsfwanimegifs+otaku+pantsu+patchuu+postyourmal+qualityanime+seinen+trueanime+vocaloid+waifu+watchinganime+weeaboo+weeabootales+yaoi+yuri+zettairyouiki'
 
 #the subreddits where expanded requests are disabled
 disableexpanded = ['animesuggest']
@@ -60,7 +49,7 @@ def setupReddit():
 
 #function for processing edit requests via pm
 def process_pms():
-    for msg in reddit.get_unread(limit=None):     
+    for msg in reddit.get_unread(limit=None):
         if (msg.subject == 'username mention'):
             if (('{' and '}') in msg.body) or (('<' and '>') in msg.body):
                 try:
@@ -73,7 +62,8 @@ def process_pms():
                     mentionedComment.refresh()
 
                     if not (DatabaseHandler.commentExists(mentionedComment.id)):
-                        continue
+                        if str(mentionedComment.subreddit).lower() in Config.subredditlist:
+                            continue
 
                     replies = mentionedComment.replies
 
@@ -100,7 +90,7 @@ def process_pms():
                                 print('Comment made.\n')
                     except praw.errors.Forbidden:
                         print('Edit equest from banned subreddit: ' + str(msg.subreddit) + '\n')
-                    
+
                     msg.mark_as_read()
 
                 except Exception as e:
@@ -269,12 +259,13 @@ def start():
     last_checked_pms = time.time()
 
     #This opens a constant stream of comments. It will loop until there's a major error (usually this means the Reddit access token needs refreshing)
-    comment_stream = praw.helpers.comment_stream(reddit, subredditlist, limit=250, verbosity=0)
+    comment_stream = praw.helpers.comment_stream(reddit, SUBREDDITLIST, limit=250, verbosity=0)
 
     for comment in comment_stream:
 
-        #check if it's time to check the PMs
-        if ((time.time() - last_checked_pms) > TIME_BETWEEN_PM_CHECKS):
+        # check if it's time to check the PMs
+        if (time.time() - last_checked_pms) > TIME_BETWEEN_PM_CHECKS:
+            print('TIME TO CHECK SHIT')
             process_pms()
             last_checked_pms = time.time()
 

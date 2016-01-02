@@ -60,3 +60,6 @@ target/
 Config.py
 oauth.ini
 Nocontextbot.py
+
+#Pycharm
+.idea
