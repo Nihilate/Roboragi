@@ -29,7 +29,7 @@ def cleanupDescription(desc):
     return reply
 
 #Builds an anime comment from MAL/HB/Anilist data
-def buildAnimeComment(isExpanded, mal, hb, ani, ap):
+def buildAnimeComment(isExpanded, mal, hb, ani, ap, anidb):
     try:
         comment = ''
 
@@ -42,6 +42,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap):
         hbURL = None
         aniURL = None
         apURL = ap
+        anidbURL = anidb
         
         youtubeTrailer = None
 
@@ -141,8 +142,8 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap):
             urlComments.append('[HB](' + hbURL + ')')
         if ani is not None:
             urlComments.append('[ANI](' + aniURL + ')')
-        '''if youtubeTrailer is not None:
-            urlComments.append('[Trailer](https://www.youtube.com/watch?v=' + youtubeTrailer + ')') '''
+        if anidbURL is not None:
+            urlComments.append('[ADB](' + anidbURL + ')')
 
         for i, link in enumerate(urlComments):
             if i is not 0:
@@ -218,12 +219,14 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap):
         receipt = '(A) Request successful: ' + title + ' - '
         if malURL is not None:
             receipt += 'MAL '
-        if ap is not None:
+        if apURL is not None:
             receipt += 'AP '
         if hb is not None:
             receipt += 'HB '
         if ani is not None:
             receipt += 'ANI '
+        if anidbURL is not None:
+            receipt += 'ADB '
         print(receipt)
 
         #We return the title/comment separately so we can track if multiples of the same comment have been requests (e.g. {Nisekoi}{Nisekoi}{Nisekoi})
@@ -406,7 +409,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
         receipt = '(M) Request successful: ' + title + ' - '
         if malURL is not None:
             receipt += 'MAL '
-        if muURL is not None:
+        if ap is not None:
             receipt += 'AP '
         if ani is not None:
             receipt += 'ANI '

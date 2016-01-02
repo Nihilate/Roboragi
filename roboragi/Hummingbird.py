@@ -8,6 +8,14 @@ import requests
 import traceback
 import pprint
 
+def getSynonyms(request):
+    synonyms = []
+
+    synonyms.append(request['title']) if request['title'] else None
+    synonyms.append(request['alternate_title']) if request['alternate_title'] else None
+
+    return synonyms
+
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext
 def getAnimeDetails(searchText):
     try:

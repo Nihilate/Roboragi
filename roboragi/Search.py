@@ -5,6 +5,7 @@ Returns a built comment created from multiple databases when given a search term
 
 import MAL
 import AnimePlanet as AniP
+import AniDB
 import Hummingbird
 import Anilist
 import MU
@@ -171,10 +172,22 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment, b
 def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
     try:
 
-        mal = None
-        hb = None
-        ani = None
-        ap = None
+        mal = {'search_function': MAL.getAnimeDetails,
+                'synonym_function': MAL.getSynonyms,
+                'checked_synonyms': [],
+                'result': None}
+        hb = {'search_function': Hummingbird.getAnimeDetails,
+                'synonym_function': Hummingbird.getSynonyms,
+                'checked_synonyms': [],
+                'result': None}
+        ani = {'search_function': Anilist.getAnimeDetails,
+                'synonym_function': Anilist.getSynonyms,
+                'checked_synonyms': [],
+                'result': None}
+        ap = {'search_function': AniP.getAnimeURL,
+                'result': None}
+        adb = {'search_function': AniDB.getAnimeURL,
+                'result': None}
         
         try:
             sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Anime" and lower(name) = ?', [searchText.lower()])
@@ -186,127 +199,81 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
         if (alternateLinks):
             synonym = json.loads(alternateLinks[0])
 
-            if (synonym['mal']):
-                mal = MAL.getAnimeDetails(synonym['mal'])
-            if (synonym['hb']):
-                hb = Hummingbird.getAnimeDetails(synonym['hb'])
-            if (synonym['ani']):
-                ani = Anilist.getAnimeDetails(synonym['ani'])
-            if (synonym['ap']):
-                ap = AniP.getAnimeURL(synonym['ap'])
+            if synonym:
+                malsyn = None
+                if 'mal' in synonym and synonym['mal']:
+                    malsyn = synonym['mal']
+
+                hbsyn = None
+                if 'hb' in synonym and synonym['hb']:
+                    hbsyn = synonym['hb']
+
+                anisyn = None
+                if 'ani' in synonym and synonym['ani']:
+                    anisyn = synonym['ani']
+
+                apsyn = None
+                if 'ap' in synonym and synonym['ap']:
+                    apsyn = synonym['ap']
+
+                adbsyn = None
+                if 'adb' in synonym and synonym['adb']:
+                    adbsyn = synonym['adb']
+
+                mal['result'] = MAL.getAnimeDetails(malsyn) if malsyn else MAL.getAnimeDetails(synonym[next(iter(synonym))])
+                hb['result'] = Hummingbird.getAnimeDetails(hbsyn) if hbsyn else HB.getAnimeDetails(synonym[next(iter(synonym))])
+                ani['result'] = Anilist.getAnimeDetails(anisyn) if anisyn else ANI.getAnimeDetails(synonym[next(iter(synonym))])
+                ap['result'] = AniP.getAnimeURL(apsyn) if apsyn else AniP.getAnimeURL(synonym[next(iter(synonym))])
+                adb['result'] = AniDB.getAnimeURL(adbsyn) if adbsyn else AniDB.getAnimeURL(synonym[next(iter(synonym))])
+                
         else:
-            #Basic breakdown:
-            #If Anilist finds something, use it to find the HB version.
-            #If we can't find it, try with HB and use it to try and "refind" Anilist
-            #If we hit HB, we don't need to look for MAL, since we can get the MAL ID from within HB. If we don't hit HB, find MAL on its own.
-            #If, at the end, we have something from Anilist, get the full set of Anilist data
-            #If it hits anything, add it to the request-tracking DB.
-            
-            ani = Anilist.getAnimeDetails(searchText)
-            
-            if (ani is not None):
-                hb = Hummingbird.getAnimeDetails(ani['title_romaji'])
+            data_sources = [ani, hb, mal]
+            aux_sources = [ap, adb]
 
-                if (hb is None):
-                    for synonym in ani['synonyms']:
-                        hb = Hummingbird.getAnimeDetails(synonym)
-                        if hb is not None:
-                            break
-                    hb = Hummingbird.getAnimeDetails(ani['title_english'])
-            else:
-                hb = Hummingbird.getAnimeDetails(searchText)
-                if (hb is not None):
-                   ani = Anilist.getAnimeDetails(hb['title'])
+            synonyms = set([searchText])
 
-            #Doing MAL stuff
-            if not mal:
-                if hb:
-                    mal = MAL.getAnimeDetails(hb['title'])
+            for x in range(len(data_sources)):
+                for source in data_sources:
+                    if source['result']:
+                        break
+                    else:
+                        for synonym in synonyms:
+                            if synonym in source['checked_synonyms']:
+                                continue
 
-                    if not mal and hb['alternate_title']:
-                        if (hb['alternate_title']):
-                            mal = MAL.getAnimeDetails(hb['alternate_title'])
-                        
-                if ani and not mal:
-                    mal = MAL.getAnimeDetails(ani['title_romaji'])
+                            source['result'] = source['search_function'](synonym)
+                            source['checked_synonyms'].append(synonym)
 
-                    if not mal:
-                        mal = MAL.getAnimeDetails(ani['title_english'])
-
-                    if not mal and ani['synonyms']:
-                        for synonym in ani['synonyms']:
-                            if mal:
+                            if source['result']:
                                 break
-                            mal = MAL.getAnimeDetails(synonym)
 
-                if not mal:
-                    mal = MAL.getAnimeDetails(searchText)
+                    if source['result']:
+                        synonyms.update([synonym.lower() for synonym in source['synonym_function'](source['result'])])
 
-                if mal and not hb:
-                    hb = Hummingbird.getAnimeDetails(mal['title'])
-                    if not hb:
-                        hb = Hummingbird.getAnimeDetails(mal['english'])
+            for source in aux_sources:
+                for synonym in synonyms:     
+                    source['result'] = source['search_function'](synonym)
 
-                if mal and not ani:
-                    ani = Anilist.getAnimeDetails(mal['title'])
-                    if not ani:
-                        ani = Anilist.getAnimeDetails(mal['english'])
+                    if source['result']:
+                        break
 
-        #----- Finally... -----#
-        try:
-            if ani is not None:
-                aniFull = Anilist.getFullAnimeDetails(ani['id'])
-                if aniFull is not None:
-                    ani = aniFull
-        except:
-            pass
-
-        if (ani is not None) or (hb is not None) or (mal is not None):
+        if ani['result'] or hb['result'] or mal['result']:
             try:
                 titleToAdd = ''
-                if mal:
-                    titleToAdd = mal['title']
-                if hb:
-                    titleToAdd = hb['title']
-                if ani:
-                    titleToAdd = ani['title_romaji']
-
-                #Do Anime-Planet stuff
-                if mal and not ap:
-                    if mal['title'] and not ap:
-                        ap = AniP.getAnimeURL(mal['title'])
-                    if mal['english'] and not ap:
-                        ap = AniP.getAnimeURL(mal['english'])
-                    if mal['synonyms'] and not ap:
-                        for synonym in mal['synonyms']:
-                            if ap:
-                                break
-                            ap = AniP.getAnimeURL(synonym)
-
-                if hb and not ap:
-                    if hb['title'] and not ap:
-                        ap = AniP.getAnimeURL(hb['title'])
-                    if hb['alternate_title'] and not ap:
-                        ap = AniP.getAnimeURL(hb['alternate_title'])
-                
-                if ani and not ap:
-                    if ani['title_english'] and not ap:
-                        ap = AniP.getAnimeURL(ani['title_english'])
-                    if ani['title_romaji'] and not ap:
-                        ap = AniP.getAnimeURL(ani['title_romaji'])
-                    if ani['synonyms'] and not ap:
-                        for synonym in ani['synonyms']:
-                            if ap:
-                                break
-                            ap = AniP.getAnimeURL(synonym)
+                if mal['result']:
+                    titleToAdd = mal['result']['title']
+                if hb['result']:
+                    titleToAdd = hb['result']['title']
+                if ani['result']:
+                    titleToAdd = ani['result']['title_romaji']
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
             except:
                 traceback.print_exc()
-                pass6
+                pass
         
-        return CommentBuilder.buildAnimeComment(isExpanded, mal, hb, ani, ap)
+        return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], hb['result'], ani['result'], ap['result'], adb['result'])
 
     except Exception as e:
         traceback.print_exc()

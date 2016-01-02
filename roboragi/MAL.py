@@ -23,6 +23,15 @@ mal = requests.Session()
 def setup():
     mal.headers.update({'Authorization': MALAUTH, 'User-Agent': MALUSERAGENT})
 
+def getSynonyms(request):
+    synonyms = []
+
+    synonyms.append(request['title']) if request['title'] else None
+    synonyms.append(request['english']) if request['english'] else None
+    synonyms.extend(request['synonyms']) if request['synonyms'] else None
+
+    return synonyms
+
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext. MAL returns XML (bleh) so we have to convert it ourselves.
 def getAnimeDetails(searchText):
     try:
@@ -31,7 +40,7 @@ def getAnimeDetails(searchText):
         except:
             setup()
             request = mal.get('http://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip())
-            
+        
         convertedRequest = convertShittyXML(request.text)
         rawList = ET.fromstring(convertedRequest)
 
@@ -108,9 +117,9 @@ def getClosestAnime(searchText, animeList):
 
 #MAL's XML is a piece of crap. It needs to be escaped twice because they do shit like this: &amp;sup2;
 def convertShittyXML(text):
-    import html
-    text=html.unescape(text)
-    return html.unescape(text)
+    import html.parser
+    text=html.parser.HTMLParser().unescape(text)
+    return html.parser.HTMLParser().unescape(text)
 
 #Used to check if two descriptions are relatively close. This is used in place of author searching because MAL don't give authors at any point.
 def getClosestFromDescription(mangaList, descriptionToCheck):
@@ -192,7 +201,7 @@ def getMangaDetails(searchText):
             setup()
             request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip())
 
-        convertedRequest = convertShittyXML(request.text)    
+        convertedRequest = convertShittyXML(request.text)
         rawList = ET.fromstring(convertedRequest)
 
         mangaList = []
@@ -238,7 +247,7 @@ def getMangaDetails(searchText):
             return None
 
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Returns a list of manga with titles very close to the search text. Current unused because MAL's API is shit and doesn't return author names.

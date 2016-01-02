@@ -33,6 +33,15 @@ escape_table = {
 def escape(text):
      return "".join(escape_table.get(c,c) for c in text)
 
+def getSynonyms(request):
+    synonyms = []
+    
+    synonyms.append(request['title_english']) if request['title_english'] else None
+    synonyms.append(request['title_romaji']) if request['title_romaji'] else None
+    synonyms.extend(request['synonyms']) if request['synonyms'] else None
+
+    return synonyms
+    
 #Sets up the connection to Anilist. You need a token to get stuff from them, which expires every hour.
 def setup():
     try:
@@ -57,8 +66,8 @@ def getAnimeDetails(searchText):
         #Of the given list of shows, we try to find the one we think is closest to our search term
         closestAnime = getClosestAnime(searchText, request.json())
 
-        if (closestAnime is not None):
-            return closestAnime
+        if closestAnime:
+            return getFullAnimeDetails(closestAnime['id'])
         else:
             return None
             
@@ -228,7 +237,7 @@ def getClosestManga(searchText, mangaList):
             for synonym in manga['synonyms']:
                  mangaNameList.append(synonym.lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.95)[0]
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.90)[0]
         
         for manga in mangaList:
             if not ('one shot' in manga['type'].lower()):
