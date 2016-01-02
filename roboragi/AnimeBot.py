@@ -265,7 +265,6 @@ def start():
 
         # check if it's time to check the PMs
         if (time.time() - last_checked_pms) > TIME_BETWEEN_PM_CHECKS:
-            print('TIME TO CHECK SHIT')
             process_pms()
             last_checked_pms = time.time()
 
