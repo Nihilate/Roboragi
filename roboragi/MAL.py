@@ -106,10 +106,11 @@ def getClosestAnime(searchText, animeList):
         #traceback.print_exc()
         return None
 
-#MAL's XML is a piece of crap.
+#MAL's XML is a piece of crap. It needs to be escaped twice because they do shit like this: &amp;sup2;
 def convertShittyXML(text):
-    import HTMLParser
-    return HTMLParser.HTMLParser().unescape(text)
+    import html
+    text=html.unescape(text)
+    return html.unescape(text)
 
 #Used to check if two descriptions are relatively close. This is used in place of author searching because MAL don't give authors at any point.
 def getClosestFromDescription(mangaList, descriptionToCheck):
@@ -237,7 +238,7 @@ def getMangaDetails(searchText):
             return None
 
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
 
 #Returns a list of manga with titles very close to the search text. Current unused because MAL's API is shit and doesn't return author names.
