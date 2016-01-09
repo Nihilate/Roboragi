@@ -21,13 +21,16 @@ def getAnimeURL(searchText):
     for anime in anidb('animetitles anime'):
         titles = []
         for title in pq(anime).find('title').items():
-            titles.append(title.text())
+            titleInfo = {}
+            titleInfo['title'] = title.text()
+            titleInfo['lang'] = title.attr['lang']
+            titles.append(titleInfo)
 
         url = 'http://anidb.net/a' + anime.attrib['aid']
         
         if titles:
             data = { 'titles': titles,
-                    'url': url
+                     'url': url
                      }
 
             animeList.append(data)
@@ -41,16 +44,33 @@ def getAnimeURL(searchText):
 
 def getClosestAnime(searchText, animeList):
     nameList = []
+    
+    trustedNames = [] #i.e. English/default names
+    untrustedNames = [] #everything else (French, Italian etc)
 
     for anime in animeList:
         for title in anime['titles']:
-            nameList.append(title.lower())
+            if title['lang'].lower() in ['x-jat', 'en']:
+                trustedNames.append(title['title'].lower())
+            else:
+                untrustedNames.append(title['title'].lower())
 
-    closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.85)
+    closestNameFromList = difflib.get_close_matches(searchText.lower(), trustedNames, 1, 0.85)
 
     if closestNameFromList:
         for anime in animeList:
-            if closestNameFromList[0].lower() in [x.lower() for x in anime['titles']]:
-                return anime
+            for title in anime['titles']:
+                if closestNameFromList[0].lower() == title['title'].lower() and title['lang'].lower() in ['x-jat', 'en']:
+                    return anime
+    else:
+        closestNameFromList = difflib.get_close_matches(searchText.lower(), untrustedNames, 1, 0.85)
+
+        if closestNameFromList:
+            for anime in animeList:
+                for title in anime['titles']:
+                    if closestNameFromList[0].lower() == title['title'].lower() and title['lang'].lower() not in ['x-jat', 'en']:
+                        return anime
 
     return None
+
+print(getAnimeURL('charlotte'))
