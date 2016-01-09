@@ -72,5 +72,3 @@ def getClosestAnime(searchText, animeList):
                         return anime
 
     return None
-
-print(getAnimeURL('charlotte'))
