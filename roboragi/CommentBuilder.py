@@ -198,7 +198,7 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap, anidb):
             comment += 'None'
             
         if (isExpanded) and (stats is not None):
-            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],2)) + '% ^of ^all ^requests'
+            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
         else:
             comment += ')'
 
@@ -397,7 +397,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
                 comment += genre
             
         if (isExpanded) and (stats is not None):
-            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],2)) + '% ^of ^all ^requests'
+            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
         else:
             comment += ')'
 
@@ -427,67 +427,89 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
         return None
 
 #Builds a stats comment
-def buildStatsComment(subreddit):
+def buildStatsComment(subreddit=None, username=None):
     try:
         statComment = ''
-
-        subreddit = str(subreddit)
+        receipt = '(S) Request successful: Stats'
         
-        basicStats = DatabaseHandler.getBasicStats()
-        subredditStats = DatabaseHandler.getSubredditStats(subreddit.lower())
+        if username:
+            userStats = DatabaseHandler.getUserStats(username)
+            
+            if userStats:
+                statComment += 'Some stats on /u/' + username + ':\n\n'
+                statComment += '- **' + str(userStats['totalUserComments']) + '** total comments searched (' + str(round(userStats['totalUserCommentsAsPercentage'], 3)) + '% of all comments)\n'
+                statComment += '- **' + str(userStats['totalUserRequests']) + '** requests made (' + str(round(userStats['totalUserRequestsAsPercentage'], 3)) + '% of all requests and #' + str(userStats['overallRequestRank']) + ' overall)\n'
+                statComment += '- **' + str(userStats['uniqueRequests']) + '** unique anime/manga requested\n'
+                statComment += '- **/r/' + str(userStats['favouriteSubreddit']) + '** is their favourite subreddit with ' + str(userStats['favouriteSubredditCount']) + ' requests (' + str(round(userStats['favouriteSubredditCountAsPercentage'], 3)) + '% of the subreddit\'s requests)\n'
+                statComment += '\n'
+                statComment += 'Their most frequently requested anime/manga overall are:\n\n'
+                
+                for i, request in enumerate(userStats['topRequests']):
+                    statComment += str(i + 1) + '. **' + str(request[0]) + '** (' + str(request[1]) + ' - ' + str(request[2]) + ' requests)  \n'
+            else:
+                statComment += '/u/' + str(username) + ' hasn\'t used Roboragi yet.'
+                
+            receipt += ' - /u/' + username
+        elif subreddit:
+            subreddit = str(subreddit)
+            subredditStats = DatabaseHandler.getSubredditStats(subreddit.lower())
+            
+            if subredditStats:
+                statComment += '**/r/' + subreddit +' Stats**\n\n'
+                
+                statComment += 'I\'ve searched through ' + str(subredditStats['totalComments'])
+                statComment += ' unique comments on /r/' + subreddit
+                statComment += ' and fulfilled a total of ' + str(subredditStats['total']) + ' requests, '
+                statComment += 'representing ' + str(round(subredditStats['totalAsPercentage'], 2)) + '% of all requests. '
+                statComment += 'A total of ' + str(subredditStats['uniqueNames']) + ' unique anime/manga have been requested here, '
+                statComment += 'with a mean value of ' + str(round(subredditStats['meanValuePerRequest'], 3)) + ' requests/show'
+                statComment += ' and a standard deviation of ' + str(round(subredditStats['standardDeviation'], 3)) + '.'
 
-        #The overall stats section
-        statComment += '**Overall Stats**\n\n'
+                statComment += '\n\n'
 
-        statComment += '/u/Roboragi has searched through ' + str(basicStats['totalComments'])
-        statComment += ' unique comments and submissions and fulfilled a total of ' + str(basicStats['total'])
-        statComment += ' requests across ' + str(basicStats['uniqueSubreddits']) + ' unique subreddit(s). '
-        statComment += 'A total of ' + str(basicStats['uniqueNames'])
-        statComment += ' unique shows have been requested, with a mean value of ' + str(round(basicStats['meanValuePerRequest'],3))
-        statComment += ' requests/show and a standard deviation of ' + str(round(basicStats['standardDeviation'], 3)) + '.'
+                statComment += 'The most frequently requested anime/manga on this subreddit are:\n\n'
 
-        statComment += '\n\n'
+                for i, request in enumerate(subredditStats['topRequests']):
+                    statComment += str(i + 1) + '. **' + str(request[0]) + '** (' + str(request[1]) + ' - ' + str(request[2]) + ' requests)\n'
 
-        statComment += 'The most frequently requested anime/manga overall are:  \n'
+                statComment += '\n'
 
-        for i, request in enumerate(basicStats['topRequests']):
-            statComment += str(i + 1) + '. ' + str(request[0]) + ' (' + str(request[1]) + ' - ' + str(request[2]) + ' requests)  \n'
+                statComment += 'The most frequent requesters on this subreddit are:\n\n'
+                for i, requester in enumerate(subredditStats['topRequesters']):
+                    statComment += str(i + 1) + '. /u/' + str(requester[0]) + ' (' + str(requester[1]) + ' requests)\n'
+                
+            else:
+                statComment += 'There have been no requests on /r/' + str(subreddit) + ' yet.'
+               
+            receipt += ' - /r/' + subreddit
+        else:
+            basicStats = DatabaseHandler.getBasicStats()
+            
+            #The overall stats section
+            statComment += '**Overall Stats**\n\n'
 
-        statComment += '\n'
-
-        statComment += 'The most frequent requesters overall are:  \n'
-        for i, requester in enumerate(basicStats['topRequesters']):
-            statComment += str(i + 1) + '. /u/' + str(requester[0]) + ' (' + str(requester[1]) + ' requests)  \n'
-
-        #The subreddit specific section
-        statComment += '&nbsp;  \n**This Subreddit**\n\n'
-
-        if not (subredditStats is None):
-            statComment += '/u/Roboragi has searched through ' + str(subredditStats['totalComments'])
-            statComment += ' unique comments and submissions on /r/' + subreddit
-            statComment += ' and fulfilled a total of ' + str(subredditStats['total']) + ' requests, '
-            statComment += 'representing ' + str(round(subredditStats['totalAsPercentage'], 2)) + '% of all requests. '
-            statComment += 'A total of ' + str(subredditStats['uniqueNames']) + ' unique shows have been requested here, '
-            statComment += 'with a mean value of ' + str(round(subredditStats['meanValuePerRequest'], 3)) + ' requests/show'
-            statComment += ' and a standard deviation of ' + str(round(subredditStats['standardDeviation'], 3)) + '.'
+            statComment += 'I\'ve searched through ' + str(basicStats['totalComments'])
+            statComment += ' unique comments and fulfilled a total of ' + str(basicStats['total'])
+            statComment += ' requests across ' + str(basicStats['uniqueSubreddits']) + ' unique subreddit(s). '
+            statComment += 'A total of ' + str(basicStats['uniqueNames'])
+            statComment += ' unique anime/manga have been requested, with a mean value of ' + str(round(basicStats['meanValuePerRequest'],3))
+            statComment += ' requests/show and a standard deviation of ' + str(round(basicStats['standardDeviation'], 3)) + '.'
 
             statComment += '\n\n'
 
-            statComment += 'The most frequently requested anime/manga on this subreddit are:  \n'
+            statComment += 'The most frequently requested anime/manga overall are:\n\n'
 
-            for i, request in enumerate(subredditStats['topRequests']):
-                statComment += str(i + 1) + '. ' + str(request[0]) + ' (' + str(request[1]) + ' - ' + str(request[2]) + ' requests)  \n'
+            for i, request in enumerate(basicStats['topRequests']):
+                statComment += str(i + 1) + '. **' + str(request[0]) + '** (' + str(request[1]) + ' - ' + str(request[2]) + ' requests)\n'
 
             statComment += '\n'
 
-            statComment += 'The most frequent requesters on this subreddit are:  \n'
-            for i, requester in enumerate(subredditStats['topRequesters']):
+            statComment += 'The most frequent requesters overall are:  \n'
+            for i, requester in enumerate(basicStats['topRequesters']):
                 statComment += str(i + 1) + '. /u/' + str(requester[0]) + ' (' + str(requester[1]) + ' requests)  \n'
+                
+            receipt += ' - Basic'
             
-        else:
-            statComment += 'There have been no requests on /r/' + str(subreddit) + ' yet.'
-
-        receipt = '(S) Request successful: Stats'
         print(receipt)
         
         return statComment

@@ -97,7 +97,7 @@ def addRequest(name, rType, requester, subreddit):
         conn.commit()
 
 #Returns an object which contains data about the overall database stats (i.e. ALL subreddits).
-def getBasicStats():
+def getBasicStats(top_media_number=5, top_username_number=3):
     try:
         basicStatDict = {}
 
@@ -129,13 +129,13 @@ def getBasicStats():
         stdDev = sqrt(variance)
         basicStatDict['standardDeviation'] = stdDev
 
-        cur.execute("SELECT name, type, COUNT(name) FROM requests GROUP BY name, type ORDER BY COUNT(name) DESC, name ASC LIMIT 5")
+        cur.execute("SELECT name, type, COUNT(name) FROM requests GROUP BY name, type ORDER BY COUNT(name) DESC, name ASC LIMIT %s", (top_media_number,))
         topRequests = cur.fetchall()
         basicStatDict['topRequests'] = []
         for request in topRequests:
             basicStatDict['topRequests'].append(request)
 
-        cur.execute("SELECT requester, COUNT(requester) FROM requests GROUP BY requester ORDER BY COUNT(requester) DESC, requester ASC LIMIT 5")
+        cur.execute("SELECT requester, COUNT(requester) FROM requests GROUP BY requester ORDER BY COUNT(requester) DESC, requester ASC LIMIT %s", (top_username_number,))
         topRequesters = cur.fetchall()
         basicStatDict['topRequesters'] = []
         for requester in topRequesters:
@@ -180,15 +180,83 @@ def getRequestStats(requestName, isManga):
         return basicRequestDict
         
     except:
-        traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
         return None
 
+#Returns an object which contains data about the overall database stats (i.e. ALL subreddits).
+def getUserStats(username, top_media_number=5):
+    try:
+        basicUserStatDict = {}
+        username = str(username).lower()
+        
+        cur.execute("SELECT COUNT(1) FROM comments where LOWER(requester) = %s", (username,))
+        totalUserComments = int(cur.fetchone()[0])
+        basicUserStatDict['totalUserComments'] = totalUserComments
+        
+        cur.execute("SELECT COUNT(1) FROM comments")
+        totalNumComments = int(cur.fetchone()[0])
+        totalCommentsAsPercentage = (float(totalUserComments)/totalNumComments) * 100
+        basicUserStatDict['totalUserCommentsAsPercentage'] = totalCommentsAsPercentage
+        
+        cur.execute("SELECT COUNT(*) FROM requests where LOWER(requester) = %s", (username,))
+        totalUserRequests = int(cur.fetchone()[0])
+        basicUserStatDict['totalUserRequests'] = totalUserRequests
+        
+        cur.execute("SELECT COUNT(1) FROM requests")
+        totalNumRequests = int(cur.fetchone()[0])
+        totalRequestsAsPercentage = (float(totalUserRequests)/totalNumRequests) * 100
+        basicUserStatDict['totalUserRequestsAsPercentage'] = totalRequestsAsPercentage
+        
+        cur.execute('''SELECT row FROM
+            (SELECT requester, count(1), ROW_NUMBER() over (order by count(1) desc) as row
+                from requests
+                group by requester) as overallrequestrank 
+            where lower(requester) = %s''', (username,))
+        overallRequestRank = int(cur.fetchone()[0])
+        basicUserStatDict['overallRequestRank'] = overallRequestRank
+
+        cur.execute("SELECT COUNT(DISTINCT (name, type)) FROM requests WHERE LOWER(requester) = %s", (username,))
+        uniqueRequests = int(cur.fetchone()[0])
+        basicUserStatDict['uniqueRequests'] = uniqueRequests
+
+        
+        cur.execute('''select r.subreddit, count(r.subreddit), total.totalcount from requests r
+            inner join (select subreddit, count(subreddit) as totalcount from requests
+            group by subreddit) total on total.subreddit = r.subreddit
+            where LOWER(requester) = %s
+            group by r.subreddit, total.totalcount
+            order by count(r.subreddit) desc
+            limit 1
+            ''', (username,))
+        favouriteSubredditStats = cur.fetchone()
+        favouriteSubreddit = str(favouriteSubredditStats[0])
+        favouriteSubredditCount = int(favouriteSubredditStats[1])
+        favouriteSubredditOverallCount = int(favouriteSubredditStats[2])
+        basicUserStatDict['favouriteSubreddit'] = favouriteSubreddit
+        basicUserStatDict['favouriteSubredditCount'] = favouriteSubredditCount
+        basicUserStatDict['favouriteSubredditCountAsPercentage'] = (float(favouriteSubredditCount)/favouriteSubredditOverallCount) * 100
+        
+        cur.execute('''SELECT name, type, COUNT(name) FROM requests where LOWER(requester) = %s
+        GROUP BY name, type ORDER BY COUNT(name) DESC, name ASC LIMIT %s''', (username, top_media_number))
+        topRequests = cur.fetchall()
+        basicUserStatDict['topRequests'] = []
+        for request in topRequests:
+            basicUserStatDict['topRequests'].append(request)
+
+        conn.commit()
+        return basicUserStatDict
+        
+    except Exception as e:
+        cur.execute('ROLLBACK')
+        conn.commit()
+        return None
+        
 #Similar to getBasicStats - returns an object which contains data about a specific subreddit.
-def getSubredditStats(subredditName):
+def getSubredditStats(subredditName, top_media_number=5, top_username_number=3):
     try:
         basicSubredditDict = {}
+        subredditName = subredditName.lower()
 
         cur.execute("SELECT COUNT(*) FROM comments WHERE subreddit = %s", (subredditName,))
         totalComments = int(cur.fetchone()[0])
@@ -204,7 +272,7 @@ def getSubredditStats(subredditName):
         if sTotal == 0:
             return None
 
-        cur.execute("SELECT COUNT(DISTINCT name) FROM requests WHERE subreddit = %s", (subredditName,))
+        cur.execute("SELECT COUNT(DISTINCT (name, type)) FROM requests WHERE subreddit = %s", (subredditName,))
         dNames = int(cur.fetchone()[0])
         basicSubredditDict['uniqueNames'] = dNames
 
@@ -215,21 +283,21 @@ def getSubredditStats(subredditName):
         basicSubredditDict['meanValuePerRequest'] = meanValue
 
         variance = 0
-        cur.execute("SELECT name, count(name) FROM requests WHERE subreddit = %s GROUP by name", (subredditName,))
+        cur.execute("SELECT name, type, count(name) FROM requests WHERE subreddit = %s GROUP by name, type", (subredditName,))
         for entry in cur.fetchall():
-            variance += (entry[1] - meanValue) * (entry[1] - meanValue)
+            variance += (entry[2] - meanValue) * (entry[2] - meanValue)
 
         variance = variance / dNames
         stdDev = sqrt(variance)
         basicSubredditDict['standardDeviation'] = stdDev
 
-        cur.execute("SELECT name, type, COUNT(name) FROM requests WHERE subreddit = %s GROUP BY name, type ORDER BY COUNT(name) DESC, name ASC LIMIT 5", (subredditName,))
+        cur.execute("SELECT name, type, COUNT(name) FROM requests WHERE subreddit = %s GROUP BY name, type ORDER BY COUNT(name) DESC, name ASC LIMIT %s", (subredditName, top_media_number))
         topRequests = cur.fetchall()
         basicSubredditDict['topRequests'] = []
         for request in topRequests:
             basicSubredditDict['topRequests'].append(request)
         
-        cur.execute("SELECT requester, COUNT(requester) FROM requests WHERE subreddit = %s GROUP BY requester ORDER BY COUNT(requester) DESC, requester ASC LIMIT 5", (subredditName,))
+        cur.execute("SELECT requester, COUNT(requester) FROM requests WHERE subreddit = %s GROUP BY requester ORDER BY COUNT(requester) DESC, requester ASC LIMIT %s", (subredditName, top_username_number))
         topRequesters = cur.fetchall()
         basicSubredditDict['topRequesters'] = []
         for requester in topRequesters:
@@ -239,7 +307,6 @@ def getSubredditStats(subredditName):
         
         return basicSubredditDict
     except Exception as e:
-        traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
         return None

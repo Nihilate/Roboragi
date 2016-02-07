@@ -106,9 +106,16 @@ def process_comment(comment, is_edit=False):
     comment.body = re.sub(r"\`(?s)(.*?)\`", "", comment.body)
     
     #This checks for requests. First up we check all known tags for the !stats request
-    # Assumes tag begins and ends with a whitespace OR at the string beginning/end
-    if re.search('(^|\s)({!stats}|{{!stats}}|<!stats>|<<!stats>>)($|\s|.)', comment.body, re.S) is not None:
-        commentReply = CommentBuilder.buildStatsComment(comment.subreddit)
+    if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
+        username = re.search('[uU]\/([A-Za-z0-9_]+?)(>|}|$)', comment.body, re.S)
+        subreddit = re.search('[rR]\/([A-Za-z0-9_]+?)(>|}|$)', comment.body, re.S)
+
+        if username:
+            commentReply = CommentBuilder.buildStatsComment(username=username.group(1))
+        elif subreddit:
+            commentReply = CommentBuilder.buildStatsComment(subreddit=subreddit.group(1))
+        else:
+            commentReply = CommentBuilder.buildStatsComment()
     else:
         
         #The basic algorithm here is:
