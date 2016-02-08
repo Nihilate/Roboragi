@@ -107,7 +107,7 @@ def process_comment(comment, is_edit=False):
     
     #This checks for requests. First up we check all known tags for the !stats request
     if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
-        username = re.search('[uU]\/([A-Za-z0-9_]+?)(>|}|$)', comment.body, re.S)
+        username = re.search('[uU]\/([A-Za-z0-9_-]+?)(>|}|$)', comment.body, re.S)
         subreddit = re.search('[rR]\/([A-Za-z0-9_]+?)(>|}|$)', comment.body, re.S)
 
         if username:
