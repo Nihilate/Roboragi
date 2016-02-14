@@ -221,7 +221,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     adbsyn = synonym['adb']
 
                 mal['result'] = MAL.getAnimeDetails(malsyn) if malsyn else MAL.getAnimeDetails(synonym[next(iter(synonym))])
-                hb['result'] = Hummingbird.getAnimeDetails(hbsyn) if hbsyn else HB.getAnimeDetails(synonym[next(iter(synonym))])
+                hb['result'] = Hummingbird.getAnimeDetails(hbsyn) if hbsyn else Hummingbird.getAnimeDetails(synonym[next(iter(synonym))])
                 ani['result'] = Anilist.getAnimeDetails(anisyn) if anisyn else ANI.getAnimeDetails(synonym[next(iter(synonym))])
                 ap['result'] = AniP.getAnimeURL(apsyn) if apsyn else AniP.getAnimeURL(synonym[next(iter(synonym))])
                 adb['result'] = AniDB.getAnimeURL(adbsyn) if adbsyn else AniDB.getAnimeURL(synonym[next(iter(synonym))])
