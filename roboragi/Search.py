@@ -53,16 +53,16 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
         alternateLinks = sqlCur.fetchone()
 
         if (alternateLinks):
-            synonym = json.loads(alternateLinks[0])
+            synonym = json.loads(alternateLinks[0])       
             
             if (synonym['mal']):
-                mal = MAL.getMangaDetails(synonym['mal'])
+                mal = MAL.getMangaDetails(synonym['mal'][0], synonym['mal'][1])
             if (synonym['ani']):
-                ani = Anilist.getMangaDetails(synonym['ani'])
+                ani = Anilist.getMangaDetailsById(synonym['ani'])
             if (synonym['mu']):
-                mu = MU.getMangaURL(synonym['mu'])
+                mu = MU.getMangaURLById(synonym['mu'])
             if (synonym['ap']):
-                ap = AniP.getMangaURL(synonym['ap'])
+                ap = AniP.getMangaURLById(synonym['ap'])
 
         else:
             #Basic breakdown:
@@ -220,11 +220,11 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if 'adb' in synonym and synonym['adb']:
                     adbsyn = synonym['adb']
 
-                mal['result'] = MAL.getAnimeDetails(malsyn) if malsyn else MAL.getAnimeDetails(synonym[next(iter(synonym))])
-                hb['result'] = Hummingbird.getAnimeDetails(hbsyn) if hbsyn else Hummingbird.getAnimeDetails(synonym[next(iter(synonym))])
-                ani['result'] = Anilist.getAnimeDetails(anisyn) if anisyn else ANI.getAnimeDetails(synonym[next(iter(synonym))])
-                ap['result'] = AniP.getAnimeURL(apsyn) if apsyn else AniP.getAnimeURL(synonym[next(iter(synonym))])
-                adb['result'] = AniDB.getAnimeURL(adbsyn) if adbsyn else AniDB.getAnimeURL(synonym[next(iter(synonym))])
+                mal['result'] = MAL.getAnimeDetails(malsyn[0],malsyn[1]) if malsyn else None
+                hb['result'] = Hummingbird.getAnimeDetailsById(hbsyn) if hbsyn else None
+                ani['result'] = Anilist.getAnimeDetailsById(anisyn) if anisyn else None
+                ap['result'] = AniP.getAnimeURLById(apsyn) if apsyn else None
+                adb['result'] = AniDB.getAnimeURLById(adbsyn) if adbsyn else None
                 
         else:
             data_sources = [ani, hb, mal]

@@ -42,6 +42,9 @@ def getAnimeURL(searchText):
     else:
         return None
 
+def getAnimeURLById(animeId):
+    return 'http://anidb.net/a' + str(animeId)
+
 def getClosestAnime(searchText, animeList):
     nameList = []
     

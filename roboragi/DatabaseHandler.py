@@ -97,7 +97,7 @@ def addRequest(name, rType, requester, subreddit):
         conn.commit()
 
 #Returns an object which contains data about the overall database stats (i.e. ALL subreddits).
-def getBasicStats(top_media_number=5, top_username_number=3):
+def getBasicStats(top_media_number=5, top_username_number=5):
     try:
         basicStatDict = {}
 
@@ -253,7 +253,7 @@ def getUserStats(username, top_media_number=5):
         return None
         
 #Similar to getBasicStats - returns an object which contains data about a specific subreddit.
-def getSubredditStats(subredditName, top_media_number=5, top_username_number=3):
+def getSubredditStats(subredditName, top_media_number=5, top_username_number=5):
     try:
         basicSubredditDict = {}
         subredditName = subredditName.lower()

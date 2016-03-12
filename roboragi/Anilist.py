@@ -75,6 +75,13 @@ def getAnimeDetails(searchText):
         #traceback.print_exc()
         return None
 
+#Returns the anime details based on an id
+def getAnimeDetailsById(animeID):
+    try:
+        return getFullAnimeDetails(animeID)
+    except Exception as e:
+        return None
+
 #Gets the "full" anime details (which aren't displayed when we search using the basic function). Gives us cool data like time until the next episode is aired.
 def getFullAnimeDetails(animeID):
      try:
@@ -194,6 +201,13 @@ def getMangaDetails(searchText):
         
     except Exception as e:
         #traceback.print_exc()
+        return None
+
+#Returns the closest manga series given an id
+def getMangaDetailsById(mangaId):
+    try:
+        return requests.get("https://anilist.co/api/manga/" + str(mangaId), params={'access_token':access_token}).json()
+    except Exception as e:
         return None
 
 #Used to determine the closest manga to a given search term in a list

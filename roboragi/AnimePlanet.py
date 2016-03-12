@@ -43,7 +43,6 @@ def getAnimeURL(searchText):
         return None
             
     except:
-        #traceback.print_exc()
         return None
 
 #Probably doesn't need to be split into two functions given how similar they are, but it might be worth keeping separate for the sake of issues between anime/manga down the line
@@ -100,5 +99,10 @@ def getMangaURL(searchText, authorName=None):
         return None
             
     except:
-        #traceback.print_exc()
         return None
+
+def getAnimeURLById(animeId):
+    return 'http://www.anime-planet.com/anime/' + str(animeId)
+
+def getMangaURLById(mangaId):
+    return 'http://www.anime-planet.com/manga/' + str(mangaId)

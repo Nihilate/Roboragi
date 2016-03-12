@@ -33,7 +33,7 @@ def getSynonyms(request):
     return synonyms
 
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext. MAL returns XML (bleh) so we have to convert it ourselves.
-def getAnimeDetails(searchText):
+def getAnimeDetails(searchText, animeId=None):
     try:
         try:
             request = mal.get('http://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip())
@@ -77,7 +77,10 @@ def getAnimeDetails(searchText):
 
             animeList.append(data)
 
-        closestAnime = getClosestAnime(searchText, animeList)
+        if animeId:
+            closestAnime = getThingById(animeId, animeList)
+        else:
+            closestAnime = getClosestAnime(searchText, animeList)
 
         return closestAnime
         
@@ -118,6 +121,19 @@ def getClosestAnime(searchText, animeList):
 #MAL's XML is a piece of crap. It needs to be escaped twice because they do shit like this: &amp;sup2;
 def convertShittyXML(text):
     import html.parser
+
+   
+
+    #It pains me to write shitty code, but MAL needs to improve their API and I'm sick of not being able to parse shit
+    text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
+    text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
+    text = text.replace('&agrave;', 'à').replace('&egrave;', 'è').replace('&dagger;', '†').replace('&sup2;', '²').replace('&#039;', "'")
+
+    #text = text.replace('&', '&amp;')
+
+    return text
+
+
     text=html.parser.HTMLParser().unescape(text)
     return html.parser.HTMLParser().unescape(text)
 
@@ -193,7 +209,7 @@ def getMangaCloseToDescription(searchText, descriptionToCheck):
     
 
 #Returns the closest manga series given a specific search term. Again, MAL returns XML, so we conver it ourselves
-def getMangaDetails(searchText):
+def getMangaDetails(searchText, mangaId=None):
     try:
         try:
             request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip())
@@ -239,15 +255,18 @@ def getMangaDetails(searchText):
 
             mangaList.append(data)
 
-        closestManga = getClosestManga(searchText, mangaList)
+        if mangaId:
+            closestManga = getThingById(mangaId, mangaList)
+        else:
+            closestManga = getClosestManga(searchText, mangaList)
 
-        if closestManga is not None:
+        if closestManga:
             return closestManga
         else:
             return None
 
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
 
 #Returns a list of manga with titles very close to the search text. Current unused because MAL's API is shit and doesn't return author names.
@@ -307,6 +326,19 @@ def getClosestManga(searchText, mangaList):
         return None
     except Exception:
         #traceback.print_exc()
+        return None
+
+
+#Used to find thing by an id
+def getThingById(thingId, thingList):
+    try:       
+        for thing in thingList:
+            if int(thing['id']) == int(thingId):
+                return thing
+            
+        return None
+    except Exception:
+        traceback.print_exc()
         return None
 
 setup()

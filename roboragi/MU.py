@@ -129,3 +129,6 @@ def getMangaURL(searchText):
     
     except:
         return None
+
+def getMangaURLById(mangaId):
+    return 'https://www.mangaupdates.com/series.html?id=' + str(mangaId)

@@ -31,6 +31,13 @@ def getAnimeDetails(searchText):
     except Exception as e:
         return None
 
+#Returns the closest anime by id
+def getAnimeDetailsById(animeId):
+    try:
+        return requests.get('http://hummingbird.me/api/v1/anime/' + str(animeId)).json()
+    except Exception as e:
+        return None
+
 #Sometimes the "right" anime isn't at the top of the list, so we get the titles
 #of everything and do some fuzzy string searching against the search text
 def getClosestAnime(searchText, animeList):
