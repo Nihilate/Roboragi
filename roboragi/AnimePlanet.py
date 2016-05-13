@@ -8,7 +8,7 @@ import collections
 BASE_URL = "http://www.anime-planet.com"
 
 def sanitiseSearchText(searchText):
-    return searchText.replace('(TV}', 'TV')
+    return searchText.replace('(TV)', 'TV')
 
 def getAnimeURL(searchText):
     try:

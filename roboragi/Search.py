@@ -71,13 +71,25 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
             #If it hits either, add it to the request-tracking DB.
             ani = Anilist.getMangaDetails(searchText)
             
-            if not (ani is None):
-                mal = MAL.getMangaDetails(ani['title_romaji'])
+            if ani:
+                try:
+                    mal = MAL.getMangaDetails(ani['title_romaji'])
+                except:
+                    pass
+
+                if not mal:
+                    try:
+                        mal = MAL.getMangaDetails(ani['title_english'])
+                    except:
+                        pass
+
+                if not mal:
+                    mal = MAL.getMangaDetails(searchText)
 
             else:
                 mal = MAL.getMangaDetails(searchText)
 
-                if not (mal is None):
+                if mal:
                     ani = Anilist.getMangaDetails(mal['title'])    
 
         #----- Finally... -----#
@@ -87,7 +99,10 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if mal:
                     titleToAdd = mal['title']
                 else:
-                    titleToAdd = ani['title_english']
+                    try:
+                        titleToAdd = ani['title_english']
+                    except:
+                        titleToAdd = ani['title_romaji']
 
                 
                 if not alternateLinks:
@@ -171,7 +186,6 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment, b
 #Builds an anime reply from multiple sources
 def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
     try:
-
         mal = {'search_function': MAL.getAnimeDetails,
                 'synonym_function': MAL.getSynonyms,
                 'checked_synonyms': [],
@@ -305,9 +319,6 @@ def isValidComment(comment, reddit):
                 return False
         except:
             pass
-
-        if (isBotAParent(comment, reddit)):
-            return False
 
         return True
         

@@ -14,6 +14,7 @@ import Search
 import CommentBuilder
 import DatabaseHandler
 import Config
+import Reference
 
 TIME_BETWEEN_PM_CHECKS = 60 #in seconds
 
@@ -234,6 +235,8 @@ def process_comment(comment, is_edit=False):
     #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
     if not (commentReply is ''):
         commentReply += Config.getSignature(comment.permalink)
+
+        commentReply += Reference.get_bling(comment.author.name)
 
         if is_edit:
             return commentReply

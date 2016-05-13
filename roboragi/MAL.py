@@ -8,6 +8,7 @@ Handles all of the connections to MyAnimeList.
 import xml.etree.cElementTree as ET
 import requests
 import traceback
+import pprint
 import difflib
 
 try:
@@ -266,7 +267,7 @@ def getMangaDetails(searchText, mangaId=None):
             return None
 
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Returns a list of manga with titles very close to the search text. Current unused because MAL's API is shit and doesn't return author names.

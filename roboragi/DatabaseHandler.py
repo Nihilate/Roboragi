@@ -63,7 +63,7 @@ def addComment(commentid, requester, subreddit, hadRequest):
         cur.execute('INSERT INTO comments (commentid, requester, subreddit, hadRequest) VALUES (%s, %s, %s, %s)', (commentid, requester, subreddit, hadRequest))
         conn.commit()
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
 
@@ -78,7 +78,7 @@ def commentExists(commentid):
             conn.commit()
             return True
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
         return True
