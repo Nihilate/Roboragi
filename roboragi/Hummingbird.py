@@ -8,6 +8,8 @@ import requests
 import traceback
 import pprint
 
+req = requests.Session()
+
 def getSynonyms(request):
     synonyms = []
 
@@ -19,7 +21,8 @@ def getSynonyms(request):
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext
 def getAnimeDetails(searchText):
     try:
-        request = requests.get('https://hummingbird.me/api/v1/search/anime?query=' + searchText.lower())
+        request = req.get('https://hummingbird.me/api/v1/search/anime?query=' + searchText.lower(), timeout=10)
+        req.close()
         
         closestAnime = getClosestAnime(searchText, request.json())
 
@@ -29,13 +32,17 @@ def getAnimeDetails(searchText):
             return None
             
     except Exception as e:
+        req.close()
         return None
 
 #Returns the closest anime by id
 def getAnimeDetailsById(animeId):
     try:
-        return requests.get('http://hummingbird.me/api/v1/anime/' + str(animeId)).json()
+        response = req.get('http://hummingbird.me/api/v1/anime/' + str(animeId), timeout=10)
+        req.close()
+        return response.json()
     except Exception as e:
+        req.close()
         return None
 
 #Sometimes the "right" anime isn't at the top of the list, so we get the titles

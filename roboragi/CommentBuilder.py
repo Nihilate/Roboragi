@@ -119,12 +119,12 @@ def buildAnimeComment(isExpanded, mal, hb, ani, ap, anidb):
             else:
                 episodes = 'Unknown'
 
-        stats = DatabaseHandler.getRequestStats(title,False)
+        stats = DatabaseHandler.getRequestStats(title, 'Anime')
 
         if ani is None:
-            stats = DatabaseHandler.getRequestStats(hb['title'],False)
+            stats = DatabaseHandler.getRequestStats(hb['title'],'Anime')
         else:
-            stats = DatabaseHandler.getRequestStats(ani['title_romaji'],False)
+            stats = DatabaseHandler.getRequestStats(ani['title_romaji'],'Anime')
 
         #---------- BUILDING THE COMMENT ----------#
                 
@@ -312,7 +312,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
             except Exception as e:
                 print(e)
 
-        stats = DatabaseHandler.getRequestStats(title,True)
+        stats = DatabaseHandler.getRequestStats(title,'Manga')
         
         #---------- BUILDING THE COMMENT ----------#
                 
@@ -415,6 +415,193 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
             receipt += 'ANI '
         if muURL is not None:
             receipt += 'MU '
+        print(receipt)
+
+        dictToReturn = {}
+        dictToReturn['title'] = title
+        dictToReturn['comment'] = comment
+        
+        return dictToReturn
+    except:
+        #traceback.print_exc()
+        return None
+
+#Builds a manga comment from MAL/Anilist/MangaUpdates data
+def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
+    try:
+        comment = ''
+
+        title = None
+        jTitle = None
+
+        cType = None
+
+        malURL = None
+        aniURL = None
+        nuURL = nu
+        lndbURL = lndb
+
+        status = None
+        chapters = None
+        volumes = None
+        genres = []
+        
+        desc = None
+
+        if not (mal is None):
+            title = mal['title']
+            malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
+            desc = mal['synopsis']
+            status = mal['status']
+
+            cType = mal['type']
+
+            try:
+                if (int(mal['chapters']) == 0):
+                    chapters = 'Unknown'
+                else:
+                    chapters = mal['chapters']
+            except:
+                chapters = 'Unknown'
+
+            try:
+                volumes = mal['volumes']
+            except:
+                volumes = 'Unknown'
+
+        if ani is not None:
+            if title is None:
+                title = ani['title_english']
+            aniURL = 'http://anilist.co/manga/' + str(ani['id'])
+            desc = ani['description']
+            status = ani['publishing_status'].title()
+
+            cType = ani['type']
+
+            try:
+                if ani['title_japanese'] is not None:
+                    jTitle = ani['title_japanese']
+
+                if ani['total_chapters'] is not None:
+                    if ani['total_chapters'] == 0:
+                        chapters = 'Unknown'
+                    else:
+                        chapters = ani['total_chapters']
+
+                if ani['total_volumes'] is not None:
+                    volumes = ani['total_volumes']
+                else:
+                    volumes = 'Unknown'
+
+                if ani['genres'] is not None:
+                    genres = ani['genres']
+
+            except Exception as e:
+                print(e)
+
+        stats = DatabaseHandler.getRequestStats(title,'LN')
+        
+        #---------- BUILDING THE COMMENT ----------#
+                
+        #----- TITLE -----#
+        comment += '**' + title.strip() + '** - ('
+
+        #----- LINKS -----#
+        urlComments = []
+        
+        if malURL is not None:
+            urlComments.append('[MAL](' + malURL + ')')
+        if aniURL is not None:
+            urlComments.append('[ANI](' + aniURL + ')')
+        if nuURL is not None:
+            urlComments.append('[NU](' + nuURL + ')')
+        if lndbURL is not None:
+            urlComments.append('[LNDB](' + lndbURL + ')')
+
+        for i, link in enumerate(urlComments):
+            if i is not 0:
+                comment += ', '
+            comment += link
+
+        comment += ')'
+
+        #----- JAPANESE TITLE -----#
+        if (isExpanded):
+            if jTitle is not None:
+                comment += '\n\n'
+                
+                splitJTitle = jTitle.split()
+                for i, word in enumerate(splitJTitle):
+                    if not (i == 0):
+                        comment += ' '
+                    comment += '^^' + word
+
+        #----- INFO LINE -----#
+        
+        if (isExpanded):
+            comment += '\n\n^('
+
+            if cType:
+                if cType == 'Novel':
+                    cType = 'Light Novel'
+                    
+                comment += '**' + cType + '** | '
+
+            comment += '**Status:** ' + status
+
+            if (cType != 'Light Novel'):
+                if str(chapters) is not 'Unknown':
+                    comment += ' | **Chapters:** ' + str(chapters)
+            else:
+                comment += ' | **Volumes:** ' + str(volumes)
+
+            if genres:
+                comment += ' | **Genres:** '
+        else:
+            comment += '\n\n^('
+
+            if cType:
+                if cType == 'Novel':
+                    cType = 'Light Novel'
+                    
+                comment += cType + ' | '
+
+            comment += 'Status: ' + status
+
+            if (cType != 'Light Novel'):
+                if str(chapters) is not 'Unknown':
+                    comment += ' | Chapters: ' + str(chapters)
+            else:
+                comment += ' | Volumes: ' + str(volumes)
+
+            if genres:
+                comment += ' | Genres: '
+
+        if genres:
+            for i, genre in enumerate(genres):
+                if i is not 0:
+                    comment += ', '
+                comment += genre
+            
+        if (isExpanded) and (stats is not None):
+            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
+        else:
+            comment += ')'
+
+        #----- DESCRIPTION -----#
+        if (isExpanded):
+            comment += '\n\n' + cleanupDescription(desc)
+
+        #----- END -----#
+        receipt = '(LN) Request successful: ' + title + ' - '
+        if malURL is not None:
+            receipt += 'MAL '
+        if ani is not None:
+            receipt += 'ANI '
+        if nuURL is not None:
+            receipt += 'MU '
+        if lndbURL is not None:
+            receipt += 'LNDB '
         print(receipt)
 
         dictToReturn = {}

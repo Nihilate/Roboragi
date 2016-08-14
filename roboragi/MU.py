@@ -10,6 +10,8 @@ import traceback
 import pprint
 import collections
 
+req = requests.Session()
+
 def findClosestManga(searchText, mangaList):
     try:
         nameList = []
@@ -30,7 +32,8 @@ def findClosestManga(searchText, mangaList):
 def findAuthorURL(authorName):
     try:
         payload = {'search': authorName}
-        html = requests.get('https://mangaupdates.com/authors.html', params=payload)
+        html = req.get('https://mangaupdates.com/authors.html', params=payload, timeout=10)
+        req.close()
         mu = pq(html.text)
         authorURL = None
 
@@ -44,12 +47,14 @@ def findAuthorURL(authorName):
 
         return authorURL
     except:
+        req.close()
         traceback.print_exc()
         return None
 
 def findSeriesURLViaAuthor(seriesName, authorName, authorURL):
     try:
-        html = requests.get(authorURL)
+        html = req.get(authorURL, timeout=10)
+        req.close()
         mu = pq(html.text)
         authorURL = None
 
@@ -77,6 +82,7 @@ def findSeriesURLViaAuthor(seriesName, authorName, authorURL):
 
         return authorURL
     except:
+        req.close()
         traceback.print_exc()
         return None
 
@@ -102,7 +108,8 @@ def getMangaWithAuthor(searchText, authorName):
 def getMangaURL(searchText):
     try:
         payload = {'search': searchText}
-        html = requests.get('https://mangaupdates.com/series.html', params=payload)
+        html = req.get('https://mangaupdates.com/series.html', params=payload, timeout=10)
+        req.close()
 
         mu = pq(html.text)
 
@@ -128,6 +135,7 @@ def getMangaURL(searchText):
         return closest['url']
     
     except:
+        req.close()
         return None
 
 def getMangaURLById(mangaId):

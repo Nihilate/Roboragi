@@ -7,6 +7,8 @@ import collections
 
 BASE_URL = "http://www.anime-planet.com"
 
+req = requests.Session()
+
 def sanitiseSearchText(searchText):
     return searchText.replace('(TV)', 'TV')
 
@@ -14,7 +16,8 @@ def getAnimeURL(searchText):
     try:
         searchText = sanitiseSearchText(searchText)
         
-        html = requests.get(BASE_URL + "/anime/all?name=" + searchText.replace(" ", "%20"))
+        html = req.get(BASE_URL + "/anime/all?name=" + searchText.replace(" ", "%20"), timeout=10)
+        req.close()
         ap = pq(html.text)
 
         animeList = []
@@ -43,22 +46,26 @@ def getAnimeURL(searchText):
         return None
             
     except:
+        req.close()
         return None
 
 #Probably doesn't need to be split into two functions given how similar they are, but it might be worth keeping separate for the sake of issues between anime/manga down the line
 def getMangaURL(searchText, authorName=None):
     try:
         if authorName:
-            html = requests.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20") + '&author=' + authorName.replace(" ", "%20"))
+            html = req.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20") + '&author=' + authorName.replace(" ", "%20"), timeout=10)
+            req.close()
 
             if "No results found" in html.text:
                 rearrangedAuthorNames = collections.deque(authorName.split(' '))
                 rearrangedAuthorNames.rotate(-1)
                 rearrangedName = ' '.join(rearrangedAuthorNames)
-                html = requests.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20") + '&author=' + rearrangedName.replace(" ", "%20"))
+                html = req.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20") + '&author=' + rearrangedName.replace(" ", "%20"), timeout=10)
+                req.close()
             
         else:
-            html = requests.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20"))
+            html = req.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20"), timeout=10)
+            req.close()
             
         ap = pq(html.text)
 
@@ -99,6 +106,7 @@ def getMangaURL(searchText, authorName=None):
         return None
             
     except:
+        req.close()
         return None
 
 def getAnimeURLById(animeId):

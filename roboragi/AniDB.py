@@ -9,11 +9,15 @@ import difflib
 import traceback
 import pprint
 
+req = requests.Session()
+
 def getAnimeURL(searchText):
     try:
-        html = requests.get('http://anisearch.outrance.pl/?task=search&query=' + searchText)
+        html = req.get('http://anisearch.outrance.pl/?task=search&query=' + searchText, timeout=10)
+        req.close()
         anidb = pq(html.content)    
     except:
+        req.close()
         return None
         
     animeList = []

@@ -11,6 +11,8 @@ import pprint
 ANICLIENT = ''
 ANISECRET = ''
 
+req = requests.Session()
+
 try:
     import Config
     ANICLIENT = Config.aniclient
@@ -45,11 +47,13 @@ def getSynonyms(request):
 #Sets up the connection to Anilist. You need a token to get stuff from them, which expires every hour.
 def setup():
     try:
-        request = requests.post('https://anilist.co/api/auth/access_token', params={'grant_type':'client_credentials', 'client_id':ANICLIENT, 'client_secret':ANISECRET})
-
+        request = req.post('https://anilist.co/api/auth/access_token', params={'grant_type':'client_credentials', 'client_id':ANICLIENT, 'client_secret':ANISECRET})
+        req.close()
+        
         global access_token
         access_token = request.json()['access_token']
     except Exception as e:
+        req.close()
         print('Error getting Anilist token')
 
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext
@@ -57,11 +61,13 @@ def getAnimeDetails(searchText):
     try:
         htmlSearchText = escape(searchText)
         
-        request = requests.get("https://anilist.co/api/anime/search/" + htmlSearchText, params={'access_token':access_token})
+        request = req.get("https://anilist.co/api/anime/search/" + htmlSearchText, params={'access_token':access_token}, timeout=10)
+        req.close()
         
         if request.status_code == 401:
             setup()
-            request = requests.get("https://anilist.co/api/anime/search/" + htmlSearchText, params={'access_token':access_token})
+            request = req.get("https://anilist.co/api/anime/search/" + htmlSearchText, params={'access_token':access_token}, timeout=10)
+            req.close()
 
         #Of the given list of shows, we try to find the one we think is closest to our search term
         closestAnime = getClosestAnime(searchText, request.json())
@@ -73,6 +79,7 @@ def getAnimeDetails(searchText):
             
     except Exception as e:
         #traceback.print_exc()
+        req.close()
         return None
 
 #Returns the anime details based on an id
@@ -85,11 +92,13 @@ def getAnimeDetailsById(animeID):
 #Gets the "full" anime details (which aren't displayed when we search using the basic function). Gives us cool data like time until the next episode is aired.
 def getFullAnimeDetails(animeID):
      try:
-        request = requests.get("https://anilist.co/api/anime/" + str(animeID), params={'access_token':access_token})
+        request = req.get("https://anilist.co/api/anime/" + str(animeID), params={'access_token':access_token}, timeout=10)
+        req.close()
 
         if request.status_code == 401:
             setup()
-            request = requests.get("https://anilist.co/api/anime/" + str(animeID), params={'access_token':access_token})
+            request = req.get("https://anilist.co/api/anime/" + str(animeID), params={'access_token':access_token}, timeout=10)
+            req.close()
         
         if request.status_code == 200:
             return request.json()
@@ -97,6 +106,7 @@ def getFullAnimeDetails(animeID):
             return None
      except Exception as e:
           #traceback.print_exc()
+          req.close()
           return None
 
 #Given a list, it finds the closest anime series it can.
@@ -137,25 +147,30 @@ def getMangaWithAuthor(searchText, authorName):
     try:
         htmlSearchText = escape(searchText)
         
-        request = requests.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token})
+        request = req.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token}, timeout=10)
+        req.close()
         
         if request.status_code == 401:
             setup()
-            request = requests.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token})
+            request = req.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token}, timeout=10)
+            req.close()
         
         closestManga = getListOfCloseManga(searchText, request.json())
         fullMangaList = []
 
         for manga in closestManga:
             try:
-                fullManga = requests.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token})
+                fullManga = req.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token}, timeout=10)
+                req.close()
 
                 if fullManga.status_code == 401:
                     setup()
-                    fullManga = requests.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token})
+                    fullManga = req.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token}, timeout=10)
+                    req.close()
 
                 fullMangaList.append(fullManga.json())
             except:
+                req.close()
                 pass
 
         potentialHits = []
@@ -178,36 +193,48 @@ def getMangaWithAuthor(searchText, authorName):
         return None
         
     except Exception as e:
+        req.close()
         traceback.print_exc()
         return None
 
+def getLightNovelDetails(searchText):
+    return getMangaDetails(searchText, True)
+
 #Returns the closest manga series given a specific search term
-def getMangaDetails(searchText):
+def getMangaDetails(searchText, isLN=False):
     try:
         htmlSearchText = escape(searchText)
         
-        request = requests.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token})
+        request = req.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token}, timeout=10)
+        req.close()
         
         if request.status_code == 401:
             setup()
-            request = requests.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token})
+            request = req.get("https://anilist.co/api/manga/search/" + htmlSearchText, params={'access_token':access_token}, timeout=10)
+            req.close()
         
-        closestManga = getClosestManga(searchText, request.json())
+        closestManga = getClosestManga(searchText, request.json(), isLN)
 
         if (closestManga is not None):
-            return requests.get("https://anilist.co/api/manga/" + str(closestManga['id']), params={'access_token':access_token}).json()
+            response = req.get("https://anilist.co/api/manga/" + str(closestManga['id']), params={'access_token':access_token}, timeout=10)
+            req.close()
+            return response.json()
         else:
             return None
         
     except Exception as e:
         #traceback.print_exc()
+        req.close()
         return None
 
 #Returns the closest manga series given an id
 def getMangaDetailsById(mangaId):
     try:
-        return requests.get("https://anilist.co/api/manga/" + str(mangaId), params={'access_token':access_token}).json()
+        response = req.get("https://anilist.co/api/manga/" + str(mangaId), params={'access_token':access_token}, timeout=10)
+        req.close()
+        return response.json()
     except Exception as e:
+        req.close()
         return None
 
 #Used to determine the closest manga to a given search term in a list
@@ -240,9 +267,15 @@ def getListOfCloseManga(searchText, mangaList):
         return None
 
 #Used to determine the closest manga to a given search term in a list
-def getClosestManga(searchText, mangaList):
+def getClosestManga(searchText, mangaList, isLN=False):
     try:
         mangaNameList = []
+
+        for manga in mangaList:
+            if isLN and 'novel' not in manga['type'].lower():
+                mangaList.remove(manga)
+            elif not isLN and 'novel' in manga['type'].lower():
+                mangaList.remove(manga)
         
         for manga in mangaList:
             mangaNameList.append(manga['title_english'].lower())

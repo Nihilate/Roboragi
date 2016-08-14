@@ -52,7 +52,7 @@ def setupReddit():
 def process_pms():
     for msg in reddit.get_unread(limit=None):
         if (msg.subject == 'username mention'):
-            if (('{' and '}') in msg.body) or (('<' and '>') in msg.body):
+            if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body):
                 try:
                     if str(msg.subreddit).lower() in exiled:
                         print('Edit request from exiled subreddit: ' + str(msg.subreddit) + '\n')
@@ -62,9 +62,9 @@ def process_pms():
                     mentionedComment = reddit.get_info(thing_id=msg.name)
                     mentionedComment.refresh()
 
-                    if not (DatabaseHandler.commentExists(mentionedComment.id)):
+                    '''if not (DatabaseHandler.commentExists(mentionedComment.id)):
                         if str(mentionedComment.subreddit).lower() in Config.subredditlist:
-                            continue
+                            continue'''
 
                     replies = mentionedComment.replies
 
@@ -102,6 +102,7 @@ def process_comment(comment, is_edit=False):
     #Anime/Manga requests that are found go into separate arrays
     animeArray = []
     mangaArray = []
+    lnArray = []
 
     #ignores all "code" markup (i.e. anything between backticks)
     comment.body = re.sub(r"\`(?s)(.*?)\`", "", comment.body)
@@ -196,6 +197,25 @@ def process_comment(comment, is_edit=False):
 
             if (reply is not None):
                 mangaArray.append(reply)
+
+        #Expanded LN
+        for match in re.finditer("\]{2}([^]]*)\[{2}", comment.body, re.S):
+            reply = ''
+
+            if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                reply = Search.buildLightNovelReply(match.group(1), False, comment)
+            else:
+                reply = Search.buildLightNovelReply(match.group(1), True, comment)                    
+
+            if (reply is not None):
+                lnArray.append(reply)
+
+        #Normal LN  
+        for match in re.finditer("(?<=(?<!\])\])([^\]\[]*)(?=\[(?!\[))", comment.body, re.S):
+            reply = Search.buildLightNovelReply(match.group(1), False, comment)
+            
+            if (reply is not None):
+                lnArray.append(reply)
             
         #Here is where we create the final reply to be posted
 
@@ -205,6 +225,7 @@ def process_comment(comment, is_edit=False):
         #Basically just to keep track of people posting the same title multiple times (e.g. {Nisekoi}{Nisekoi}{Nisekoi})
         postedAnimeTitles = []
         postedMangaTitles = []
+        postedLNTitles = []
 
         #Adding all the anime to the final comment. If there's manga too we split up all the paragraphs and indent them in Reddit markup by adding a '>', then recombine them
         for i, animeReply in enumerate(animeArray):
@@ -228,12 +249,27 @@ def process_comment(comment, is_edit=False):
                 postedMangaTitles.append(mangaReply['title'])
                 commentReply += mangaReply['comment']
 
+        if lnArray:
+            commentReply += '\n\n'
+
+        #Adding all the manga to the final comment
+        for i, lnReply in enumerate(lnArray):
+            if not (i is 0):
+                commentReply += '\n\n'
+            
+            if not (lnReply['title'] in postedLNTitles):
+                postedLNTitles.append(lnReply['title'])
+                commentReply += lnReply['comment']
+
         #If there are more than 10 requests, shorten them all 
-        if not (commentReply is '') and (len(animeArray) + len(mangaArray) >= 10):
+        if not (commentReply is '') and (len(animeArray) + len(mangaArray)+ len(lnArray) >= 10):
             commentReply = re.sub(r"\^\((.*?)\)", "", commentReply, flags=re.M)
 
     #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
-    if not (commentReply is ''):
+    if commentReply is not '':
+        '''if (comment.author.name == 'treborabc'):
+            commentReply = '[No.](https://www.reddit.com/r/anime_irl/comments/4sba1n/anime_irl/d58xkha)'''
+        
         commentReply += Config.getSignature(comment.permalink)
 
         commentReply += Reference.get_bling(comment.author.name)

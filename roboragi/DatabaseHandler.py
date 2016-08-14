@@ -151,13 +151,11 @@ def getBasicStats(top_media_number=5, top_username_number=5):
         return None
 
 #Returns an object which contains request-specifc data. Basically just used for the expanded comments.
-def getRequestStats(requestName, isManga):
+def getRequestStats(requestName, type):
     try:
         basicRequestDict = {}
 
-        requestType = 'Anime'
-        if (isManga):
-            requestType = 'Manga'
+        requestType = type
 
         cur.execute("SELECT COUNT(*) FROM requests")
         total = int(cur.fetchone()[0])
