@@ -51,12 +51,12 @@ def setupReddit():
 #function for processing edit requests via pm
 def process_pms():
     for msg in reddit.get_unread(limit=None):
-        if (msg.subject == 'username mention'):
+        if ((msg.subject == 'username mention') or (msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower())):
             if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body):
                 try:
                     if str(msg.subreddit).lower() in exiled:
-                        print('Edit request from exiled subreddit: ' + str(msg.subreddit) + '\n')
-                        msg.mark_as_read()
+                        #print('Edit request from exiled subreddit: ' + str(msg.subreddit) + '\n')
+                        #msg.mark_as_read()
                         continue
 
                     mentionedComment = reddit.get_info(thing_id=msg.name)
@@ -89,10 +89,12 @@ def process_pms():
                             else:
                                 mentionedComment.reply(commentReply)
                                 print('Comment made.\n')
+                            
+                            msg.mark_as_read()
                     except praw.errors.Forbidden:
-                        print('Edit equest from banned subreddit: ' + str(msg.subreddit) + '\n')
+                        print('Edit request from banned subreddit: ' + str(msg.subreddit) + '\n')
 
-                    msg.mark_as_read()
+                    
 
                 except Exception as e:
                     print(e)
@@ -105,7 +107,9 @@ def process_comment(comment, is_edit=False):
     lnArray = []
 
     #ignores all "code" markup (i.e. anything between backticks)
-    comment.body = re.sub(r"\`(?s)(.*?)\`", "", comment.body)
+    comment.body = re.sub(r"\`[{<\[]+(.*?)[}>\]]+\`", "", comment.body)
+
+    num_so_far = 0
     
     #This checks for requests. First up we check all known tags for the !stats request
     if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
@@ -139,88 +143,108 @@ def process_comment(comment, is_edit=False):
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
             forceNormal = True
 
+        #The final comment reply. We add stuff to this progressively.
+        commentReply = ''
+
+        #if (numOfRequest + numOfExpandedRequest) > 25:
+        #    commentReply = 'You have tried to request too many things at once. Please reduce the number of requests and try again.'
+        #else:
+
         #Expanded Anime
         for match in re.finditer("\{{2}([^}]*)\}{2}", comment.body, re.S):
-            reply = ''
+            if num_so_far < 30:
+                reply = ''
 
-            if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                reply = Search.buildAnimeReply(match.group(1), False, comment)
-            else:
-                reply = Search.buildAnimeReply(match.group(1), True, comment)                    
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildAnimeReply(match.group(1), False, comment)
+                else:
+                    reply = Search.buildAnimeReply(match.group(1), True, comment)                    
 
-            if (reply is not None):
-                animeArray.append(reply)
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    animeArray.append(reply)
 
         #Normal Anime  
         for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))", comment.body, re.S):
-            reply = Search.buildAnimeReply(match.group(1), False, comment)
-            
-            if (reply is not None):
-                animeArray.append(reply)
+            if num_so_far < 30:
+                reply = Search.buildAnimeReply(match.group(1), False, comment)
+                
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    animeArray.append(reply)
 
         #Expanded Manga
         #NORMAL EXPANDED
         for match in re.finditer("\<{2}([^>]*)\>{2}(?!(:|\>))", comment.body, re.S):
-            reply = ''
-            
-            if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                reply = Search.buildMangaReply(match.group(1), False, comment)
-            else:
-                reply = Search.buildMangaReply(match.group(1), True, comment)
+            if num_so_far < 30:
+                reply = ''
+                
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildMangaReply(match.group(1), False, comment)
+                else:
+                    reply = Search.buildMangaReply(match.group(1), True, comment)
 
-            if (reply is not None):
-                mangaArray.append(reply)
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    mangaArray.append(reply)
 
         #AUTHOR SEARCH EXPANDED
         for match in re.finditer("\<{2}([^>]*)\>{2}:\(([^)]+)\)", comment.body, re.S):
-            reply = ''
-            
-            if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
-            else:
-                reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), True, comment)
+            if num_so_far < 30:
+                reply = ''
+                
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
+                else:
+                    reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), True, comment)
 
-            if (reply is not None):
-                mangaArray.append(reply)
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    mangaArray.append(reply)
 
         #Normal Manga
         #NORMAL
         for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]+)\>(?!(:|\>))", comment.body, re.S):
-            reply = Search.buildMangaReply(match.group(1), False, comment)
+            if num_so_far < 30:
+                reply = Search.buildMangaReply(match.group(1), False, comment)
 
-            if (reply is not None):
-                mangaArray.append(reply)
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    mangaArray.append(reply)
 
         #AUTHOR SEARCH
         for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]*)\>:\(([^)]+)\)", comment.body, re.S):
-            reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
+            if num_so_far < 30:
+                reply = Search.buildMangaReplyWithAuthor(match.group(1), match.group(2), False, comment)
 
-            if (reply is not None):
-                mangaArray.append(reply)
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    mangaArray.append(reply)
 
         #Expanded LN
         for match in re.finditer("\]{2}([^]]*)\[{2}", comment.body, re.S):
-            reply = ''
+            if num_so_far < 30:
+                reply = ''
 
-            if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                reply = Search.buildLightNovelReply(match.group(1), False, comment)
-            else:
-                reply = Search.buildLightNovelReply(match.group(1), True, comment)                    
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildLightNovelReply(match.group(1), False, comment)
+                else:
+                    reply = Search.buildLightNovelReply(match.group(1), True, comment)                    
 
-            if (reply is not None):
-                lnArray.append(reply)
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    lnArray.append(reply)
 
         #Normal LN  
-        for match in re.finditer("(?<=(?<!\])\])([^\]\[]*)(?=\[(?!\[))", comment.body, re.S):
-            reply = Search.buildLightNovelReply(match.group(1), False, comment)
-            
-            if (reply is not None):
-                lnArray.append(reply)
-            
+        for match in re.finditer("(?<=(?<!\])\](?!\())([^\]\[]*)(?=\[(?!\[))", comment.body, re.S):
+            if num_so_far < 30:
+                reply = Search.buildLightNovelReply(match.group(1), False, comment)
+                
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    lnArray.append(reply)
+        
         #Here is where we create the final reply to be posted
-
-        #The final comment reply. We add stuff to this progressively.
-        commentReply = ''
 
         #Basically just to keep track of people posting the same title multiple times (e.g. {Nisekoi}{Nisekoi}{Nisekoi})
         postedAnimeTitles = []
@@ -270,6 +294,9 @@ def process_comment(comment, is_edit=False):
         '''if (comment.author.name == 'treborabc'):
             commentReply = '[No.](https://www.reddit.com/r/anime_irl/comments/4sba1n/anime_irl/d58xkha)'''
         
+        if num_so_far >= 30:
+            commentReply += "\n\nI'm limited to 30 requests at once and have had to cut off some, sorry for the inconvinience!\n\n"
+
         commentReply += Config.getSignature(comment.permalink)
 
         commentReply += Reference.get_bling(comment.author.name)
@@ -285,8 +312,10 @@ def process_comment(comment, is_edit=False):
             except Exception:
                 traceback.print_exc()
 
+            comment_author = comment.author.name if comment.author else '!UNKNOWN!'
+            
             try:
-                DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, True)
+                DatabaseHandler.addComment(comment.id, comment_author, comment.subreddit, True)
             except:
                 traceback.print_exc()
     else:
@@ -294,14 +323,15 @@ def process_comment(comment, is_edit=False):
             if is_edit:
                 return None
             else:
-                DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, False)
+                comment_author = comment.author.name if comment.author else '!UNKNOWN!'
+                
+                DatabaseHandler.addComment(comment.id, comment_author, comment.subreddit, False)
         except:
             traceback.print_exc()
     
 
 #The main function
 def start():
-    print('Starting comment stream:')
     last_checked_pms = time.time()
 
     #This opens a constant stream of comments. It will loop until there's a major error (usually this means the Reddit access token needs refreshing)

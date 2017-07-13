@@ -41,14 +41,24 @@ def getLightNovelURL(searchText):
 def findClosestLightNovel(searchText, lnList):
     try:
         nameList = []
+        nameListWithoutWN = []
 
         for ln in lnList:
             nameList.append(ln['title'].lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.80)
+            if '(wn)' not in ln['title'].lower():
+                nameListWithoutWN.append(ln['title'].lower())
+
+        closestNameFromListWithoutWN = difflib.get_close_matches(searchText.lower(), nameListWithoutWN, 1, 0.80)
+        closestNameFromListWithWN = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.80)
+
+        if closestNameFromListWithoutWN:
+            nameToUse = closestNameFromListWithoutWN[0].lower()
+        else:
+            nameToUse = closestNameFromListWithWN[0].lower()
 
         for ln in lnList:
-            if ln['title'].lower() == closestNameFromList[0].lower():
+            if ln['title'].lower() == nameToUse:
                 return ln
 
         return None

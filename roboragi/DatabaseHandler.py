@@ -101,19 +101,19 @@ def getBasicStats(top_media_number=5, top_username_number=5):
     try:
         basicStatDict = {}
 
-        cur.execute("SELECT COUNT(*) FROM comments")
+        cur.execute("SELECT COUNT(1) FROM comments")
         totalComments = int(cur.fetchone()[0])
         basicStatDict['totalComments'] = totalComments
         
-        cur.execute("SELECT COUNT(*) FROM requests;")
+        cur.execute("SELECT COUNT(1) FROM requests;")
         total = int(cur.fetchone()[0])
         basicStatDict['total'] = total
         
-        cur.execute("SELECT COUNT(DISTINCT name) FROM requests;")
+        cur.execute("SELECT COUNT(1) FROM (SELECT DISTINCT name FROM requests) as temp;")
         dNames = int(cur.fetchone()[0])
         basicStatDict['uniqueNames'] = dNames
 
-        cur.execute("SELECT COUNT(DISTINCT subreddit) FROM requests;")
+        cur.execute("SELECT COUNT(1) FROM (SELECT DISTINCT subreddit FROM requests) as temp;")
         dSubreddits = int(cur.fetchone()[0])
         basicStatDict['uniqueSubreddits'] = dSubreddits
 

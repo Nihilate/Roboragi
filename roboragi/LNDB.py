@@ -20,19 +20,25 @@ def getLightNovelURL(searchText):
 
         lndb = pq(html.text)
 
-        lnList = []
+        if 'light_novel' in html.url:
+            #we've immediately hit a result
+            return html.url
+        else:
+            #scan the search page for stuff
 
-        for thing in lndb.find('#bodylightnovelscontentid table tr'):
-            title = pq(thing).find('a').text()
-            url = pq(thing).find('a').attr('href')
+            lnList = []
 
-            if title:
-                data = { 'title': title,
-                        'url': url }
-                lnList.append(data)
+            for thing in lndb.find('#bodylightnovelscontentid table tr'):
+                title = pq(thing).find('a').text()
+                url = pq(thing).find('a').attr('href')
 
-        closest = findClosestLightNovel(searchText, lnList)
-        return closest['url']
+                if title:
+                    data = { 'title': title,
+                            'url': url }
+                    lnList.append(data)
+
+            closest = findClosestLightNovel(searchText, lnList)
+            return closest['url']
     
     except Exception as e:
         req.close()

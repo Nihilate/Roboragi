@@ -37,18 +37,18 @@ def getSynonyms(request):
 def getAnimeDetails(searchText, animeId=None):
     try:
         try:
-            request = mal.get('http://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip(), timeout=10)
+            request = mal.get('https://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip(), timeout=10)
             mal.close()
         except:
             setup()
-            request = mal.get('http://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip(), timeout=10)
+            request = mal.get('https://myanimelist.net/api/anime/search.xml?q=' + searchText.rstrip(), timeout=10)
             mal.close()
-
+        
         convertedRequest = convertShittyXML(request.text)
         rawList = ET.fromstring(convertedRequest)
 
         animeList = []
-
+        
         for anime in rawList.findall('./entry'):
             animeID = anime.find('id').text
             title = anime.find('title').text
@@ -86,9 +86,9 @@ def getAnimeDetails(searchText, animeId=None):
             closestAnime = getClosestAnime(searchText, animeList)
 
         return closestAnime
-
+        
     except Exception:
-        #traceback.print_exc()
+        traceback.print_exc()
         mal.close()
         return None
 
@@ -96,10 +96,11 @@ def getAnimeDetails(searchText, animeId=None):
 def getClosestAnime(searchText, animeList):
     try:
         nameList = []
-
+        
         for anime in animeList:
             nameList.append(anime['title'].lower())
 
+            
             if anime['english'] is not None:
                 nameList.append(anime['english'].lower())
 
@@ -110,8 +111,12 @@ def getClosestAnime(searchText, animeList):
         closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.90)[0]
 
         for anime in animeList:
-            if (anime['title'].lower() == closestNameFromList.lower()) or (anime['english'].lower() == closestNameFromList.lower()):
-                return anime
+            if anime['title']:
+                if anime['title'].lower() == closestNameFromList.lower():
+                    return anime
+            elif anime['english']:
+                if anime['english'].lower() == closestNameFromList.lower():
+                    return anime
             else:
                 for synonym in anime['synonyms']:
                     if synonym.lower() == closestNameFromList.lower():
@@ -126,19 +131,20 @@ def getClosestAnime(searchText, animeList):
 def convertShittyXML(text):
     import html.parser
 
-    replacements = [['&Eacute;', 'É'], ['&times;', 'x'], ['&rsquo;', "'"],
-                    ['&lsquo;', "'"], ['&hellip', '...'], ['&le', '<'],
-                    ['<;', '; '], ['&hearts;', '♥'], ['&mdash;', '-'],
-                    ['&eacute;', 'é'], ['&ndash;', '-'], ['&Aacute;', 'Á'],
-                    ['&acute;', 'à'], ['&ldquo;', '"'], ['&rdquo;', '"'],
-                    ['&Oslash;', 'Ø'], ['&frac12;', '½'], ['&infin;', '∞'],
-                    ['&agrave;', 'à'], ['&egrave;', 'è'], ['&dagger;', '†'],
-                    ['&sup2;', '²'], ['&#039;', "'"]]
+   
 
-    for xml_char, replacement_char in replacements:
-        text = text.replace(xml_char, replacement_char)
+    #It pains me to write shitty code, but MAL needs to improve their API and I'm sick of not being able to parse shit
+    text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
+    text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
+    text = text.replace('&agrave;', 'à').replace('&egrave;', 'è').replace('&dagger;', '†').replace('&sup2;', '²').replace('&#039;', "'")
+
+    #text = text.replace('&', '&amp;')
 
     return text
+
+
+    text=html.parser.HTMLParser().unescape(text)
+    return html.parser.HTMLParser().unescape(text)
 
 #Used to check if two descriptions are relatively close. This is used in place of author searching because MAL don't give authors at any point.
 def getClosestFromDescription(mangaList, descriptionToCheck):
@@ -152,7 +158,7 @@ def getClosestFromDescription(mangaList, descriptionToCheck):
         for manga in mangaList:
             if closestNameFromList == manga['synopsis'].lower():
                 return manga
-
+        
     except:
         return None
 
@@ -160,18 +166,18 @@ def getClosestFromDescription(mangaList, descriptionToCheck):
 def getMangaCloseToDescription(searchText, descriptionToCheck):
     try:
         try:
-            request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
+            request = mal.get('https://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
             mal.close()
         except:
             setup()
-            request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
+            request = mal.get('https://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
             mal.close()
 
         convertedRequest = convertShittyXML(request.text)
         rawList = ET.fromstring(convertedRequest)
 
         mangaList = []
-
+        
         for manga in rawList.findall('./entry'):
             mangaID = manga.find('id').text
             title = manga.find('title').text
@@ -210,9 +216,9 @@ def getMangaCloseToDescription(searchText, descriptionToCheck):
         return getClosestFromDescription(closeManga, descriptionToCheck)
     except:
         mal.close()
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
-
+    
 def getLightNovelDetails(searchText, lnId=None):
     return getMangaDetails(searchText, lnId, True)
 
@@ -220,18 +226,18 @@ def getLightNovelDetails(searchText, lnId=None):
 def getMangaDetails(searchText, mangaId=None, isLN=False):
     try:
         try:
-            request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
+            request = mal.get('https://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
             mal.close()
         except:
             setup()
-            request = mal.get('http://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
+            request = mal.get('https://myanimelist.net/api/manga/search.xml?q=' + searchText.rstrip(), timeout=10)
             mal.close()
 
         convertedRequest = convertShittyXML(request.text)
         rawList = ET.fromstring(convertedRequest)
 
         mangaList = []
-
+        
         for manga in rawList.findall('./entry'):
             mangaID = manga.find('id').text
             title = manga.find('title').text
@@ -291,8 +297,8 @@ def getListOfCloseManga(searchText, mangaList):
     try:
         ratio = 0.90
         returnList = []
-
-        for manga in mangaList:
+        
+        for manga in mangaList:          
             if round(difflib.SequenceMatcher(lambda x: x == "", manga['title'].lower(), searchText.lower()).ratio(), 3) >= ratio:
                 returnList.append(manga)
             elif manga['english'] is not None:
@@ -305,7 +311,7 @@ def getListOfCloseManga(searchText, mangaList):
                         break
 
         return returnList
-
+        
     except Exception:
         #traceback.print_exc()
         return None
@@ -314,17 +320,17 @@ def getListOfCloseManga(searchText, mangaList):
 def getClosestManga(searchText, mangaList):
     try:
         nameList = []
-
+        
         for manga in mangaList:
             nameList.append(manga['title'].lower())
-
+            
             if manga['english'] is not None:
                 nameList.append(manga['english'].lower())
-
+                
             if manga['synonyms'] is not None:
                 for synonym in manga['synonyms']:
                     nameList.append(synonym.lower().strip())
-
+        
         closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.90)[0]
 
         for manga in mangaList:
@@ -348,11 +354,11 @@ def getClosestManga(searchText, mangaList):
 
 #Used to find thing by an id
 def getThingById(thingId, thingList):
-    try:
+    try:       
         for thing in thingList:
             if int(thing['id']) == int(thingId):
                 return thing
-
+            
         return None
     except Exception:
         traceback.print_exc()

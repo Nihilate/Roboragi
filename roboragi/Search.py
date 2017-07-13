@@ -57,14 +57,21 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
         if (alternateLinks):
             synonym = json.loads(alternateLinks[0])       
             
-            if (synonym['mal']):
-                mal = MAL.getMangaDetails(synonym['mal'][0], synonym['mal'][1])
-            if (synonym['ani']):
-                ani = Anilist.getMangaDetailsById(synonym['ani'])
-            if (synonym['mu']):
-                mu = MU.getMangaURLById(synonym['mu'])
-            if (synonym['ap']):
-                ap = AniP.getMangaURLById(synonym['ap'])
+            if 'mal' in synonym:
+                if (synonym['mal']):
+                    mal = MAL.getMangaDetails(synonym['mal'][0], synonym['mal'][1])
+            
+            if 'ani' in synonym:
+	            if (synonym['ani']):
+	                ani = Anilist.getMangaDetailsById(synonym['ani'])
+
+            if 'mu' in synonym:
+                if (synonym['mu']):
+                    mu = MU.getMangaURLById(synonym['mu'])
+                
+            if 'ap' in synonym:
+                if (synonym['ap']):
+                    ap = AniP.getMangaURLById(synonym['ap'])
 
         else:
             #Basic breakdown:
@@ -192,10 +199,10 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 'synonym_function': MAL.getSynonyms,
                 'checked_synonyms': [],
                 'result': None}
-        hb = {'search_function': Hummingbird.getAnimeDetails,
+        '''hb = {'search_function': Hummingbird.getAnimeDetails,
                 'synonym_function': Hummingbird.getSynonyms,
                 'checked_synonyms': [],
-                'result': None}
+                'result': None}'''
         ani = {'search_function': Anilist.getAnimeDetails,
                 'synonym_function': Anilist.getSynonyms,
                 'checked_synonyms': [],
@@ -220,9 +227,9 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if 'mal' in synonym and synonym['mal']:
                     malsyn = synonym['mal']
 
-                hbsyn = None
+                '''hbsyn = None
                 if 'hb' in synonym and synonym['hb']:
-                    hbsyn = synonym['hb']
+                    hbsyn = synonym['hb']'''
 
                 anisyn = None
                 if 'ani' in synonym and synonym['ani']:
@@ -237,15 +244,15 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     adbsyn = synonym['adb']
 
                 mal['result'] = MAL.getAnimeDetails(malsyn[0],malsyn[1]) if malsyn else None
-                hb['result'] = Hummingbird.getAnimeDetailsById(hbsyn) if hbsyn else None
+                '''hb['result'] = Hummingbird.getAnimeDetailsById(hbsyn) if hbsyn else None'''
                 ani['result'] = Anilist.getAnimeDetailsById(anisyn) if anisyn else None
                 ap['result'] = AniP.getAnimeURLById(apsyn) if apsyn else None
                 adb['result'] = AniDB.getAnimeURLById(adbsyn) if adbsyn else None
                 
         else:
-            data_sources = [ani, hb, mal]
-            #aux_sources = [ap, adb]
-            aux_sources = [ap]
+            data_sources = [ani, mal]
+            aux_sources = [ap, adb]
+            #aux_sources = [ap]
 
             synonyms = set([searchText])
 
@@ -274,15 +281,18 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     if source['result']:
                         break
 
-        if ani['result'] or hb['result'] or mal['result']:
+        if ani['result'] or mal['result']:
             try:
                 titleToAdd = ''
                 if mal['result']:
-                    titleToAdd = mal['result']['title']
-                if hb['result']:
-                    titleToAdd = hb['result']['title']
+                    if 'title' in mal['result']:
+                        titleToAdd = mal['result']['title']
+                '''if hb['result']:
+                    if 'title' in hb['result']:
+                        titleToAdd = hb['result']['title']'''
                 if ani['result']:
-                    titleToAdd = ani['result']['title_romaji']
+                    if 'title_romaji' in ani['result']:
+                        titleToAdd = ani['result']['title_romaji']
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
@@ -290,7 +300,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], hb['result'], ani['result'], ap['result'], adb['result'])
+        return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], ani['result'], ap['result'], adb['result'])
 
     except Exception as e:
         traceback.print_exc()
