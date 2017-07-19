@@ -62,10 +62,6 @@ def process_pms():
                     mentionedComment = reddit.get_info(thing_id=msg.name)
                     mentionedComment.refresh()
 
-                    '''if not (DatabaseHandler.commentExists(mentionedComment.id)):
-                        if str(mentionedComment.subreddit).lower() in Config.subredditlist:
-                            continue'''
-
                     replies = mentionedComment.replies
 
                     ownComments = []
@@ -91,10 +87,11 @@ def process_pms():
                                 print('Comment made.\n')
                             
                             msg.mark_as_read()
+                            
+                            if not (DatabaseHandler.commentExists(mentionedComment.id)):
+                                DatabaseHandler.addComment(mentionedComment.id, reply.author.name, msg.subreddit, True)
                     except praw.errors.Forbidden:
                         print('Edit request from banned subreddit: ' + str(msg.subreddit) + '\n')
-
-                    
 
                 except Exception as e:
                     print(e)

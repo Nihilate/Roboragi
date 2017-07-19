@@ -59,6 +59,14 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
 
             if mal['type']:
                 cType = mal['type']
+
+            if mal['title']:
+                title = mal['title']
+            elif mal['english']:
+                title = mal['english']
+
+            if mal['status']:
+                status = mal['status']
             
             malURL = 'http://myanimelist.net/anime/' + str(mal['id'])
 
@@ -110,9 +118,9 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
         urlComments = []
 
         try:
-        	mal_english = mal['english']
+            mal_english = mal['english']
         except:
-        	pass
+            pass
         
         if malURL and mal_english:
             urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ' "' + mal_english + '")')

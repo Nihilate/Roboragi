@@ -101,7 +101,12 @@ def getFullAnimeDetails(animeID):
             req.close()
         
         if request.status_code == 200:
-            return request.json()
+            anime = request.json()
+
+            anime['genres'] = [genre for genre in anime['genres'] if genre]
+            anime['synonyms'] = [synonym for synonym in anime['synonyms'] if synonym]
+
+            return anime
         else:
             return None
      except Exception as e:
