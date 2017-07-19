@@ -222,7 +222,12 @@ def getMangaDetails(searchText, isLN=False):
         if (closestManga is not None):
             response = req.get("https://anilist.co/api/manga/" + str(closestManga['id']), params={'access_token':access_token}, timeout=10)
             req.close()
-            return response.json()
+            json = response.json()
+
+            json['genres'] = [genre for genre in json['genres'] if genre]
+            json['synonyms'] = [synonym for synonym in json['synonyms'] if synonym]
+
+            return json
         else:
             return None
         

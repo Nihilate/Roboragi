@@ -25,7 +25,7 @@ def getAnimeURL(searchText):
         #If it's taken us to the search page
         if ap.find('.cardDeck.pure-g.cd-narrow[data-type="anime"]'):
             for entry in ap.find('.card.pure-1-6'):
-                entryTitle = pq(entry).find('a').text()
+                entryTitle = pq(entry).find('h4').text()
                 entryURL = pq(entry).find('a').attr('href')
                 
                 anime = {}
@@ -74,7 +74,7 @@ def getMangaURL(searchText, authorName=None):
         #If it's taken us to the search page
         if ap.find('.cardDeck.pure-g.cd-narrow[data-type="manga"]'):
             for entry in ap.find('.card.pure-1-6'):
-                entryTitle = pq(entry).find('a').text()
+                entryTitle = pq(entry).find('h4').text()
                 entryURL = pq(entry).find('a').attr('href')
                 
                 manga = {}

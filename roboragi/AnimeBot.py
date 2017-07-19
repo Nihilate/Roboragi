@@ -89,7 +89,7 @@ def process_pms():
                             msg.mark_as_read()
                             
                             if not (DatabaseHandler.commentExists(mentionedComment.id)):
-                                DatabaseHandler.addComment(mentionedComment.id, reply.author.name, msg.subreddit, True)
+                                DatabaseHandler.addComment(mentionedComment.id, mentionedComment.author.name, msg.subreddit, True)
                     except praw.errors.Forbidden:
                         print('Edit request from banned subreddit: ' + str(msg.subreddit) + '\n')
 
