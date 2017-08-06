@@ -29,7 +29,7 @@ def cleanupDescription(desc):
     return reply
 
 #Builds an anime comment from MAL/HB/Anilist data
-def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
+def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
     try:
         comment = ''
 
@@ -42,8 +42,6 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
         aniURL = None
         apURL = ap
         anidbURL = anidb
-        
-        youtubeTrailer = None
 
         status = None
         episodes = None
@@ -54,60 +52,49 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
         
         desc = None
 
-        if mal:
-            desc = mal['synopsis']
 
-            if mal['type']:
-                cType = mal['type']
-
-            if mal['title']:
-                title = mal['title']
-            elif mal['english']:
-                title = mal['english']
-
-            if mal['status']:
-                status = mal['status']
-            
-            malURL = 'http://myanimelist.net/anime/' + str(mal['id'])
-
-        if ani is not None:
-            title = ani['title_romaji']
+        if ani:
             aniURL = 'http://anilist.co/anime/' + str(ani['id'])
 
-            try:
-                cType = ani['type']
-                desc = ani['description']
-            except:
-                pass
+            title = ani['title_romaji'] if 'title_romaji' in ani else ani['title_english']
+            desc = ani['description'] if 'description' in ani else None
+            status = ani['airing_status'].title() if 'airing_status' in ani else None
+            cType = ani['type'] if 'type' in ani else None
 
-            status = ani['airing_status'].title()
+            jTitle = ani['title_japanese'] if 'title_japanese' in ani else None
+            genres = ani['genres'] if 'genres' in ani else None
 
-            try:
-                if ani['title_japanese'] is not None:
-                    jTitle = ani['title_japanese']
+            episodes = ani['total_episodes'] if 'total_episodes' in ani else None
+            if episodes == 0:
+                episodes = None
 
-                if ani['youtube_id'] is not None:
-                    youtubeTrailer = ani['youtube_id']
+            if 'airing' in ani:
+                countdown = ani['airing']['countdown'] if 'countdown' in ani['airing'] else None
+                nextEpisode = ani['airing']['next_episode'] if 'next_episode' in ani['airing'] else None
 
-                if ani['total_episodes'] is not None:
-                    if ani['total_episodes'] == 0:
-                        episodes = 'Unknown'
-                    else:
-                        episodes = ani['total_episodes']
+        if kit:
+            kitURL = kit['url']
 
-                if ani['genres'] is not None:
-                    genres = ani['genres']
+            if not title:
+                title = kit['title_romaji'] if 'title_romaji' in kit else kit['title_english']
+            if not desc:
+                desc = kit['description'] if 'description' in kit else None
+            if not cType:
+                cType = kit['type'].title() if 'type' in kit else None
 
-                if ani['airing'] is not None:
-                    countdown = ani['airing']['countdown']
-                    nextEpisode = ani['airing']['next_episode']
-            except:
-                print('No full details for Anilist')
+        if mal:
+            malURL = 'http://myanimelist.net/anime/' + str(mal['id'])
+
+            if not title:
+                title = mal['title'] if 'title' in mal else mal['english']
+            if not desc:
+                desc = mal['synopsis'] if 'synopsis' in mal else None
+            if not status:
+                status = mal['status'] if 'status' in mal else None
+            if not cType:
+                cType = mal['type'] if 'type' in mal else None
 
         stats = DatabaseHandler.getRequestStats(title, 'Anime')
-
-        if ani is not None:
-            stats = DatabaseHandler.getRequestStats(ani['title_romaji'],'Anime')
 
         #---------- BUILDING THE COMMENT ----------#
                 
@@ -131,6 +118,8 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
             urlComments.append('[A-P](' + sanitise_url_for_markdown(apURL) + ')')
         if ani is not None:
             urlComments.append('[AL](' + sanitise_url_for_markdown(aniURL) + ')')
+        if kit is not None:
+            urlComments.append('[KIT](' + sanitise_url_for_markdown(kitURL) + ')')
         if anidbURL is not None:
             urlComments.append('[ADB](' + sanitise_url_for_markdown(anidbURL) + ')')
 
@@ -161,7 +150,7 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
             
             comment += '**Status:** ' + status
 
-            if cType != 'Movie':
+            if cType != 'Movie' and episodes:
                 comment += ' | **Episodes:** ' + str(episodes)
 
             comment += ' | **Genres:** '
@@ -173,7 +162,7 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
 
             comment += 'Status: ' + status
 
-            if cType != 'Movie':
+            if cType != 'Movie' and episodes:
                 comment += ' | Episodes: ' + str(episodes)
 
             comment += ' | Genres: '
@@ -212,6 +201,8 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
             receipt += 'AP '
         if ani is not None:
             receipt += 'AL '
+        if kit is not None:
+            receipt += 'KIT '
         if anidbURL is not None:
             receipt += 'ADB '
         print(receipt)
@@ -227,7 +218,7 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb):
         return None
 
 #Builds a manga comment from MAL/Anilist/MangaUpdates data
-def buildMangaComment(isExpanded, mal, ani, mu, ap):
+def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
     try:
         comment = ''
 
@@ -248,70 +239,64 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
         
         desc = None
 
-        if not (mal is None):
-            title = mal['title']
-            malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
-            desc = mal['synopsis']
-            status = mal['status']
-
-            cType = mal['type']
-
-            try:
-                if (int(mal['chapters']) == 0):
-                    chapters = 'Unknown'
-                else:
-                    chapters = mal['chapters']
-            except:
-                chapters = 'Unknown'
-
-            try:
-                if (int(mal['volumes']) == 0):
-                    volumes = 'Unknown'
-                else:
-                    volumes = mal['volumes']
-            except:
-                volumes = 'Unknown'
-
-        if ani is not None:
-            if title is None:
-                title = ani['title_english']
+        if ani:
             aniURL = 'http://anilist.co/manga/' + str(ani['id'])
-            
-            if ani['description']:
-                desc = ani['description']
-            
-            try:
-                status = ani['publishing_status'].title()
-            except:
-                pass
 
-            cType = ani['type']
+            title = ani['title_romaji'] if 'title_romaji' in ani else ani['title_english']
+            desc = ani['description'] if 'description' in ani else None
+            status = ani['publishing_status'].title() if 'publishing_status' in ani else None
+            cType = ani['type'] if 'type' in ani else None
 
-            try:
-                if ani['title_japanese'] is not None:
-                    jTitle = ani['title_japanese']
+            jTitle = ani['title_japanese'] if 'title_japanese' in ani else None
+            genres = ani['genres'] if 'genres' in ani else None
 
-                if ani['total_chapters'] is not None:
-                    if ani['total_chapters'] == 0:
+            chapters = ani['total_chapters'] if 'total_chapters' in ani else None
+            if chapters == 0:
+                chapters = None
+            volumes = ani['total_volumes'] if 'total_volumes' in ani else None
+            if volumes == 0:
+                volumes = None
+
+        if kit:
+            kitURL = kit['url']
+
+            if not title:
+                title = kit['title_romaji'] if 'title_romaji' in kit else kit['title_english']
+            if not desc:
+                desc = kit['description'] if 'description' in kit else None
+            if not cType:
+                cType = kit['type'].title() if 'type' in kit else None
+
+        if mal:
+            malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
+
+            if not title:
+                title = mal['title'] if 'title' in mal else mal['english']
+            if not desc:
+                desc = mal['synopsis'] if 'synopsis' in mal else None
+            if not status:
+                status = mal['status'] if 'status' in mal else None
+            if not cType:
+                cType = mal['type'] if 'type' in mal else None
+
+            if not chapters:
+                try:
+                    if (int(mal['chapters']) == 0):
                         chapters = 'Unknown'
                     else:
-                        chapters = ani['total_chapters']
-                else:
-                    volumes = 'Unknown'
+                        chapters = mal['chapters']
+                except:
+                    chapters = None
 
-                if ani['total_volumes'] is not None:
-                    if ani['total_volumes'] == 0:
+            if not volumes:
+                try:
+                    if (int(mal['volumes']) == 0):
                         volumes = 'Unknown'
                     else:
-                        volumes = ani['total_volumes']
-                else:
+                        volumes = mal['volumes']
+                except:
                     volumes = 'Unknown'
 
-                if ani['genres'] is not None:
-                    genres = ani['genres']
-
-            except Exception as e:
-                print(e)
 
         stats = DatabaseHandler.getRequestStats(title,'Manga')
         
@@ -337,6 +322,8 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
             urlComments.append('[A-P](' + sanitise_url_for_markdown(apURL) + ')')
         if aniURL is not None:
             urlComments.append('[AL](' + sanitise_url_for_markdown(aniURL) + ')')
+        if kitURL is not None:
+            urlComments.append('[KIT](' + sanitise_url_for_markdown(kitURL) + ')')
         if muURL is not None:
             urlComments.append('[MU](' + sanitise_url_for_markdown(muURL) + ')')
 
@@ -372,12 +359,12 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
             comment += '**Status:** ' + status
 
             if (cType != 'Light Novel'):
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
-                if str(chapters) is not 'Unknown':
+                if chapters and str(chapters) is not 'Unknown':
                     comment += ' | **Chapters:** ' + str(chapters)
             else:
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
 
             if genres:
@@ -394,12 +381,12 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
             comment += 'Status: ' + status
 
             if (cType != 'Light Novel'):
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | Volumes: ' + str(volumes)
-                if str(chapters) is not 'Unknown':
+                if chapters and str(chapters) is not 'Unknown':
                     comment += ' | Chapters: ' + str(chapters)
             else:
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | Volumes: ' + str(volumes)
 
             if genres:
@@ -428,6 +415,8 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
             receipt += 'AP '
         if ani is not None:
             receipt += 'AL '
+        if kit is not None:
+            receipt += 'KIT '
         if muURL is not None:
             receipt += 'MU '
         print(receipt)
@@ -442,7 +431,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap):
         return None
 
 #Builds a manga comment from MAL/Anilist/MangaUpdates data
-def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
+def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
     try:
         comment = ''
 
@@ -463,68 +452,63 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
         
         desc = None
 
-        if not (mal is None):
-            title = mal['title']
-            malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
-            desc = mal['synopsis']
-            status = mal['status']
-
-            cType = mal['type']
-
-            try:
-                if (int(mal['chapters']) == 0):
-                    chapters = 'Unknown'
-                else:
-                    chapters = mal['chapters']
-            except:
-                chapters = 'Unknown'
-
-            try:
-                if (int(mal['volumes']) == 0):
-                    volumes = 'Unknown'
-                else:
-                    volumes = mal['volumes']
-            except:
-                volumes = 'Unknown'
-
-        if ani is not None:
-            if title is None:
-                title = ani['title_english']
+        if ani:
             aniURL = 'http://anilist.co/manga/' + str(ani['id'])
-            desc = ani['description']
 
-            try:
-                status = ani['publishing_status'].title()
-            except:
-                pass
+            title = ani['title_romaji'] if 'title_romaji' in ani else ani['title_english']
+            desc = ani['description'] if 'description' in ani else None
+            status = ani['publishing_status'].title() if 'publishing_status' in ani else None
+            cType = ani['type'] if 'type' in ani else None
 
-            cType = ani['type']
+            jTitle = ani['title_japanese'] if 'title_japanese' in ani else None
+            genres = ani['genres'] if 'genres' in ani else None
 
-            try:
-                if ani['title_japanese'] is not None:
-                    jTitle = ani['title_japanese']
+            chapters = ani['total_chapters'] if 'total_chapters' in ani else None
+            if chapters == 0:
+                chapters = None
+            volumes = ani['total_volumes'] if 'total_volumes' in ani else None
+            if volumes == 0:
+                volumes = None
 
-                if ani['total_chapters'] is not None:
-                    if ani['total_chapters'] == 0:
+        if kit:
+            kitURL = kit['url']
+
+            if not title:
+                title = kit['title_romaji'] if 'title_romaji' in kit else kit['title_english']
+            if not desc:
+                desc = kit['description'] if 'description' in kit else None
+            if not cType:
+                cType = kit['type'].title() if 'type' in kit else None
+
+        if mal:
+            malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
+
+            if not title:
+                title = mal['title'] if 'title' in mal else mal['english']
+            if not desc:
+                desc = mal['synopsis'] if 'synopsis' in mal else None
+            if not status:
+                status = mal['status'] if 'status' in mal else None
+            if not cType:
+                cType = mal['type'] if 'type' in mal else None
+
+            if not chapters:
+                try:
+                    if (int(mal['chapters']) == 0):
                         chapters = 'Unknown'
                     else:
-                        chapters = ani['total_chapters']
-                else:
-                    volumes = 'Unknown'
+                        chapters = mal['chapters']
+                except:
+                    chapters = None
 
-                if ani['total_volumes'] is not None:
-                    if ani['total_volumes'] == 0:
+            if not volumes:
+                try:
+                    if (int(mal['volumes']) == 0):
                         volumes = 'Unknown'
                     else:
-                        volumes = ani['total_volumes']
-                else:
+                        volumes = mal['volumes']
+                except:
                     volumes = 'Unknown'
-
-                if ani['genres'] is not None:
-                    genres = ani['genres']
-
-            except Exception as e:
-                print(e)
 
         stats = DatabaseHandler.getRequestStats(title,'LN')
         
@@ -548,6 +532,8 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
         	
         if aniURL is not None:
             urlComments.append('[AL](' + sanitise_url_for_markdown(aniURL) + ')')
+        if kitURL is not None:
+            urlComments.append('[KIT](' + sanitise_url_for_markdown(kitURL) + ')')
         if nuURL is not None:
             urlComments.append('[NU](' + sanitise_url_for_markdown(nuURL) + ')')
         if lndbURL is not None:
@@ -585,12 +571,12 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
             comment += '**Status:** ' + status
 
             if (cType != 'Light Novel'):
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
-                if str(chapters) is not 'Unknown':
+                if chapters and str(chapters) is not 'Unknown':
                     comment += ' | **Chapters:** ' + str(chapters)
             else:
-                if str(volumes) is not 'Unknown':
+                if volumes and tr(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
 
             if genres:
@@ -607,12 +593,12 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
             comment += 'Status: ' + status
 
             if (cType != 'Light Novel'):
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | Volumes: ' + str(volumes)
-                if str(chapters) is not 'Unknown':
+                if chapters and str(chapters) is not 'Unknown':
                     comment += ' | Chapters: ' + str(chapters)
             else:
-                if str(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | Volumes: ' + str(volumes)
 
             if genres:
@@ -639,6 +625,8 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb):
             receipt += 'MAL '
         if ani is not None:
             receipt += 'AL '
+        if kit is not None:
+            receipt += 'KIT '
         if nuURL is not None:
             receipt += 'MU '
         if lndbURL is not None:

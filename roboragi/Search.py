@@ -6,7 +6,7 @@ Returns a built comment created from multiple databases when given a search term
 import MAL
 import AnimePlanet as AniP
 import AniDB
-import Hummingbird
+import Kitsu
 import Anilist
 import MU
 import NU
@@ -41,12 +41,24 @@ except sqlite3.Error as e:
 
 #Builds a manga reply from multiple sources
 def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
-    try:
-        ani = None
-        mal = None
-        mu = None
-        ap = None
-        
+    try:       
+        ani = {'search_function': Anilist.getMangaDetails,
+                'synonym_function': Anilist.getSynonyms,
+                'checked_synonyms': [],
+                'result': None}
+        mal = {'search_function': MAL.getMangaDetails,
+                'synonym_function': MAL.getSynonyms,
+                'checked_synonyms': [],
+                'result': None}
+        kit = {'search_function': Kitsu.get_manga,
+                'synonym_function': Kitsu.get_synonyms,
+                'checked_synonyms': [],
+                'result': None}
+        mu = {'search_function': MU.getMangaURL,
+                'result': None}
+        ap = {'search_function': AniP.getMangaURL,
+                'result': None}
+
         try:
             sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "Manga" and lower(name) = ?', [searchText.lower()])
         except sqlite3.Error as e:
@@ -55,94 +67,82 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
         alternateLinks = sqlCur.fetchone()
 
         if (alternateLinks):
-            synonym = json.loads(alternateLinks[0])       
-            
-            if 'mal' in synonym:
-                if (synonym['mal']):
-                    mal = MAL.getMangaDetails(synonym['mal'][0], synonym['mal'][1])
-            
-            if 'ani' in synonym:
-	            if (synonym['ani']):
-	                ani = Anilist.getMangaDetailsById(synonym['ani'])
+            synonym = json.loads(alternateLinks[0])
 
-            if 'mu' in synonym:
-                if (synonym['mu']):
-                    mu = MU.getMangaURLById(synonym['mu'])
-                
-            if 'ap' in synonym:
-                if (synonym['ap']):
-                    ap = AniP.getMangaURLById(synonym['ap'])
+            if synonym:
+                malsyn = None
+                if 'mal' in synonym and synonym['mal']:
+                    malsyn = synonym['mal']
+
+                anisyn = None
+                if 'ani' in synonym and synonym['ani']:
+                    anisyn = synonym['ani']
+
+                kitsyn = None
+                if 'kit' in synonym and synonym['kit']:
+                    kitsyn = synonym['kit']
+
+                musyn = None
+                if 'mu' in synonym and synonym['mu']:
+                    musyn = synonym['mu']
+
+                apsyn = None
+                if 'ap' in synonym and synonym['ap']:
+                    apsyn = synonym['ap']
+
+                mal['result'] = MAL.getMangaDetails(malsyn[0],malsyn[1]) if malsyn else None
+                ani['result'] = Anilist.getMangaDetailsById(anisyn) if anisyn else None
+                kit['result'] = Kitsu.get_manga(kitsyn) if kitsyn else None
+                mu['result'] = MU.getMangaURLById(musyn) if musyn else None
+                ap['result'] = AniP.getMangaURLById(apsyn) if apsyn else None
 
         else:
-            #Basic breakdown:
-            #If Anilist finds something, use it to find the MAL version.
-            #If hits either MAL or Ani, use it to find the MU version.
-            #If it hits either, add it to the request-tracking DB.
-            ani = Anilist.getMangaDetails(searchText)
-            
-            if ani:
-                try:
-                    mal = MAL.getMangaDetails(ani['title_romaji'])
-                except:
-                    pass
+            data_sources = [ani, kit, mal]
+            aux_sources = [mu, ap]
 
-                if not mal:
-                    try:
-                        mal = MAL.getMangaDetails(ani['title_english'])
-                    except:
-                        pass
+            synonyms = set([searchText])
 
-                if not mal:
-                    mal = MAL.getMangaDetails(searchText)
+            for x in range(len(data_sources)):
+                for source in data_sources:
+                    if source['result']:
+                        break
+                    else:
+                        for synonym in synonyms:
+                            if synonym in source['checked_synonyms']:
+                                continue
 
-            else:
-                mal = MAL.getMangaDetails(searchText)
+                            source['result'] = source['search_function'](synonym)
+                            source['checked_synonyms'].append(synonym)
 
-                if mal:
-                    ani = Anilist.getMangaDetails(mal['title'])    
+                            if source['result']:
+                                break
 
-        #----- Finally... -----#
-        if ani or mal:
+                    if source['result']:
+                        synonyms.update([synonym.lower() for synonym in source['synonym_function'](source['result'])])
+
+            for source in aux_sources:
+                for synonym in synonyms:     
+                    source['result'] = source['search_function'](synonym)
+
+                    if source['result']:
+                        break
+
+        if ani['result'] or mal['result'] or kit['result']:
             try:
                 titleToAdd = ''
-                if mal:
-                    titleToAdd = mal['title']
-                else:
+                if ani['result']:
                     try:
-                        titleToAdd = ani['title_english']
+                        titleToAdd = ani['result']['title_romaji']
                     except:
-                        titleToAdd = ani['title_romaji']
-
+                        titleToAdd = ani['result']['title_english']
+                elif mal['result']:
+                    titleToAdd = mal['result']['title']
+                elif kit['result']:
+                    try:
+                        titleToAdd = kit['result']['title_romaji']
+                    except:
+                        titleToAdd = kit['result']['title_english']
                 
-                if not alternateLinks:
-                    #MU stuff
-                    if mal:
-                        mu = MU.getMangaURL(mal['title'])
-                    else:
-                        mu = MU.getMangaURL(ani['title_romaji'])
-
-                    #Do the anime-planet stuff
-                    if mal and not ap:
-                        if mal['title'] and not ap:
-                            ap = AniP.getMangaURL(mal['title'])
-                        if mal['english'] and not ap:
-                            ap = AniP.getMangaURL(mal['english'])
-                        if mal['synonyms'] and not ap:
-                            for synonym in mal['synonyms']:
-                                if ap:
-                                    break
-                                ap = AniP.getMangaURL(synonym)
-
-                    if ani and not ap:
-                        if ani['title_english'] and not ap:
-                            ap = AniP.getMangaURL(ani['title_english'])
-                        if ani['title_romaji'] and not ap:
-                            ap = AniP.getMangaURL(ani['title_romaji'])
-                        if ani['synonyms'] and not ap:
-                            for synonym in ani['synonyms']:
-                                if ap:
-                                    break
-                                ap = AniP.getMangaURL(synonym)
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Manga', baseComment.author.name, baseComment.subreddit)
@@ -150,11 +150,12 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildMangaComment(isExpanded, mal, ani, mu, ap)
-        
+        return CommentBuilder.buildMangaComment(isExpanded, mal['result'], ani['result'], mu['result'], ap['result'], kit['result'])
+
     except Exception as e:
         traceback.print_exc()
         return None
+        
 
 #Builds a manga search for a specific series by a specific author
 def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment, blockTracking=False):
@@ -199,10 +200,10 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 'synonym_function': MAL.getSynonyms,
                 'checked_synonyms': [],
                 'result': None}
-        '''hb = {'search_function': Hummingbird.getAnimeDetails,
-                'synonym_function': Hummingbird.getSynonyms,
+        kit = {'search_function': Kitsu.get_anime,
+                'synonym_function': Kitsu.get_synonyms,
                 'checked_synonyms': [],
-                'result': None}'''
+                'result': None}
         ani = {'search_function': Anilist.getAnimeDetails,
                 'synonym_function': Anilist.getSynonyms,
                 'checked_synonyms': [],
@@ -227,9 +228,9 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if 'mal' in synonym and synonym['mal']:
                     malsyn = synonym['mal']
 
-                '''hbsyn = None
-                if 'hb' in synonym and synonym['hb']:
-                    hbsyn = synonym['hb']'''
+                kitsyn = None
+                if 'kit' in synonym and synonym['kit']:
+                    kitsyn = synonym['kit']
 
                 anisyn = None
                 if 'ani' in synonym and synonym['ani']:
@@ -244,15 +245,14 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     adbsyn = synonym['adb']
 
                 mal['result'] = MAL.getAnimeDetails(malsyn[0],malsyn[1]) if malsyn else None
-                '''hb['result'] = Hummingbird.getAnimeDetailsById(hbsyn) if hbsyn else None'''
+                kit['result'] = Kitsu.get_anime(kitsyn) if kitsyn else None
                 ani['result'] = Anilist.getAnimeDetailsById(anisyn) if anisyn else None
                 ap['result'] = AniP.getAnimeURLById(apsyn) if apsyn else None
                 adb['result'] = AniDB.getAnimeURLById(adbsyn) if adbsyn else None
                 
         else:
-            data_sources = [ani, mal]
+            data_sources = [ani, kit, mal]
             aux_sources = [ap, adb]
-            #aux_sources = [ap]
 
             synonyms = set([searchText])
 
@@ -281,18 +281,18 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                     if source['result']:
                         break
 
-        if ani['result'] or mal['result']:
+        if ani['result'] or mal['result'] or kit['result']:
             try:
                 titleToAdd = ''
-                if mal['result']:
-                    if 'title' in mal['result']:
-                        titleToAdd = mal['result']['title']
-                '''if hb['result']:
-                    if 'title' in hb['result']:
-                        titleToAdd = hb['result']['title']'''
                 if ani['result']:
                     if 'title_romaji' in ani['result']:
                         titleToAdd = ani['result']['title_romaji']
+                elif mal['result']:
+                    if 'title' in mal['result']:
+                        titleToAdd = mal['result']['title']
+                elif kit['result']:
+                    if 'title_romaji' in kit['result']:
+                        titleToAdd = kit['result']['title_romaji']
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'Anime', baseComment.author.name, baseComment.subreddit)
@@ -300,7 +300,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], ani['result'], ap['result'], adb['result'])
+        return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], ani['result'], ap['result'], adb['result'], kit['result'])
 
     except Exception as e:
         traceback.print_exc()
@@ -315,6 +315,10 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                 'result': None}
         ani = {'search_function': Anilist.getLightNovelDetails,
                 'synonym_function': Anilist.getSynonyms,
+                'checked_synonyms': [],
+                'result': None}
+        kit = {'search_function': Kitsu.get_light_novel,
+                'synonym_function': Kitsu.get_synonyms,
                 'checked_synonyms': [],
                 'result': None}
         nu = {'search_function': NU.getLightNovelURL,
@@ -341,6 +345,10 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                 if 'ani' in synonym and synonym['ani']:
                     anisyn = synonym['ani']
 
+                kitsyn = None
+                if 'kit' in synonym and synonym['kit']:
+                    kitsyn = synonym['kit']
+
                 nusyn = None
                 if 'nu' in synonym and synonym['nu']:
                     nusyn = synonym['nu']
@@ -351,11 +359,12 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
 
                 mal['result'] = MAL.getLightNovelDetails(malsyn[0],malsyn[1]) if malsyn else None
                 ani['result'] = Anilist.getMangaDetailsById(anisyn) if anisyn else None
+                kit['result'] = Kitsu.get_light_novel(kitsyn) if kitsyn else None
                 nu['result'] = NU.getLightNovelById(nusyn) if nusyn else None
                 lndb['result'] = LNDB.getLightNovelById(lndbsyn) if lndbsyn else None
                 
         else:
-            data_sources = [ani, mal]
+            data_sources = [ani, kit, mal]
             aux_sources = [nu, lndb]
 
             synonyms = set([searchText])
@@ -385,16 +394,22 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                     if source['result']:
                         break
 
-        if ani['result'] or mal['result']:
+        if ani['result'] or mal['result'] or kit['result']:
             try:
                 titleToAdd = ''
-                if mal['result']:
-                    titleToAdd = mal['result']['title']
                 if ani['result']:
                     try:
                         titleToAdd = ani['result']['title_romaji']
                     except:
                         titleToAdd = ani['result']['title_english']
+                elif mal['result']:
+                    titleToAdd = mal['result']['title']
+                elif kit['result']:
+                    try:
+                        titleToAdd = kit['result']['title_romaji']
+                    except:
+                        titleToAdd = kit['result']['title_english']
+                
 
                 if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
                     DatabaseHandler.addRequest(titleToAdd, 'LN', baseComment.author.name, baseComment.subreddit)
@@ -402,7 +417,7 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildLightNovelComment(isExpanded, mal['result'], ani['result'], nu['result'], lndb['result'])
+        return CommentBuilder.buildLightNovelComment(isExpanded, mal['result'], ani['result'], nu['result'], lndb['result'], kit['result'])
 
     except Exception as e:
         traceback.print_exc()
