@@ -68,9 +68,9 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
             if episodes == 0:
                 episodes = None
 
-            if 'airing' in ani:
-                countdown = ani['airing']['countdown'] if 'countdown' in ani['airing'] else None
-                nextEpisode = ani['airing']['next_episode'] if 'next_episode' in ani['airing'] else None
+            if ani['airing']:
+                countdown = ani['airing']['countdown']
+                nextEpisode = ani['airing']['next_episode']
 
         if kit:
             kitURL = kit['url']
@@ -81,6 +81,11 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
                 cType = kit['type'].title() if 'type' in kit else None
+
+            if not episodes:
+                episodes = kit['episode_count'] if 'episode_count' in kit else None
+                if episodes == 0:
+                    episodes = None
 
         if mal:
             malURL = 'http://myanimelist.net/anime/' + str(mal['id'])
@@ -231,6 +236,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
         aniURL = None
         muURL = mu
         apURL = ap
+        kitURL = None
 
         status = None
         chapters = None
@@ -266,6 +272,15 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
                 cType = kit['type'].title() if 'type' in kit else None
+
+            if not chapters:
+                chapters = kit['chapter_count'] if 'chapter_count' in kit else None
+                if chapters == 0:
+                    chapters = None
+            if not volumes:
+                volumes = kit['volume_count'] if 'volume_count' in kit else None
+                if volumes == 0:
+                    volumes = None
 
         if mal:
             malURL = 'http://myanimelist.net/manga/' + str(mal['id'])
@@ -427,7 +442,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
         
         return dictToReturn
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
 
 #Builds a manga comment from MAL/Anilist/MangaUpdates data
@@ -444,6 +459,7 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
         aniURL = None
         nuURL = nu
         lndbURL = lndb
+        kitURL = None
 
         status = None
         chapters = None
@@ -479,6 +495,15 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
                 cType = kit['type'].title() if 'type' in kit else None
+
+            if not chapters:
+                chapters = kit['chapter_count'] if 'chapter_count' in kit else None
+                if chapters == 0:
+                    chapters = None
+            if not volumes:
+                volumes = kit['volume_count'] if 'volume_count' in kit else None
+                if volumes == 0:
+                    volumes = None
 
         if mal:
             malURL = 'http://myanimelist.net/manga/' + str(mal['id'])

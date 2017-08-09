@@ -50,7 +50,7 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                 'synonym_function': MAL.getSynonyms,
                 'checked_synonyms': [],
                 'result': None}
-        kit = {'search_function': Kitsu.get_manga,
+        kit = {'search_function': Kitsu.search_manga,
                 'synonym_function': Kitsu.get_synonyms,
                 'checked_synonyms': [],
                 'result': None}
@@ -200,7 +200,7 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 'synonym_function': MAL.getSynonyms,
                 'checked_synonyms': [],
                 'result': None}
-        kit = {'search_function': Kitsu.get_anime,
+        kit = {'search_function': Kitsu.search_anime,
                 'synonym_function': Kitsu.get_synonyms,
                 'checked_synonyms': [],
                 'result': None}
@@ -317,7 +317,7 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                 'synonym_function': Anilist.getSynonyms,
                 'checked_synonyms': [],
                 'result': None}
-        kit = {'search_function': Kitsu.get_light_novel,
+        kit = {'search_function': Kitsu.search_light_novel,
                 'synonym_function': Kitsu.get_synonyms,
                 'checked_synonyms': [],
                 'result': None}
