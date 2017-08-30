@@ -5,7 +5,7 @@ import traceback
 import pprint
 import collections
 
-BASE_URL = "http://www.anime-planet.com"
+BASE_URL = "https://www.anime-planet.com"
 
 req = requests.Session()
 
@@ -110,7 +110,7 @@ def getMangaURL(searchText, authorName=None):
         return None
 
 def getAnimeURLById(animeId):
-    return 'http://www.anime-planet.com/anime/' + str(animeId)
+    return 'https://www.anime-planet.com/anime/' + str(animeId)
 
 def getMangaURLById(mangaId):
-    return 'http://www.anime-planet.com/manga/' + str(mangaId)
+    return 'https://www.anime-planet.com/manga/' + str(mangaId)
