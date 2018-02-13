@@ -37,12 +37,14 @@ def escape(text):
 
 def getSynonyms(request):
     synonyms = []
-    
-    synonyms.append(request['title_english']) if request['title_english'] else None
-    synonyms.append(request['title_romaji']) if request['title_romaji'] else None
     synonyms.extend(request['synonyms']) if request['synonyms'] else None
-
     return synonyms
+
+def getTitles(request):
+    titles = [] 
+    titles.append(request['title_english']) if request['title_english'] else None
+    titles.append(request['title_romaji']) if request['title_romaji'] else None
+    return titles
     
 #Sets up the connection to Anilist. You need a token to get stuff from them, which expires every hour.
 def setup():

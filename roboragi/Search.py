@@ -43,15 +43,18 @@ except sqlite3.Error as e:
 def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
     try:       
         ani = {'search_function': Anilist.getMangaDetails,
+                'title_function': Anilist.getTitles,
                 'synonym_function': Anilist.getSynonyms,
                 'checked_synonyms': [],
                 'result': None}
         mal = {'search_function': MAL.getMangaDetails,
                 'synonym_function': MAL.getSynonyms,
+                'title_function': MAL.getTitles,
                 'checked_synonyms': [],
                 'result': None}
         kit = {'search_function': Kitsu.search_manga,
                 'synonym_function': Kitsu.get_synonyms,
+                'title_function': Kitsu.get_titles,
                 'checked_synonyms': [],
                 'result': None}
         mu = {'search_function': MU.getMangaURL,
@@ -101,15 +104,32 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
             aux_sources = [mu, ap]
 
             synonyms = set([searchText])
+            titles = set()
 
             for x in range(len(data_sources)):
                 for source in data_sources:
                     if source['result']:
                         break
                     else:
+                        for title in titles:
+                            if title in source['checked_synonyms']:
+                                break
+
+                            if source['result']:
+                                break
+
+                            source['result'] = source['search_function'](title)
+                            source['checked_synonyms'].append(title)
+
+                            if source['result']:
+                                break
+
                         for synonym in synonyms:
                             if synonym in source['checked_synonyms']:
-                                continue
+                                break
+
+                            if source['result']:
+                                break
 
                             source['result'] = source['search_function'](synonym)
                             source['checked_synonyms'].append(synonym)
@@ -119,13 +139,21 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
 
                     if source['result']:
                         synonyms.update([synonym.lower() for synonym in source['synonym_function'](source['result'])])
+                        titles.update([title.lower() for title in source['title_function'](source['result'])])
 
             for source in aux_sources:
-                for synonym in synonyms:     
+                for title in titles:
                     source['result'] = source['search_function'](synonym)
 
                     if source['result']:
                         break
+
+                if not source['result']:
+                    for synonym in synonyms:
+                        source['result'] = source['search_function'](synonym)
+
+                        if source['result']:
+                            break
 
         if ani['result'] or mal['result'] or kit['result']:
             try:
@@ -198,14 +226,17 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
     try:
         mal = {'search_function': MAL.getAnimeDetails,
                 'synonym_function': MAL.getSynonyms,
+                'title_function': MAL.getTitles,
                 'checked_synonyms': [],
                 'result': None}
         kit = {'search_function': Kitsu.search_anime,
                 'synonym_function': Kitsu.get_synonyms,
+                'title_function': Kitsu.get_titles,
                 'checked_synonyms': [],
                 'result': None}
         ani = {'search_function': Anilist.getAnimeDetails,
                 'synonym_function': Anilist.getSynonyms,
+                'title_function': Anilist.getTitles,
                 'checked_synonyms': [],
                 'result': None}
         ap = {'search_function': AniP.getAnimeURL,
@@ -255,13 +286,14 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
             aux_sources = [ap, adb]
 
             synonyms = set([searchText])
+            titles = set()
 
             for x in range(len(data_sources)):
                 for source in data_sources:
                     if source['result']:
                         break
                     else:
-                        for synonym in synonyms:
+                        for synonym in (titles | synonyms):
                             if synonym in source['checked_synonyms']:
                                 continue
 
@@ -273,13 +305,22 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
 
                     if source['result']:
                         synonyms.update([synonym.lower() for synonym in source['synonym_function'](source['result'])])
+                        titles.update([title.lower() for title in source['title_function'](source['result'])])
+
 
             for source in aux_sources:
-                for synonym in synonyms:     
+                for title in titles:
                     source['result'] = source['search_function'](synonym)
 
                     if source['result']:
                         break
+
+                if not source['result']:
+                    for synonym in synonyms:
+                        source['result'] = source['search_function'](synonym)
+
+                        if source['result']:
+                            break
 
         if ani['result'] or mal['result'] or kit['result']:
             try:
@@ -311,14 +352,17 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
     try:
         mal = {'search_function': MAL.getLightNovelDetails,
                 'synonym_function': MAL.getSynonyms,
+                'title_function': MAL.getTitles,
                 'checked_synonyms': [],
                 'result': None}
         ani = {'search_function': Anilist.getLightNovelDetails,
                 'synonym_function': Anilist.getSynonyms,
+                'title_function': Anilist.getTitles,
                 'checked_synonyms': [],
                 'result': None}
         kit = {'search_function': Kitsu.search_light_novel,
                 'synonym_function': Kitsu.get_synonyms,
+                'title_function': Kitsu.get_titles,
                 'checked_synonyms': [],
                 'result': None}
         nu = {'search_function': NU.getLightNovelURL,
@@ -368,13 +412,14 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
             aux_sources = [nu, lndb]
 
             synonyms = set([searchText])
+            titles = set()
 
             for x in range(len(data_sources)):
                 for source in data_sources:
                     if source['result']:
                         break
                     else:
-                        for synonym in synonyms:
+                        for synonym in (titles | synonyms):
                             if synonym in source['checked_synonyms']:
                                 continue
 
@@ -386,13 +431,22 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
 
                     if source['result']:
                         synonyms.update([synonym.lower() for synonym in source['synonym_function'](source['result'])])
+                        titles.update([title.lower() for title in source['title_function'](source['result'])])
+
 
             for source in aux_sources:
-                for synonym in synonyms:     
+                for title in titles:
                     source['result'] = source['search_function'](synonym)
 
                     if source['result']:
                         break
+
+                if not source['result']:
+                    for synonym in synonyms:
+                        source['result'] = source['search_function'](synonym)
+
+                        if source['result']:
+                            break
 
         if ani['result'] or mal['result'] or kit['result']:
             try:

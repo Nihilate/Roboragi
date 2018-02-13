@@ -19,6 +19,6 @@ def is_april_fools_2016(username):
 
 def get_bling(username):
     if is_april_fools_2016(username):
-        return ' ^(| \U0001F4B0)'
+        return '&#32;|&#32;\U0001F4B0'
     else:
         return ''

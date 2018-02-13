@@ -26,12 +26,14 @@ def setup():
 
 def getSynonyms(request):
     synonyms = []
-
-    synonyms.append(request['title']) if request['title'] else None
-    synonyms.append(request['english']) if request['english'] else None
     synonyms.extend(request['synonyms']) if request['synonyms'] else None
-
     return synonyms
+
+def getTitles(request):
+    titles = []
+    titles.append(request['title']) if request['title'] else None
+    titles.append(request['english']) if request['english'] else None
+    return titles
 
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext. MAL returns XML (bleh) so we have to convert it ourselves.
 def getAnimeDetails(searchText, animeId=None):
@@ -88,7 +90,7 @@ def getAnimeDetails(searchText, animeId=None):
         return closestAnime
         
     except Exception:
-        traceback.print_exc()
+        #traceback.print_exc()
         mal.close()
         return None
 
@@ -114,13 +116,12 @@ def getClosestAnime(searchText, animeList):
             if anime['title']:
                 if anime['title'].lower() == closestNameFromList.lower():
                     return anime
-            elif anime['english']:
+            if anime['english']:
                 if anime['english'].lower() == closestNameFromList.lower():
                     return anime
-            else:
-                for synonym in anime['synonyms']:
-                    if synonym.lower() == closestNameFromList.lower():
-                        return anime
+            for synonym in anime['synonyms']:
+                if synonym.lower() == closestNameFromList.lower():
+                    return anime
 
         return None
     except Exception:
@@ -134,7 +135,7 @@ def convertShittyXML(text):
    
 
     #It pains me to write shitty code, but MAL needs to improve their API and I'm sick of not being able to parse shit
-    text = text.replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
+    text = text.replace('&psi;','Ψ').replace('&Eacute;', 'É').replace('&times;', 'x').replace('&rsquo;', "'").replace('&lsquo;', "'").replace('&hellip', '...').replace('&le', '<').replace('<;', '; ').replace('&hearts;', '♥').replace('&mdash;', '-')
     text = text.replace('&eacute;', 'é').replace('&ndash;', '-').replace('&Aacute;', 'Á').replace('&acute;', 'à').replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&Oslash;', 'Ø').replace('&frac12;', '½').replace('&infin;', '∞')
     text = text.replace('&agrave;', 'à').replace('&egrave;', 'è').replace('&dagger;', '†').replace('&sup2;', '²').replace('&#039;', "'")
 
@@ -361,7 +362,7 @@ def getThingById(thingId, thingList):
             
         return None
     except Exception:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 setup()

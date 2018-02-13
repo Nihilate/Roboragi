@@ -107,6 +107,9 @@ def process_comment(comment, is_edit=False):
     comment.body = re.sub(r"\`[{<\[]+(.*?)[}>\]]+\`", "", comment.body)
 
     num_so_far = 0
+
+    numOfRequest = 0
+    numOfExpandedRequest = 0
     
     #This checks for requests. First up we check all known tags for the !stats request
     if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
@@ -126,15 +129,14 @@ def process_comment(comment, is_edit=False):
         #If it's a normal request, build a reply using the data in the braces, add the reply to the relevant array.
 
         #Counts the number of expanded results vs total results. If it's not just a single expanded result, they all get turned into normal requests.
-        numOfRequest = 0
-        numOfExpandedRequest = 0
+        
         forceNormal = False
 
-        for match in re.finditer("\{{2}([^}]*)\}{2}|\<{2}([^>]*)\>{2}", comment.body, re.S):
+        for match in re.finditer("\{{2}([^}]*)\}{2}|\<{2}([^>]*)\>{2}|\]{2}([^]]*)\[{2}", comment.body, re.S):
             numOfRequest += 1
             numOfExpandedRequest += 1
             
-        for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))|(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))", comment.body, re.S):
+        for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))|(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))|(?<=(?<!\])\](?!\())([^\]\[]*)(?=\[(?!\[))", comment.body, re.S):
             numOfRequest += 1
 
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
@@ -297,6 +299,12 @@ def process_comment(comment, is_edit=False):
         commentReply += Config.getSignature(comment.permalink)
 
         commentReply += Reference.get_bling(comment.author.name)
+
+        total_expected = int(numOfRequest)
+        total_found = int(len(animeArray) + len(mangaArray)+ len(lnArray))
+        
+        if total_found != total_expected:
+            commentReply += '&#32;|&#32;('+str(total_found)+'/'+str(total_expected)+')'
 
         if is_edit:
             return commentReply

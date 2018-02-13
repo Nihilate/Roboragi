@@ -34,7 +34,7 @@ def get_closest(results, search_term):
     name_list = []
 
     for result in results:
-      synonyms = [synonym.lower() for synonym in get_synonyms(result)]
+      synonyms = [synonym.lower() for synonym in (get_titles(result) | get_synonyms(result))]
       if synonyms:
           name_list.extend(synonyms)
 
@@ -154,7 +154,11 @@ def parse_light_novel(results):
 
 def get_synonyms(result):
     synonyms = set()
-    synonyms.add(result['title_romaji']) if result['title_romaji'] else None
-    synonyms.add(result['title_english']) if result['title_english'] else None
     synonyms.update(result['synonyms'])
     return synonyms
+
+def get_titles(result):
+    titles = set()
+    titles.add(result['title_romaji']) if result['title_romaji'] else None
+    titles.add(result['title_english']) if result['title_english'] else None
+    return titles

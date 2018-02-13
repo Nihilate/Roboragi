@@ -8,6 +8,7 @@ from os import linesep
 import traceback
 import DatabaseHandler
 import pprint
+import datetime
 
 #Removes the (Source: MAL) or (Written by X) bits from the decriptions in the databases
 def cleanupDescription(desc):    
@@ -52,6 +53,7 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
         
         desc = None
 
+        release_year = None
 
         if ani:
             aniURL = 'http://anilist.co/anime/' + str(ani['id'])
@@ -63,6 +65,13 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
 
             jTitle = ani['title_japanese'] if 'title_japanese' in ani else None
             genres = ani['genres'] if 'genres' in ani else None
+
+            try:
+            	year_str = str(ani['start_date_fuzzy']) if 'start_date_fuzzy' in ani else None
+            	if year_str:
+            		release_year = year_str[:4]
+            except:
+            	pass
 
             episodes = ani['total_episodes'] if 'total_episodes' in ani else None
             if episodes == 0:
@@ -81,6 +90,13 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
                 cType = kit['type'].title() if 'type' in kit else None
+
+            try:
+            	year_str = str(kit['startDate']) if 'startDate' in kit else None
+            	if year_str:
+            		release_year = year_str[:4]
+            except:
+            	pass
 
             if not episodes:
                 episodes = kit['episode_count'] if 'episode_count' in kit else None
@@ -152,6 +168,9 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
 
             if cType:
                 comment += '**' + cType + '** | '
+
+            if release_year:
+            	 comment += '**' + release_year + '** | '
             
             comment += '**Status:** ' + status
 
@@ -187,12 +206,16 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
 
         #----- EPISODE COUNTDOWN -----#
         if (countdown is not None) and (nextEpisode is not None):
+            current_utc_time = datetime.datetime.utcnow()
+            air_time_in_utc = current_utc_time + datetime.timedelta(0,countdown)
+            formatted_time = air_time_in_utc.strftime('%Y%m%dT%H%M')
+
             #countdown is given to us in seconds
             days, countdown = divmod(countdown, 24*60*60)
             hours, countdown = divmod(countdown, 60*60)
             minutes, countdown = divmod(countdown, 60)
-                               
-            comment += '\n\n^(Episode ' + str(nextEpisode) + ' airs in ' + str(days) + ' days, ' + str(hours) + ' hours, ' + str(minutes) + ' minutes)'
+
+            comment += '\n\n^[Episode&#32;' + str(nextEpisode) + '&#32;airs&#32;in&#32;' + str(days) + '&#32;days,&#32;' + str(hours) + '&#32;hours,&#32;' + str(minutes) + '&#32;minutes](https://www.timeanddate.com/worldclock/fixedtime.html?iso='+ formatted_time +')'
 
         #----- DESCRIPTION -----#
         if (isExpanded):
@@ -442,7 +465,7 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
         
         return dictToReturn
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Builds a manga comment from MAL/Anilist/MangaUpdates data
@@ -601,7 +624,7 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
                 if chapters and str(chapters) is not 'Unknown':
                     comment += ' | **Chapters:** ' + str(chapters)
             else:
-                if volumes and tr(volumes) is not 'Unknown':
+                if volumes and str(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
 
             if genres:
@@ -758,5 +781,5 @@ def buildStatsComment(subreddit=None, username=None):
         
         return statComment
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
