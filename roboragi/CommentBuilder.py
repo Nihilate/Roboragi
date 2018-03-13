@@ -67,11 +67,11 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
             genres = ani['genres'] if 'genres' in ani else None
 
             try:
-            	year_str = str(ani['start_date_fuzzy']) if 'start_date_fuzzy' in ani else None
-            	if year_str:
-            		release_year = year_str[:4]
+                year_str = str(ani['start_date_fuzzy']) if 'start_date_fuzzy' in ani else None
+                if year_str:
+                    release_year = year_str[:4]
             except:
-            	pass
+                pass
 
             episodes = ani['total_episodes'] if 'total_episodes' in ani else None
             if episodes == 0:
@@ -92,11 +92,11 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
                 cType = kit['type'].title() if 'type' in kit else None
 
             try:
-            	year_str = str(kit['startDate']) if 'startDate' in kit else None
-            	if year_str:
-            		release_year = year_str[:4]
+                year_str = str(kit['startDate']) if 'startDate' in kit else None
+                if year_str:
+                    release_year = year_str[:4]
             except:
-            	pass
+                pass
 
             if not episodes:
                 episodes = kit['episode_count'] if 'episode_count' in kit else None
@@ -133,7 +133,7 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
         if malURL and mal_english:
             urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ' "' + mal_english + '")')
         elif malURL:
-        	urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ')')
+            urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ')')
 
         if apURL is not None:
             urlComments.append('[A-P](' + sanitise_url_for_markdown(apURL) + ')')
@@ -170,14 +170,12 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
                 comment += '**' + cType + '** | '
 
             if release_year:
-            	 comment += '**' + release_year + '** | '
+                 comment += '**' + release_year + '** | '
             
             comment += '**Status:** ' + status
 
             if cType != 'Movie' and episodes:
                 comment += ' | **Episodes:** ' + str(episodes)
-
-            comment += ' | **Genres:** '
         else:
             comment += '\n\n^('
 
@@ -189,15 +187,16 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
             if cType != 'Movie' and episodes:
                 comment += ' | Episodes: ' + str(episodes)
 
-            comment += ' | Genres: '
+        if genres:
+            if (isExpanded):
+                comment += ' | **Genres:** '
+            else:
+                comment += ' | Genres: '
 
-        if not (genres == []):
             for i, genre in enumerate(genres):
                 if i is not 0:
                     comment += ', '
                 comment += genre
-        else:
-            comment += 'None'
             
         if (isExpanded) and (stats is not None):
             comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
@@ -347,14 +346,14 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
         urlComments = []
         
         try:
-        	mal_english = mal['english']
+            mal_english = mal['english']
         except:
-        	pass
+            pass
         
         if malURL and mal_english:
             urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ' "' + mal_english + '")')
         elif malURL:
-        	urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ')')
+            urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ')')
 
         if apURL is not None:
             urlComments.append('[A-P](' + sanitise_url_for_markdown(apURL) + ')')
@@ -404,9 +403,6 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
             else:
                 if volumes and str(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
-
-            if genres:
-                comment += ' | **Genres:** '
         else:
             comment += '\n\n^('
 
@@ -427,10 +423,12 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
                 if volumes and str(volumes) is not 'Unknown':
                     comment += ' | Volumes: ' + str(volumes)
 
-            if genres:
+        if genres:
+            if (isExpanded):
+                comment += ' | **Genres:** '
+            else:
                 comment += ' | Genres: '
 
-        if genres:
             for i, genre in enumerate(genres):
                 if i is not 0:
                     comment += ', '
@@ -496,7 +494,7 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
 
             title = ani['title_romaji'] if 'title_romaji' in ani else ani['title_english']
             desc = ani['description'] if 'description' in ani else None
-            status = ani['publishing_status'].title() if 'publishing_status' in ani else None
+            status = ani['publishing_status'].title() if 'publishing_status' in ani and ani['publishing_status'] else None
             cType = ani['type'] if 'type' in ani else None
 
             jTitle = ani['title_japanese'] if 'title_japanese' in ani else None
@@ -569,15 +567,15 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
         urlComments = []
         
         try:
-        	mal_english = mal['english']
+            mal_english = mal['english']
         except:
-        	pass
+            pass
         
         if malURL and mal_english:
             urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ' "' + mal_english + '")')
         elif malURL:
-        	urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ')')
-        	
+            urlComments.append('[MAL](' + sanitise_url_for_markdown(malURL) + ')')
+            
         if aniURL is not None:
             urlComments.append('[AL](' + sanitise_url_for_markdown(aniURL) + ')')
         if kitURL is not None:
@@ -626,9 +624,6 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
             else:
                 if volumes and str(volumes) is not 'Unknown':
                     comment += ' | **Volumes:** ' + str(volumes)
-
-            if genres:
-                comment += ' | **Genres:** '
         else:
             comment += '\n\n^('
 
@@ -649,10 +644,12 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
                 if volumes and str(volumes) is not 'Unknown':
                     comment += ' | Volumes: ' + str(volumes)
 
-            if genres:
+        if genres:
+            if (isExpanded):
+                comment += ' | **Genres:** '
+            else:
                 comment += ' | Genres: '
 
-        if genres:
             for i, genre in enumerate(genres):
                 if i is not 0:
                     comment += ', '
@@ -691,7 +688,7 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
         return None
 
 def sanitise_url_for_markdown(url):
-	return url.replace('(', '\(').replace(')', '\)')
+    return url.replace('(', '\(').replace(')', '\)')
 
 #Builds a stats comment
 def buildStatsComment(subreddit=None, username=None):

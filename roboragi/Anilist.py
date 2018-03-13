@@ -8,28 +8,137 @@ import difflib
 import traceback
 import pprint
 
-ANICLIENT = ''
-ANISECRET = ''
-
 req = requests.Session()
 
-try:
-    import Config
-    ANICLIENT = Config.aniclient
-    ANISECRET = Config.anisecret
-except ImportError:
-    pass
+uri = 'https://graphql.anilist.co'
 
-access_token = ''
+search_query = '''query ($search: String, $type: MediaType) {
+  Page {
+    media(search: $search, type: $type) {
+      id
+      title {
+        romaji
+        english
+        native
+      }
+      type
+      status
+      format
+      episodes
+      chapters
+      volumes
+      description
+      startDate {
+          year
+          month
+          day
+      }
+      endDate {
+          year
+          month
+          day
+      }
+      genres
+      synonyms
+      nextAiringEpisode {
+        airingAt
+        timeUntilAiring
+        episode
+      }
+    }
+  }
+}'''
 
-escape_table = {
-     "&": " ",
-     "\'": "\\'",
-     '\"': '\\"',
-     '/': ' ',
-     '-': ' '
-     #'!': '\!'
-     }
+id_query = '''query ($id: Int) {
+  Page {
+    media(id: $id) {
+      id
+      title {
+        romaji
+        english
+        native
+      }
+      type
+      status
+      format
+      episodes
+      chapters
+      volumes
+      description
+      startDate {
+          year
+          month
+          day
+      }
+      endDate {
+          year
+          month
+          day
+      }
+      genres
+      synonyms
+      nextAiringEpisode {
+        airingAt
+        timeUntilAiring
+        episode
+      }
+    }
+  }
+}'''
+
+def morph_to_v1(raw):
+    raw_results = raw["data"]["Page"]["media"]
+    morphed_results = []
+
+    for raw_result in raw_results:
+        try:
+            morphed = {}
+            morphed["id"] = raw_result["id"]
+            morphed["title_romaji"] = raw_result["title"]["romaji"]
+            morphed["title_english"] = raw_result["title"]["english"]
+            morphed["title_japanese"] = raw_result["title"]["native"]
+            morphed["type"] = map_media_format(raw_result["format"])
+            morphed["start_date_fuzzy"] = raw_result["startDate"]["year"]
+            morphed["end_date_fuzzy"] = raw_result["endDate"]["year"]
+            morphed["description"] = raw_result["description"]
+            morphed["genres"] = raw_result["genres"]
+            morphed["synonyms"] = raw_result["synonyms"]
+            morphed["total_episodes"] = raw_result["episodes"]
+            morphed["total_chapters"] = raw_result["chapters"]
+            morphed["total_volumes"] = raw_result["volumes"]
+            morphed["airing_status"] = map_media_status(raw_result["status"])
+            morphed["publishing_status"] = map_media_status(raw_result["status"])
+            morphed["airing"] = { "countdown": raw_result["nextAiringEpisode"]["timeUntilAiring"], "next_episode": raw_result["nextAiringEpisode"]["episode"] } if raw_result["nextAiringEpisode"] else None
+
+            morphed_results.append(morphed)
+        except Exception as e:
+            print(e)
+    
+    return morphed_results
+
+def map_media_format(media_format):
+    mapped_formats = {
+        'TV': 'TV',
+        'TV_SHORT': 'TV Short',
+        'MOVIE': 'Movie',
+        'SPECIAL': 'Special',
+        'OVA': 'OVA',
+        'ONA': 'ONA',
+        'MUSIC': 'Music',
+        'MANGA': 'Manga',
+        'NOVEL': 'Novel',
+        'ONE_SHOT': 'One Shot',
+        }
+    return mapped_formats[media_format]
+
+def map_media_status(media_status):
+    mapped_status = {
+        'FINISHED': 'Finished',
+        'RELEASING': 'Releasing',
+        'NOT_YET_RELEASED': 'Not Yet Released',
+        'CANCELLED': 'Special'
+        }
+    return mapped_status[media_status]
 
 #Anilist's database doesn't like weird symbols when searching it, so you have to escape or replace a bunch of stuff.
 def escape(text):
@@ -45,37 +154,50 @@ def getTitles(request):
     titles.append(request['title_english']) if request['title_english'] else None
     titles.append(request['title_romaji']) if request['title_romaji'] else None
     return titles
-    
-#Sets up the connection to Anilist. You need a token to get stuff from them, which expires every hour.
-def setup():
+
+def detailsBySearch(searchText, mediaType):
     try:
-        request = req.post('https://anilist.co/api/auth/access_token', params={'grant_type':'client_credentials', 'client_id':ANICLIENT, 'client_secret':ANISECRET})
-        req.close()
+        search_variables = {
+            'search': searchText,
+            'type': mediaType
+        }
         
-        global access_token
-        access_token = request.json()['access_token']
-    except Exception as e:
+        request = req.post(uri, json={ 'query': search_query, 'variables': search_variables})
         req.close()
-        print('Error getting Anilist token')
+
+        return morph_to_v1(request.json())
+            
+    except Exception as e:
+        traceback.print_exc()
+        req.close()
+        return None
+
+def detailsById(idToFind):
+    try:
+        id_variables = {
+            'id': int(idToFind)
+        } 
+        
+        request = req.post(uri, json={ 'query': id_query, 'variables': id_variables})
+        req.close()
+
+        return morph_to_v1(request.json())[0]
+            
+    except Exception as e:
+        traceback.print_exc()
+        req.close()
+        return None
 
 #Returns the closest anime (as a Json-like object) it can find using the given searchtext
 def getAnimeDetails(searchText):
     try:
-        sanitised_search_text = escape(searchText)
-        
-        request = req.get("https://anilist.co/api/anime/search/" + sanitised_search_text, params={'access_token':access_token}, timeout=10)
-        req.close()
-        
-        if request.status_code != 200:
-            setup()
-            request = req.get("https://anilist.co/api/anime/search/" + sanitised_search_text, params={'access_token':access_token}, timeout=10)
-            req.close()
+        results = detailsBySearch(searchText, 'ANIME')
         
         #Of the given list of shows, we try to find the one we think is closest to our search term
-        closest_anime = getClosestAnime(searchText, request.json())
+        closest_anime = getClosestAnime(searchText, results)
 
         if closest_anime:
-            return getFullAnimeDetails(closest_anime['id'])
+            return closest_anime
         else:
             return None
             
@@ -87,34 +209,9 @@ def getAnimeDetails(searchText):
 #Returns the anime details based on an id
 def getAnimeDetailsById(animeID):
     try:
-        return getFullAnimeDetails(animeID)
+        return detailsById(animeID)
     except Exception as e:
         return None
-
-#Gets the "full" anime details (which aren't displayed when we search using the basic function). Gives us cool data like time until the next episode is aired.
-def getFullAnimeDetails(animeID):
-     try:
-        request = req.get("https://anilist.co/api/anime/" + str(animeID), params={'access_token':access_token}, timeout=10)
-        req.close()
-
-        if request.status_code != 200:
-            setup()
-            request = req.get("https://anilist.co/api/anime/" + str(animeID), params={'access_token':access_token}, timeout=10)
-            req.close()
-        
-        if request.status_code == 200:
-            anime = request.json()
-
-            anime['genres'] = [genre for genre in anime['genres'] if genre]
-            anime['synonyms'] = [synonym for synonym in anime['synonyms'] if synonym]
-
-            return anime
-        else:
-            return None
-     except Exception as e:
-          #traceback.print_exc()
-          req.close()
-          return None
 
 #Given a list, it finds the closest anime series it can.
 def getClosestAnime(searchText, animeList):
@@ -152,100 +249,30 @@ def getClosestAnime(searchText, animeList):
         #traceback.print_exc()
         return None
 
-#Makes a search for a manga series using a specific author
-def getMangaWithAuthor(searchText, authorName):
-    try:
-        request = req.get("https://anilist.co/api/manga/search/" + searchText, params={'access_token':access_token}, timeout=10)
-        req.close()
-        
-        if request.status_code != 200:
-            setup()
-            request = req.get("https://anilist.co/api/manga/search/" + searchText, params={'access_token':access_token}, timeout=10)
-            req.close()
-        
-        closestManga = getListOfCloseManga(searchText, request.json())
-        fullMangaList = []
-
-        for manga in closestManga:
-            try:
-                fullManga = req.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token}, timeout=10)
-                req.close()
-
-                if fullManga.status_code != 200:
-                    setup()
-                    fullManga = req.get("https://anilist.co/api/manga/" + str(manga['id']) + "/staff", params={'access_token':access_token}, timeout=10)
-                    req.close()
-
-                fullMangaList.append(fullManga.json())
-            except:
-                req.close()
-                pass
-
-        potentialHits = []
-        for manga in fullMangaList:
-            for staff in manga['staff']:
-                isRightName = True
-                fullStaffName = staff['name_first'] + ' ' + staff['name_last']
-                authorNamesSplit = authorName.split(' ')
-
-                for name in authorNamesSplit:
-                    if not (name.lower() in fullStaffName.lower()):
-                        isRightName = False
-
-                if isRightName:
-                    potentialHits.append(manga)
-
-        if potentialHits:
-            return getClosestManga(searchText, potentialHits)
-
-        return None
-        
-    except Exception as e:
-        req.close()
-        traceback.print_exc()
-        return None
-
 def getLightNovelDetails(searchText):
     return getMangaDetails(searchText, True)
 
 #Returns the closest manga series given a specific search term
 def getMangaDetails(searchText, isLN=False):
     try:       
-        request = req.get("https://anilist.co/api/manga/search/" + searchText, params={'access_token':access_token}, timeout=10)
-        req.close()
+        results = detailsBySearch(searchText, 'MANGA')
         
-        if request.status_code != 200:
-            setup()
-            request = req.get("https://anilist.co/api/manga/search/" + searchText, params={'access_token':access_token}, timeout=10)
-            req.close()
-        
-        closestManga = getClosestManga(searchText, request.json(), isLN)
+        closestManga = getClosestManga(searchText, results, isLN)
 
-        if (closestManga is not None):
-            response = req.get("https://anilist.co/api/manga/" + str(closestManga['id']), params={'access_token':access_token}, timeout=10)
-            req.close()
-            json = response.json()
-
-            json['genres'] = [genre for genre in json['genres'] if genre]
-            json['synonyms'] = [synonym for synonym in json['synonyms'] if synonym]
-
-            return json
+        if closestManga:
+            return closestManga
         else:
             return None
         
     except Exception as e:
         #traceback.print_exc()
-        req.close()
         return None
 
 #Returns the closest manga series given an id
 def getMangaDetailsById(mangaId):
     try:
-        response = req.get("https://anilist.co/api/manga/" + str(mangaId), params={'access_token':access_token}, timeout=10)
-        req.close()
-        return response.json()
+        return detailsById(mangaId)
     except Exception as e:
-        req.close()
         return None
 
 #Used to determine the closest manga to a given search term in a list
@@ -274,7 +301,7 @@ def getListOfCloseManga(searchText, mangaList):
                         break
         return returnList
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         return None
 
 #Used to determine the closest manga to a given search term in a list
@@ -311,5 +338,3 @@ def getClosestManga(searchText, mangaList, isLN=False):
     except Exception as e:
         #traceback.print_exc()
         return None
-
-setup()
