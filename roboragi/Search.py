@@ -11,6 +11,7 @@ import Anilist
 import MU
 import NU
 import LNDB
+from VNDB import VNDB
 
 import CommentBuilder
 import DatabaseHandler
@@ -178,7 +179,11 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildMangaComment(isExpanded, mal['result'], ani['result'], mu['result'], ap['result'], kit['result'])
+        if mal['result'] or ani['result'] or kit['result']:
+            return CommentBuilder.buildMangaComment(isExpanded, mal['result'], ani['result'], mu['result'], ap['result'], kit['result'])
+        else:
+            print('No result found for ' + searchText)
+            return None
 
     except Exception as e:
         traceback.print_exc()
@@ -341,7 +346,11 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], ani['result'], ap['result'], adb['result'], kit['result'])
+        if mal['result'] or ani['result'] or kit['result']:
+            return CommentBuilder.buildAnimeComment(isExpanded, mal['result'], ani['result'], ap['result'], adb['result'], kit['result'])
+        else:
+            print('No result found for ' + searchText)
+            return None
 
     except Exception as e:
         traceback.print_exc()
@@ -471,7 +480,57 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                 traceback.print_exc()
                 pass
         
-        return CommentBuilder.buildLightNovelComment(isExpanded, mal['result'], ani['result'], nu['result'], lndb['result'], kit['result'])
+        if mal['result'] or ani['result'] or kit['result']:
+            return CommentBuilder.buildLightNovelComment(isExpanded, mal['result'], ani['result'], nu['result'], lndb['result'], kit['result'])
+        else:
+            print('No result found for ' + searchText)
+            return None
+
+    except Exception as e:
+        traceback.print_exc()
+        return None
+
+#Builds an VN reply from VNDB
+def buildVisualNovelReply(searchText, isExpanded, baseComment, blockTracking=False):
+    try:
+        vndb = VNDB()
+        
+        try:
+            sqlCur.execute('SELECT dbLinks FROM synonyms WHERE type = "VN" and lower(name) = ?', [searchText.lower()])
+        except sqlite3.Error as e:
+            print(e)
+
+        alternateLinks = sqlCur.fetchone()
+
+        if (alternateLinks):
+            synonym = json.loads(alternateLinks[0])
+
+            if synonym:
+                vndbsyn = None
+                if 'vndb' in synonym and synonym['vndb']:
+                    synonym = synonym['vndb']
+
+                result = vndb.getVisualNovelDetailsById(synonym) if synonym else None
+                
+        else:
+            result = vndb.getVisualNovelDetails(searchText)
+
+        vndb.close()
+
+        if result:
+            try:
+                titleToAdd = result['title']
+
+                if (str(baseComment.subreddit).lower is not 'nihilate') and (str(baseComment.subreddit).lower is not 'roboragi') and not blockTracking:
+                    DatabaseHandler.addRequest(titleToAdd, 'VN', baseComment.author.name, baseComment.subreddit)
+            except:
+                traceback.print_exc()
+                pass
+
+            return CommentBuilder.buildVisualNovelComment(isExpanded, result)
+        else:
+            print('No result found for ' + searchText)
+            return None
 
     except Exception as e:
         traceback.print_exc()

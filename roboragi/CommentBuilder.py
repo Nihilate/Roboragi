@@ -12,14 +12,22 @@ import datetime
 
 #Removes the (Source: MAL) or (Written by X) bits from the decriptions in the databases
 def cleanupDescription(desc):    
-    for match in re.finditer("([\[\<\(](.*?)[\]\>\)])", desc, re.S):
+    for match in re.finditer("([\[\<\(](.*)[\]\>\)])", desc, re.S):
         if 'ource' in match.group(1).lower():
             desc = desc.replace(match.group(1), '')
         if 'MAL' in match.group(1):
             desc = desc.replace(match.group(1), '')
+        if '[From' in match.group(1):
+            desc = desc.replace(match.group(1), '')
+        if 'taken from' in match.group(1):
+            desc = desc.replace(match.group(1), '')
 
     for match in re.finditer("([\<](.*?)[\>])", desc, re.S):
         if 'br' in match.group(1).lower():
+            desc = desc.replace(match.group(1), '')
+        if 'i' == match.group(1).lower():
+            desc = desc.replace(match.group(1), '')
+        if 'b' == match.group(1).lower():
             desc = desc.replace(match.group(1), '')
         
     reply = ''
@@ -197,11 +205,12 @@ def buildAnimeComment(isExpanded, mal, ani, ap, anidb, kit):
                 if i is not 0:
                     comment += ', '
                 comment += genre
+
+        comment += ')'
             
         if (isExpanded) and (stats is not None):
-            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
-        else:
-            comment += ')'
+            comment += '  \n^(**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddits - ' + str(round(stats['totalAsPercentage'],3)) + '% of all requests)'
+
 
         #----- EPISODE COUNTDOWN -----#
         if (countdown is not None) and (nextEpisode is not None):
@@ -433,11 +442,12 @@ def buildMangaComment(isExpanded, mal, ani, mu, ap, kit):
                 if i is not 0:
                     comment += ', '
                 comment += genre
+
+        comment += ')'
             
         if (isExpanded) and (stats is not None):
-            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
-        else:
-            comment += ')'
+            comment += '  \n^(**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddits - ' + str(round(stats['totalAsPercentage'],3)) + '% of all requests)'
+            
 
         #----- DESCRIPTION -----#
         if (isExpanded):
@@ -654,11 +664,11 @@ def buildLightNovelComment(isExpanded, mal, ani, nu, lndb, kit):
                 if i is not 0:
                     comment += ', '
                 comment += genre
-            
+
+        comment += ')'
+        
         if (isExpanded) and (stats is not None):
-            comment += '  \n**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
-        else:
-            comment += ')'
+            comment += '  \n^(**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddits - ' + str(round(stats['totalAsPercentage'],3)) + '% of all requests)'
 
         #----- DESCRIPTION -----#
         if (isExpanded):
@@ -779,4 +789,64 @@ def buildStatsComment(subreddit=None, username=None):
         return statComment
     except:
         #traceback.print_exc()
+        return None
+
+#Builds an anime comment from MAL/HB/Anilist data
+def buildVisualNovelComment(isExpanded, vndb):
+    try:
+        comment = ''
+
+        urls = []
+        if vndb['url']:
+            urls.append('[VNDB]({0})'.format(vndb['url']))
+        if vndb['wikipedia_url']:
+            urls.append('[Wiki]({0})'.format(vndb['wikipedia_url']))
+
+        formatted_links = ''
+        for i, link in enumerate(urls):
+            if i is not 0:
+                formatted_links += ', '
+            formatted_links += link
+
+        if not isExpanded:
+            template = '**{title}** - {links}\n\n^({type}{released}{length})'
+            formatted = template.format(title=vndb['title'],
+                links='({})'.format(formatted_links),
+                type='VN',
+                released = ' | Released: ' + vndb['release_year'] if vndb['release_year'] else '',
+                length = ' | Length: ' + vndb['length'] if vndb['length'] else '')
+
+            comment = formatted
+        else:
+            stats = DatabaseHandler.getRequestStats(vndb['title'],'VN')
+            if stats:
+                formatted_stats = '**Stats:** ' + str(stats['total']) + ' requests across ' + str(stats['uniqueSubreddits']) + ' subreddit(s)^) ^- ^' + str(round(stats['totalAsPercentage'],3)) + '% ^of ^all ^requests'
+            else:
+                formatted_stats = None
+
+            template = '**{title}** - {links}\n\n^({type}{released}{length}){stats}\n\n{desc}'
+            formatted = template.format(title=vndb['title'],
+                links='({})'.format(formatted_links),
+                type='**VN**',
+                released = ' | **Released:** ' + vndb['release_year'] if vndb['release_year'] else '',
+                length = ' | **Length:** ' + vndb['length'] if vndb['length'] else '',
+                stats = '  \n^(' + formatted_stats if formatted_stats else '',
+                desc=cleanupDescription(vndb['description']))
+
+            comment = formatted
+
+        #----- END -----#
+        receipt = '(VN) Request successful: ' + vndb['title'] + ' - '
+        if vndb:
+            receipt += 'VNDB'
+        print(receipt)
+
+        #We return the title/comment separately so we can track if multiples of the same comment have been requests (e.g. {Nisekoi}{Nisekoi}{Nisekoi})
+        dictToReturn = {}
+        dictToReturn['title'] = vndb['title']
+        dictToReturn['comment'] = comment
+
+        return dictToReturn
+    except:
+        traceback.print_exc()
         return None

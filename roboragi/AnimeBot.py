@@ -48,11 +48,31 @@ def setupReddit():
     except Exception as e:
         print('Error with setting up Reddit: ' + str(e))
 
+def get_regular_regex(left_brace_character, right_brace_character):
+    return '(?<=(?<!\S)\{0})([^\{0}\{1}]+?)(?=\{1}(?!\())'.format(left_brace_character, right_brace_character)
+    
+def get_expanded_regex(left_brace_character, right_brace_character):
+    return '\{0}{{2}}(.+?)\{1}{{2}}'.format(left_brace_character, right_brace_character)
+
+def get_regular_requests(comment, left_brace_character, right_brace_character):
+    for request in get_requests(comment, get_regular_regex(left_brace_character, right_brace_character)):
+        yield request
+
+def get_expanded_requests(comment, left_brace_character, right_brace_character):
+    for request in get_requests(comment, get_expanded_regex(left_brace_character, right_brace_character)):
+        yield request
+
+def get_requests(comment, regex):
+    for match in re.finditer(regex, comment, re.M):
+        matched_text = match.group(1)
+        if not re.match(r'\s', matched_text) and not re.match(r'^.+\s$', matched_text):
+            yield matched_text
+
 #function for processing edit requests via pm
 def process_pms():
     for msg in reddit.get_unread(limit=None):
         if ((msg.subject == 'username mention') or (msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower())):
-            if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body):
+            if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body) or (('|' and '|') in msg.body):
                 try:
                     if str(msg.subreddit).lower() in exiled:
                         #print('Edit request from exiled subreddit: ' + str(msg.subreddit) + '\n')
@@ -102,6 +122,7 @@ def process_comment(comment, is_edit=False):
     animeArray = []
     mangaArray = []
     lnArray = []
+    vnArray = []
 
     #ignores all "code" markup (i.e. anything between backticks)
     comment.body = re.sub(r"\`[{<\[]+(.*?)[}>\]]+\`", "", comment.body)
@@ -132,11 +153,11 @@ def process_comment(comment, is_edit=False):
         
         forceNormal = False
 
-        for match in re.finditer("\{{2}([^}]*)\}{2}|\<{2}([^>]*)\>{2}|\]{2}([^]]*)\[{2}", comment.body, re.S):
+        for match in re.finditer('(' + get_expanded_regex('{','}') + ')|(' + get_expanded_regex('<','>') + ')|(' + get_expanded_regex(']','[') + ')|(' + get_expanded_regex('|','|') + ')', comment.body, re.M):
             numOfRequest += 1
             numOfExpandedRequest += 1
             
-        for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))|(?<=(?<!\<)\<)([^\<\>]*)(?=\>(?!\>))|(?<=(?<!\])\](?!\())([^\]\[]*)(?=\[(?!\[))", comment.body, re.S):
+        for match in re.finditer('(' + get_regular_regex('{','}') + ')|(' + get_regular_regex('<','>') + ')|(' + get_regular_regex(']','[') + ')|(' + get_regular_regex('|','|') + ')', comment.body, re.M):
             numOfRequest += 1
 
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
@@ -150,23 +171,23 @@ def process_comment(comment, is_edit=False):
         #else:
 
         #Expanded Anime
-        for match in re.finditer("\{{2}([^}]*)\}{2}", comment.body, re.S):
+        for match in get_expanded_requests(comment.body, '{', '}'):
             if num_so_far < 30:
                 reply = ''
 
                 if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildAnimeReply(match.group(1), False, comment)
+                    reply = Search.buildAnimeReply(match, False, comment)
                 else:
-                    reply = Search.buildAnimeReply(match.group(1), True, comment)                    
+                    reply = Search.buildAnimeReply(match, True, comment)                    
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
                     animeArray.append(reply)
 
         #Normal Anime  
-        for match in re.finditer("(?<=(?<!\{)\{)([^\{\}]*)(?=\}(?!\}))", comment.body, re.S):
+        for match in get_regular_requests(comment.body, '{', '}'):
             if num_so_far < 30:
-                reply = Search.buildAnimeReply(match.group(1), False, comment)
+                reply = Search.buildAnimeReply(match, False, comment)
                 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
@@ -174,14 +195,14 @@ def process_comment(comment, is_edit=False):
 
         #Expanded Manga
         #NORMAL EXPANDED
-        for match in re.finditer("\<{2}([^>]*)\>{2}(?!(:|\>))", comment.body, re.S):
+        for match in get_expanded_requests(comment.body, '<', '>'):
             if num_so_far < 30:
                 reply = ''
                 
                 if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildMangaReply(match.group(1), False, comment)
+                    reply = Search.buildMangaReply(match, False, comment)
                 else:
-                    reply = Search.buildMangaReply(match.group(1), True, comment)
+                    reply = Search.buildMangaReply(match, True, comment)
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
@@ -189,36 +210,59 @@ def process_comment(comment, is_edit=False):
 
         #Normal Manga
         #NORMAL
-        for match in re.finditer("(?<=(?<!\<)\<)([^\<\>]+)\>(?!(:|\>))", comment.body, re.S):
+        for match in get_regular_requests(comment.body, '<', '>'):
             if num_so_far < 30:
-                reply = Search.buildMangaReply(match.group(1), False, comment)
+                reply = Search.buildMangaReply(match, False, comment)
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
                     mangaArray.append(reply)
 
         #Expanded LN
-        for match in re.finditer("\]{2}([^]]*)\[{2}", comment.body, re.S):
+        for match in get_expanded_requests(comment.body, ']', '['):
             if num_so_far < 30:
                 reply = ''
 
                 if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildLightNovelReply(match.group(1), False, comment)
+                    reply = Search.buildLightNovelReply(match, False, comment)
                 else:
-                    reply = Search.buildLightNovelReply(match.group(1), True, comment)                    
+                    reply = Search.buildLightNovelReply(match, True, comment)                    
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
                     lnArray.append(reply)
 
         #Normal LN  
-        for match in re.finditer("(?<=(?<!\])\](?!\())([^\]\[]*)(?=\[(?!\[))", comment.body, re.S):
+        for match in get_regular_requests(comment.body, ']', '['):
             if num_so_far < 30:
-                reply = Search.buildLightNovelReply(match.group(1), False, comment)
+                reply = Search.buildLightNovelReply(match, False, comment)
                 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
                     lnArray.append(reply)
+
+        #Expanded VN
+        for match in get_expanded_requests(comment.body, '|', '|'):
+            if num_so_far < 30:
+                reply = ''
+
+                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
+                    reply = Search.buildVisualNovelReply(match, False, comment)
+                else:
+                    reply = Search.buildVisualNovelReply(match, True, comment)                    
+
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    vnArray.append(reply)
+
+        #Normal VN  
+        for match in get_regular_requests(comment.body, '|', '|'):
+            if num_so_far < 30:
+                reply = Search.buildVisualNovelReply(match, False, comment)
+                
+                if (reply is not None):
+                    num_so_far = num_so_far + 1
+                    vnArray.append(reply)
         
         #Here is where we create the final reply to be posted
 
@@ -226,6 +270,7 @@ def process_comment(comment, is_edit=False):
         postedAnimeTitles = []
         postedMangaTitles = []
         postedLNTitles = []
+        postedVNTitles = []
 
         #Adding all the anime to the final comment. If there's manga too we split up all the paragraphs and indent them in Reddit markup by adding a '>', then recombine them
         for i, animeReply in enumerate(animeArray):
@@ -261,8 +306,17 @@ def process_comment(comment, is_edit=False):
                 postedLNTitles.append(lnReply['title'])
                 commentReply += lnReply['comment']
 
+        #Adding all the manga to the final comment
+        for i, vnReply in enumerate(vnArray):
+            if not (i is 0):
+                commentReply += '\n\n'
+            
+            if not (vnReply['title'] in postedVNTitles):
+                postedVNTitles.append(vnReply['title'])
+                commentReply += vnReply['comment']
+
         #If there are more than 10 requests, shorten them all 
-        if not (commentReply is '') and (len(animeArray) + len(mangaArray)+ len(lnArray) >= 10):
+        if not (commentReply is '') and (len(animeArray) + len(mangaArray)+ len(lnArray) + len(vnArray) >= 10):
             commentReply = re.sub(r"\^\((.*?)\)", "", commentReply, flags=re.M)
 
     #If there was actually something found, add the signature and post the comment to Reddit. Then, add the comment to the "already seen" database.
@@ -278,7 +332,7 @@ def process_comment(comment, is_edit=False):
         commentReply += Reference.get_bling(comment.author.name)
 
         total_expected = int(numOfRequest)
-        total_found = int(len(animeArray) + len(mangaArray)+ len(lnArray))
+        total_found = int(len(animeArray) + len(mangaArray)+ len(lnArray) + len(vnArray))
         
         if total_found != total_expected:
             commentReply += '&#32;|&#32;('+str(total_found)+'/'+str(total_expected)+')'
@@ -310,7 +364,6 @@ def process_comment(comment, is_edit=False):
                 DatabaseHandler.addComment(comment.id, comment_author, comment.subreddit, False)
         except:
             traceback.print_exc()
-    
 
 #The main function
 def start():

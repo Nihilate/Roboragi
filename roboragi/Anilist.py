@@ -202,7 +202,7 @@ def getAnimeDetails(searchText):
             return None
             
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         req.close()
         return None
 
@@ -222,31 +222,37 @@ def getClosestAnime(searchText, animeList):
         #For each anime series, add all the titles/synonyms to an array and do a fuzzy string search to find the one closest to our search text.
         #We also fill out an array that doesn't contain the synonyms. This is to protect against shows with multiple adaptations and similar synonyms (e.g. Haiyore Nyaruko-San)
         for anime in animeList:
-            if 'title_english' in anime:
+            if 'title_english' in anime and anime['title_english']:
                 animeNameList.append(anime['title_english'].lower())
                 animeNameListNoSyn.append(anime['title_english'].lower())
 
-            if 'title_romaji' in anime:
+            if 'title_romaji' in anime and anime['title_romaji']:
                 animeNameList.append(anime['title_romaji'].lower())
                 animeNameListNoSyn.append(anime['title_romaji'].lower())
 
-            if 'synonyms' in anime:
+            if 'synonyms' in anime and anime['synonyms']:
                 for synonym in anime['synonyms']:
                      animeNameList.append(synonym.lower())
         
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.95)[0]
+        try:
+            closestNameFromList = difflib.get_close_matches(searchText.lower(), animeNameList, 1, 0.95)[0]
+        except:
+            closestNameFromList = None
         
-        for anime in animeList:
-            if (anime['title_english'].lower() == closestNameFromList.lower()) or (anime['title_romaji'].lower() == closestNameFromList.lower()):
-                return anime
-            else:
-                for synonym in anime['synonyms']:
-                    if (synonym.lower() == closestNameFromList.lower()) and (synonym.lower() not in animeNameListNoSyn):
-                        return anime
+        if closestNameFromList:
+            for anime in animeList: 
+                if anime['title_english'] and anime['title_english'].lower() == closestNameFromList.lower():
+                    return anime
+                elif anime['title_romaji'] and anime['title_romaji'].lower() == closestNameFromList.lower():
+                    return anime
+                else:
+                    for synonym in anime['synonyms']:
+                        if (synonym.lower() == closestNameFromList.lower()) and (synonym.lower() not in animeNameListNoSyn):
+                            return anime
 
         return None
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
 
 def getLightNovelDetails(searchText):
@@ -290,9 +296,9 @@ def getListOfCloseManga(searchText, mangaList):
             if (alreadyExists):
                 continue
             
-            if round(difflib.SequenceMatcher(lambda x: x == "", manga['title_english'].lower(), searchText.lower()).ratio(), 3) >= ratio:
+            if manga['title_english'] and round(difflib.SequenceMatcher(lambda x: x == "", manga['title_english'].lower(), searchText.lower()).ratio(), 3) >= ratio:
                 returnList.append(manga)
-            elif round(difflib.SequenceMatcher(lambda x: x == "", manga['title_romaji'].lower(), searchText.lower()).ratio(), 3) >= ratio:
+            elif manga['title_romaji'] and round(difflib.SequenceMatcher(lambda x: x == "", manga['title_romaji'].lower(), searchText.lower()).ratio(), 3) >= ratio:
                 returnList.append(manga)
             elif not (manga['synonyms'] is None):
                 for synonym in manga['synonyms']:
@@ -301,7 +307,7 @@ def getListOfCloseManga(searchText, mangaList):
                         break
         return returnList
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
 
 #Used to determine the closest manga to a given search term in a list
@@ -316,25 +322,31 @@ def getClosestManga(searchText, mangaList, isLN=False):
                 mangaList.remove(manga)
         
         for manga in mangaList:
-            mangaNameList.append(manga['title_english'].lower())
-            mangaNameList.append(manga['title_romaji'].lower())
+            mangaNameList.append(manga['title_english'].lower()) if manga['title_english'] else None
+            mangaNameList.append(manga['title_romaji'].lower()) if manga['title_romaji'] else None
 
             for synonym in manga['synonyms']:
                  mangaNameList.append(synonym.lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.90)[0]
+        try:
+            closestNameFromList = difflib.get_close_matches(searchText.lower(), mangaNameList, 1, 0.90)[0]
+        except:
+            closestNameFromList = None
         
-        for manga in mangaList:
-            if not ('one shot' in manga['type'].lower()):
-                if (manga['title_english'].lower() == closestNameFromList.lower()) or (manga['title_romaji'].lower() == closestNameFromList.lower()):
-                    return manga
+        if closestNameFromList:
+            for manga in mangaList:
+                if not ('one shot' in manga['type'].lower()):
+                    if manga['title_english'] and (manga['title_english'].lower() == closestNameFromList.lower()):
+                        return manga
+                    if manga['title_romaji'] and (manga['title_romaji'].lower() == closestNameFromList.lower()):
+                        return manga
 
-        for manga in mangaList:                
-            for synonym in manga['synonyms']:
-                if synonym.lower() == closestNameFromList.lower():
-                    return manga
+            for manga in mangaList:                
+                for synonym in manga['synonyms']:
+                    if synonym.lower() == closestNameFromList.lower():
+                        return manga
 
         return None
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         return None
