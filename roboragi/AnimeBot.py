@@ -77,8 +77,8 @@ def get_requests(comment, regex):
             yield matched_text
 
 
-# function for processing edit requests via pm
 def process_pms():
+    """ function for processing edit requests via pm """
     for msg in reddit.get_unread(limit=None):
         if ((msg.subject == 'username mention') or (msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower())):
             if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body) or (('|' and '|') in msg.body):
@@ -131,8 +131,8 @@ def process_pms():
                     print(e)
 
 
-# process dat comment
 def process_comment(comment, is_edit=False):
+    """ process dat comment """
     # Anime/Manga requests that are found go into separate arrays
     animeArray = []
     mangaArray = []
@@ -398,8 +398,8 @@ def process_comment(comment, is_edit=False):
             traceback.print_exc()
 
 
-# The main function
 def start():
+    """ The main function """
     last_checked_pms = time.time()
 
     # This opens a constant stream of comments. It will loop until there's a
