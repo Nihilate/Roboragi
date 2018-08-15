@@ -193,18 +193,17 @@ def process_comment(comment, is_edit=False):
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
             forceNormal = True
 
+        # Determine whether we'll build an expanded reply just once.
+        subredditName = str(comment.subreddit).lower()
+        isExpanded = (forceNormal or (subredditName in disableexpanded))
+
         # The final comment reply. We add stuff to this progressively.
         commentReply = ''
 
         # Expanded Anime
         for match in get_expanded_requests(comment.body, '{', '}'):
             if num_so_far < 30:
-                reply = ''
-
-                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildAnimeReply(match, False, comment)
-                else:
-                    reply = Search.buildAnimeReply(match, True, comment)
+                reply = Search.buildAnimeReply(match, isExpanded, comment)
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
@@ -223,12 +222,7 @@ def process_comment(comment, is_edit=False):
         # NORMAL EXPANDED
         for match in get_expanded_requests(comment.body, '<', '>'):
             if num_so_far < 30:
-                reply = ''
-
-                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildMangaReply(match, False, comment)
-                else:
-                    reply = Search.buildMangaReply(match, True, comment)
+                reply = Search.buildMangaReply(match, isExpanded, comment)
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
@@ -247,12 +241,7 @@ def process_comment(comment, is_edit=False):
         # Expanded LN
         for match in get_expanded_requests(comment.body, ']', '['):
             if num_so_far < 30:
-                reply = ''
-
-                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildLightNovelReply(match, False, comment)
-                else:
-                    reply = Search.buildLightNovelReply(match, True, comment)
+                reply = Search.buildLightNovelReply(match, isExpanded, comment)
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
@@ -270,12 +259,7 @@ def process_comment(comment, is_edit=False):
         # Expanded VN
         for match in get_expanded_requests(comment.body, '|', '|'):
             if num_so_far < 30:
-                reply = ''
-
-                if (forceNormal) or (str(comment.subreddit).lower() in disableexpanded):
-                    reply = Search.buildVisualNovelReply(match, False, comment)
-                else:
-                    reply = Search.buildVisualNovelReply(match, True, comment)
+                reply = Search.buildVisualNovelReply(match, isExpanded, comment)
 
                 if (reply is not None):
                     num_so_far = num_so_far + 1
