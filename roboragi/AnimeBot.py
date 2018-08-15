@@ -84,54 +84,60 @@ def get_requests(comment, regex):
 def process_pms():
     """ function for processing edit requests via pm """
     for msg in reddit.get_unread(limit=None):
-        if ((msg.subject == 'username mention') or (msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower())):
-            if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body) or (('|' and '|') in msg.body):
+        usernameMention = msg.subject == 'username mention'
+        usernameInBody = msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower()
+
+        # This PM doesn't meet the response criteria. Skip it.
+        if not (usernameMention or usernameInBody):
+            continue
+
+        if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body) or (('|' and '|') in msg.body):
+            try:
+                if str(msg.subreddit).lower() in exiled:
+                    continue
+
+                mentionedComment = reddit.get_info(thing_id=msg.name)
+                mentionedComment.refresh()
+
+                replies = mentionedComment.replies
+
+                ownComments = []
+                commentToEdit = None
+
+                for reply in replies:
+                    if (reply.author.name == 'Roboragi'):
+                        ownComments.append(reply)
+
+                for comment in ownComments:
+                    if 'http://www.reddit.com/r/Roboragi/wiki/index' in comment.body:
+                        commentToEdit = comment
+
+                commentReply = process_comment(mentionedComment, True)
+
                 try:
-                    if str(msg.subreddit).lower() in exiled:
-                        continue
+                    if (commentReply):
+                        if commentToEdit:
+                            commentToEdit.edit(commentReply)
+                            print('Comment edited.\n')
+                        else:
+                            mentionedComment.reply(commentReply)
+                            print('Comment made.\n')
 
-                    mentionedComment = reddit.get_info(thing_id=msg.name)
-                    mentionedComment.refresh()
+                        msg.mark_as_read()
 
-                    replies = mentionedComment.replies
+                        if not (DatabaseHandler.commentExists(mentionedComment.id)):
+                            DatabaseHandler.addComment(
+                                mentionedComment.id,
+                                mentionedComment.author.name,
+                                msg.subreddit,
+                                True
+                            )
+                except praw.errors.Forbidden:
+                    print('Edit request from banned '
+                          'subreddit: {0}\n'.format(msg.subreddit))
 
-                    ownComments = []
-                    commentToEdit = None
-
-                    for reply in replies:
-                        if (reply.author.name == 'Roboragi'):
-                            ownComments.append(reply)
-
-                    for comment in ownComments:
-                        if 'http://www.reddit.com/r/Roboragi/wiki/index' in comment.body:
-                            commentToEdit = comment
-
-                    commentReply = process_comment(mentionedComment, True)
-
-                    try:
-                        if (commentReply):
-                            if commentToEdit:
-                                commentToEdit.edit(commentReply)
-                                print('Comment edited.\n')
-                            else:
-                                mentionedComment.reply(commentReply)
-                                print('Comment made.\n')
-
-                            msg.mark_as_read()
-
-                            if not (DatabaseHandler.commentExists(mentionedComment.id)):
-                                DatabaseHandler.addComment(
-                                    mentionedComment.id,
-                                    mentionedComment.author.name,
-                                    msg.subreddit,
-                                    True
-                                )
-                    except praw.errors.Forbidden:
-                        print('Edit request from banned '
-                              'subreddit: {0}\n'.format(msg.subreddit))
-
-                except Exception as e:
-                    print(e)
+            except Exception as e:
+                print(e)
 
 
 def process_comment(comment, is_edit=False):
