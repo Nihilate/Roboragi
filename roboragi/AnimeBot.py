@@ -16,17 +16,13 @@ import Reference
 
 TIME_BETWEEN_PM_CHECKS = 60  # in seconds
 
-try:
-    import Config
-    USERNAME = Config.username
-    PASSWORD = Config.password
-    USERAGENT = Config.useragent
-    REDDITAPPID = Config.redditappid
-    REDDITAPPSECRET = Config.redditappsecret
-    REFRESHTOKEN = Config.refreshtoken
-    SUBREDDITLIST = Config.get_formatted_subreddit_list()
-except ImportError:
-    pass
+USERNAME = Config.username
+PASSWORD = Config.password
+USERAGENT = Config.useragent
+REDDITAPPID = Config.redditappid
+REDDITAPPSECRET = Config.redditappsecret
+REFRESHTOKEN = Config.refreshtoken
+SUBREDDITLIST = Config.get_formatted_subreddit_list()
 
 reddit = praw.Reddit(user_agent=USERNAME)
 
