@@ -84,8 +84,6 @@ def process_pms():
             if (('{' and '}') in msg.body) or (('<' and '>') in msg.body) or ((']' and '[') in msg.body) or (('|' and '|') in msg.body):
                 try:
                     if str(msg.subreddit).lower() in exiled:
-                        # print('Edit request from exiled subreddit: ' + str(msg.subreddit) + '\n')
-                        # msg.mark_as_read()
                         continue
 
                     mentionedComment = reddit.get_info(thing_id=msg.name)
@@ -184,10 +182,6 @@ def process_comment(comment, is_edit=False):
 
         # The final comment reply. We add stuff to this progressively.
         commentReply = ''
-
-        # if (numOfRequest + numOfExpandedRequest) > 25:
-        #    commentReply = 'You have tried to request too many things at once. Please reduce the number of requests and try again.'
-        # else:
 
         # Expanded Anime
         for match in get_expanded_requests(comment.body, '{', '}'):
@@ -343,8 +337,6 @@ def process_comment(comment, is_edit=False):
     # If there was actually something found, add the signature and post the
     # comment to Reddit. Then, add the comment to the "already seen" database.
     if commentReply is not '':
-        '''if (comment.author.name == 'treborabc'):
-            commentReply = '[No.](https://www.reddit.com/r/anime_irl/comments/4sba1n/anime_irl/d58xkha)'''
 
         if num_so_far >= 30:
             commentReply += "\n\nI'm limited to 30 requests at once and have had to cut off some, sorry for the inconvinience!\n\n"
