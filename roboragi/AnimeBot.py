@@ -61,12 +61,20 @@ def get_expanded_regex(left_brace_character, right_brace_character):
 
 
 def get_regular_requests(comment, left_brace_character, right_brace_character):
-    for request in get_requests(comment, get_regular_regex(left_brace_character, right_brace_character)):
+    requests = get_requests(
+        comment,
+        get_regular_regex(left_brace_character, right_brace_character)
+    )
+    for request in requests:
         yield request
 
 
 def get_expanded_requests(comment, left_brace_character, right_brace_character):
-    for request in get_requests(comment, get_expanded_regex(left_brace_character, right_brace_character)):
+    requests = get_requests(
+        comment,
+        get_expanded_regex(left_brace_character, right_brace_character)
+    )
+    for request in requests:
         yield request
 
 
@@ -123,7 +131,8 @@ def process_pms():
                                     True
                                 )
                     except praw.errors.Forbidden:
-                        print('Edit request from banned subreddit: ' + str(msg.subreddit) + '\n')
+                        print('Edit request from banned '
+                              'subreddit: {0}\n'.format(msg.subreddit))
 
                 except Exception as e:
                     print(e)
@@ -151,9 +160,13 @@ def process_comment(comment, is_edit=False):
         subreddit = re.search('[rR]\/([A-Za-z0-9_]+?)(>|}|$)', comment.body, re.S)
 
         if username:
-            commentReply = CommentBuilder.buildStatsComment(username=username.group(1))
+            commentReply = CommentBuilder.buildStatsComment(
+                username=username.group(1)
+            )
         elif subreddit:
-            commentReply = CommentBuilder.buildStatsComment(subreddit=subreddit.group(1))
+            commentReply = CommentBuilder.buildStatsComment(
+                subreddit=subreddit.group(1)
+            )
         else:
             commentReply = CommentBuilder.buildStatsComment()
     else:
@@ -331,7 +344,8 @@ def process_comment(comment, is_edit=False):
                 commentReply += vnReply['comment']
 
         # If there are more than 10 requests, shorten them all
-        if not (commentReply is '') and (len(animeArray) + len(mangaArray)+ len(lnArray) + len(vnArray) >= 10):
+        lenRequests = sum(map(len, (animeArray, mangaArray, lnArray, vnArray)))
+        if not (commentReply is '') and (lenRequests >= 10):
             commentReply = re.sub(r"\^\((.*?)\)", "", commentReply, flags=re.M)
 
     # If there was actually something found, add the signature and post the
@@ -339,17 +353,20 @@ def process_comment(comment, is_edit=False):
     if commentReply is not '':
 
         if num_so_far >= 30:
-            commentReply += "\n\nI'm limited to 30 requests at once and have had to cut off some, sorry for the inconvinience!\n\n"
+            commentReply += ("\n\nI'm limited to 30 requests at once and have "
+                             "had to cut off some, sorry for the "
+                             "inconvinience!\n\n")
 
         commentReply += Config.getSignature(comment.permalink)
 
         commentReply += Reference.get_bling(comment.author.name)
 
         total_expected = int(numOfRequest)
-        total_found = int(len(animeArray) + len(mangaArray) + len(lnArray) + len(vnArray))
+        total_found = sum(map(len, (animeArray, mangaArray, lnArray, vnArray)))
 
         if total_found != total_expected:
-            commentReply += '&#32;|&#32;('+str(total_found)+'/'+str(total_expected)+')'
+            commentReply += '&#32;|&#32;({0}/{1})'.format(total_found,
+                                                          total_expected)
 
         if is_edit:
             return commentReply
@@ -358,7 +375,8 @@ def process_comment(comment, is_edit=False):
                 comment.reply(commentReply)
                 print("Comment made.\n")
             except praw.errors.Forbidden:
-                print('Request from banned subreddit: ' + str(comment.subreddit) + '\n')
+                print('Request from banned '
+                      'subreddit: {0}\n'.format(comment.subreddit))
             except Exception:
                 traceback.print_exc()
 
@@ -396,7 +414,12 @@ def start():
 
     # This opens a constant stream of comments. It will loop until there's a
     # major error (usually this means the Reddit access token needs refreshing)
-    comment_stream = praw.helpers.comment_stream(reddit, SUBREDDITLIST, limit=250, verbosity=0)
+    comment_stream = praw.helpers.comment_stream(
+        reddit,
+        SUBREDDITLIST,
+        limit=250,
+        verbosity=0
+    )
 
     for comment in comment_stream:
 
