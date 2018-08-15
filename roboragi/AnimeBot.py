@@ -49,11 +49,11 @@ def setupReddit():
 
 
 def get_regular_regex(left_brace_character, right_brace_character):
-    return '(?<=(?<!\S)\{0})([^\{0}\{1}]+?)(?=\{1}(?!\())'.format(left_brace_character, right_brace_character)
+    return r'(?<=(?<!\S)\{0})([^\{0}\{1}]+?)(?=\{1}(?!\())'.format(left_brace_character, right_brace_character)
 
 
 def get_expanded_regex(left_brace_character, right_brace_character):
-    return '\{0}{{2}}(.+?)\{1}{{2}}'.format(left_brace_character, right_brace_character)
+    return r'\{0}{{2}}(.+?)\{1}{{2}}'.format(left_brace_character, right_brace_character)
 
 
 def get_regular_requests(comment, left_brace_character, right_brace_character):
