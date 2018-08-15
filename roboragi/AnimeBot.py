@@ -32,6 +32,16 @@ disableexpanded = ['animesuggest']
 # subreddits I'm actively avoiding
 exiled = ['anime']
 
+USERNAME_PATTERN = re.compile(
+    pattern=r'[uU]\/([A-Za-z0-9_-]+?)(>|}|$)',
+    flags=re.S
+)
+
+SUBREDDIT_PATTERN = re.compile(
+    pattern=r'[rR]\/([A-Za-z0-9_]+?)(>|}|$)',
+    flags=re.S
+)
+
 
 # Sets up Reddit for PRAW
 def setupReddit():
@@ -167,8 +177,8 @@ def process_comment(comment, is_edit=False):
 
     # This checks for requests. First up we check all known tags for the !stats request
     if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
-        username = re.search('[uU]\/([A-Za-z0-9_-]+?)(>|}|$)', comment.body, re.S)
-        subreddit = re.search('[rR]\/([A-Za-z0-9_]+?)(>|}|$)', comment.body, re.S)
+        username = USERNAME_PATTERN.search(comment.body)
+        subreddit = SUBREDDIT_PATTERN.search(comment.body)
 
         if username:
             commentReply = CommentBuilder.buildStatsComment(
