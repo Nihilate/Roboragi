@@ -101,10 +101,10 @@ def process_pms():
         if not any((hasCurlies, hasPointies, hasSquares, hasVerticalBars)):
             continue
 
-        try:
-            if str(msg.subreddit).lower() in exiled:
-                continue
+        if str(msg.subreddit).lower() in exiled:
+            continue
 
+        try:
             mentionedComment = reddit.get_info(thing_id=msg.name)
             mentionedComment.refresh()
 
@@ -143,7 +143,7 @@ def process_pms():
                         )
             except praw.errors.Forbidden:
                 print('Edit request from banned '
-                        'subreddit: {0}\n'.format(msg.subreddit))
+                      'subreddit: {0}\n'.format(msg.subreddit))
 
         except Exception as e:
             print(e)
