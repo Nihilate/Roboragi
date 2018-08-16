@@ -204,11 +204,11 @@ def process_comment(comment, is_edit=False):
 
         forceNormal = False
 
-        for match in re.finditer('(' + get_expanded_regex('{','}') + ')|(' + get_expanded_regex('<','>') + ')|(' + get_expanded_regex(']','[') + ')|(' + get_expanded_regex('|','|') + ')', comment.body, re.M):
+        for match in re.finditer('(' + get_expanded_regex('{', '}') + ')|(' + get_expanded_regex('<', '>') + ')|(' + get_expanded_regex(']', '[') + ')|(' + get_expanded_regex('|', '|') + ')', comment.body, re.M):
             numOfRequest += 1
             numOfExpandedRequest += 1
 
-        for match in re.finditer('(' + get_regular_regex('{','}') + ')|(' + get_regular_regex('<','>') + ')|(' + get_regular_regex(']','[') + ')|(' + get_regular_regex('|','|') + ')', comment.body, re.M):
+        for match in re.finditer('(' + get_regular_regex('{', '}') + ')|(' + get_regular_regex('<', '>') + ')|(' + get_regular_regex(']', '[') + ')|(' + get_regular_regex('|', '|') + ')', comment.body, re.M):
             numOfRequest += 1
 
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
