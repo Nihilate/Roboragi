@@ -394,7 +394,7 @@ def process_comment(comment, is_edit=False):
                     comment.subreddit,
                     True
                 )
-            except:
+            except Exception:
                 traceback.print_exc()
     else:
         try:
@@ -409,7 +409,7 @@ def process_comment(comment, is_edit=False):
                     comment.subreddit,
                     False
                 )
-        except:
+        except Exception:
             traceback.print_exc()
 
 
@@ -445,7 +445,7 @@ def start():
                         comment.subreddit,
                         False
                     )
-            except:
+            except Exception:
                 pass
             continue
 
