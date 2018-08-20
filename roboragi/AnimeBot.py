@@ -13,6 +13,7 @@ import CommentBuilder
 import DatabaseHandler
 import Config
 import Reference
+from patterns import find_requests, USERNAME_PATTERN, SUBREDDIT_PATTERN
 
 TIME_BETWEEN_PM_CHECKS = 60  # in seconds
 
@@ -32,16 +33,6 @@ disableexpanded = ['animesuggest']
 # subreddits I'm actively avoiding
 exiled = ['anime']
 
-USERNAME_PATTERN = re.compile(
-    pattern=r'[uU]\/([A-Za-z0-9_-]+?)(>|}|$)',
-    flags=re.S
-)
-
-SUBREDDIT_PATTERN = re.compile(
-    pattern=r'[rR]\/([A-Za-z0-9_]+?)(>|}|$)',
-    flags=re.S
-)
-
 
 # Sets up Reddit for PRAW
 def setupReddit():
@@ -56,39 +47,6 @@ def setupReddit():
         print('Reddit successfully set up')
     except Exception as e:
         print('Error with setting up Reddit: ' + str(e))
-
-
-def get_regular_regex(left_brace_character, right_brace_character):
-    return r'(?<=(?<!\S)\{0})([^\{0}\{1}]+?)(?=\{1}(?!\())'.format(left_brace_character, right_brace_character)
-
-
-def get_expanded_regex(left_brace_character, right_brace_character):
-    return r'\{0}{{2}}(.+?)\{1}{{2}}'.format(left_brace_character, right_brace_character)
-
-
-def get_regular_requests(comment, left_brace_character, right_brace_character):
-    requests = get_requests(
-        comment,
-        get_regular_regex(left_brace_character, right_brace_character)
-    )
-    for request in requests:
-        yield request
-
-
-def get_expanded_requests(comment, left_brace_character, right_brace_character):
-    requests = get_requests(
-        comment,
-        get_expanded_regex(left_brace_character, right_brace_character)
-    )
-    for request in requests:
-        yield request
-
-
-def get_requests(comment, regex):
-    for match in re.finditer(regex, comment, re.M):
-        matched_text = match.group(1)
-        if not re.match(r'\s', matched_text) and not re.match(r'^.+\s$', matched_text):
-            yield matched_text
 
 
 def process_pms():
@@ -204,11 +162,11 @@ def process_comment(comment, is_edit=False):
 
         forceNormal = False
 
-        for match in re.finditer('(' + get_expanded_regex('{', '}') + ')|(' + get_expanded_regex('<', '>') + ')|(' + get_expanded_regex(']', '[') + ')|(' + get_expanded_regex('|', '|') + ')', comment.body, re.M):
+        for match in find_requests('all', comment.body, expanded=True):
             numOfRequest += 1
             numOfExpandedRequest += 1
 
-        for match in re.finditer('(' + get_regular_regex('{', '}') + ')|(' + get_regular_regex('<', '>') + ')|(' + get_regular_regex(']', '[') + ')|(' + get_regular_regex('|', '|') + ')', comment.body, re.M):
+        for match in find_requests('all', comment.body):
             numOfRequest += 1
 
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
@@ -222,7 +180,7 @@ def process_comment(comment, is_edit=False):
         commentReply = ''
 
         # Expanded Anime
-        for match in get_expanded_requests(comment.body, '{', '}'):
+        for match in find_requests('anime', comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildAnimeReply(match, isExpanded, comment)
 
@@ -231,7 +189,7 @@ def process_comment(comment, is_edit=False):
                     animeArray.append(reply)
 
         # Normal Anime
-        for match in get_regular_requests(comment.body, '{', '}'):
+        for match in find_requests('anime', comment.body):
             if num_so_far < 30:
                 reply = Search.buildAnimeReply(match, False, comment)
 
@@ -241,7 +199,7 @@ def process_comment(comment, is_edit=False):
 
         # Expanded Manga
         # NORMAL EXPANDED
-        for match in get_expanded_requests(comment.body, '<', '>'):
+        for match in find_requests('manga', comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildMangaReply(match, isExpanded, comment)
 
@@ -251,7 +209,7 @@ def process_comment(comment, is_edit=False):
 
         # Normal Manga
         # NORMAL
-        for match in get_regular_requests(comment.body, '<', '>'):
+        for match in find_requests('manga', comment.body):
             if num_so_far < 30:
                 reply = Search.buildMangaReply(match, False, comment)
 
@@ -260,7 +218,7 @@ def process_comment(comment, is_edit=False):
                     mangaArray.append(reply)
 
         # Expanded LN
-        for match in get_expanded_requests(comment.body, ']', '['):
+        for match in find_requests('light_novel', comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildLightNovelReply(match, isExpanded, comment)
 
@@ -269,7 +227,7 @@ def process_comment(comment, is_edit=False):
                     lnArray.append(reply)
 
         # Normal LN
-        for match in get_regular_requests(comment.body, ']', '['):
+        for match in find_requests('light_novel', comment.body):
             if num_so_far < 30:
                 reply = Search.buildLightNovelReply(match, False, comment)
 
@@ -278,7 +236,7 @@ def process_comment(comment, is_edit=False):
                     lnArray.append(reply)
 
         # Expanded VN
-        for match in get_expanded_requests(comment.body, '|', '|'):
+        for match in find_requests('visual_novel', comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildVisualNovelReply(match, isExpanded, comment)
 
@@ -287,7 +245,7 @@ def process_comment(comment, is_edit=False):
                     vnArray.append(reply)
 
         # Normal VN
-        for match in get_regular_requests(comment.body, '|', '|'):
+        for match in find_requests('visual_novel', comment.body):
             if num_so_far < 30:
                 reply = Search.buildVisualNovelReply(match, False, comment)
 
