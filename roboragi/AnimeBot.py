@@ -410,17 +410,18 @@ def start():
         process_comment(comment)
 
 
-# ------------------------------------#
-# Here's the stuff that actually gets run
+if __name__ == '__main__':
+    # ------------------------------------#
+    # Here's the stuff that actually gets run
 
-# Initialise Reddit.
-setupReddit()
+    # Initialise Reddit.
+    setupReddit()
 
-# Loop the comment stream until the Reddit access token expires. Then get a new
-# access token and start the stream again.
-while 1:
-    try:
-        start()
-    except Exception:
-        traceback.print_exc()
-        pass
+    # Loop the comment stream until the Reddit access token expires. Then get a
+    # new access token and start the stream again.
+    while 1:
+        try:
+            start()
+        except Exception:
+            traceback.print_exc()
+            pass
