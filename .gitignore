@@ -63,3 +63,5 @@ Nocontextbot.py
 
 #Pycharm
 .idea
+
+.pytest_cache/
