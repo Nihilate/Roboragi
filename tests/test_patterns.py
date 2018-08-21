@@ -228,13 +228,12 @@ def test_expanded_visual_novel(given, expected):
 
 
 def test_all_regular_patterns():
-    given = ('This is an **example** [Markdown] comment.\n'
-             'Here are some requests:\n'
+    given = ('This is an **example** [Markdown](https://commonmark.org/)\n'
+             'comment. Here are some requests:\n'
              '{anime 1} {anime2}\n'
              '<manga 1> <manga2>\n'
              ']light novel 1[ ]light_novel2[\n'
-             '|visual novel 1| |visual_novel2|\n\n'
-             '[Markdown]: https://commonmark.org/')
+             '|visual novel 1| |visual_novel2|\n')
     expected = [
         'anime 1',
         'anime2',
@@ -250,13 +249,12 @@ def test_all_regular_patterns():
 
 
 def test_all_extended_patterns():
-    given = ('This is an **example** [Markdown] comment.\n'
-             'Here are some requests:\n'
+    given = ('This is an **example** [Markdown](https://commonmark.org/)\n'
+             'comment. Here are some requests:\n'
              '{{anime 1}} {{anime2}}\n'
              '<<manga 1>> <<manga2>>\n'
              ']]light novel 1[[ ]]light_novel2[[\n'
-             '||visual novel 1|| ||visual_novel2||\n\n'
-             '[Markdown]: https://commonmark.org/')
+             '||visual novel 1|| ||visual_novel2||\n')
     expected = [
         'anime 1',
         'anime2',
