@@ -10,6 +10,8 @@ from roboragi.patterns import find_requests
     ('{Kill la Kill}', ['Kill la Kill']),
     ('{ヒナまつり}', ['ヒナまつり']),
     ('{Re:Zero} {No Game No Life}', ['Re:Zero', 'No Game No Life']),
+    ('{Gunbuster}, {Diebuster}', ['Gunbuster', 'Diebuster']),
+    ('{Nisekoi}: Words Go Here', ['Nisekoi']),
     ('', []),
     ('{}', []),
     ('{ }', []),
@@ -23,7 +25,6 @@ from roboragi.patterns import find_requests
     ('{partial_after}}', []),
     ('{nested{after}}', []),
     ('{{nested}before}', []),
-    ('{parens_after}(', []),
 ])
 def test_regular_anime(given, expected):
     actual = list(find_requests('anime', given))
@@ -37,6 +38,8 @@ def test_regular_anime(given, expected):
     ('{{Kill la Kill}}', ['Kill la Kill']),
     ('{{ヒナまつり}}', ['ヒナまつり']),
     ('{{Re:Zero}} {{No Game No Life}}', ['Re:Zero', 'No Game No Life']),
+    ('{{Gunbuster}}, {{Diebuster}}', ['Gunbuster', 'Diebuster']),
+    ('{{Nisekoi}}: Words Go Here', ['Nisekoi']),
     ('', []),
     ('{{}}', []),
     ('{{ }}', []),
@@ -50,7 +53,6 @@ def test_regular_anime(given, expected):
     ('{{partial_after}}}}', []),
     ('{{nested{{after}}}}', []),
     ('{{{{nested}}before}}}', []),
-    ('{{parens_after}}(', []),
 ])
 def test_expanded_anime(given, expected):
     actual = list(find_requests('anime', given, expanded=True))
@@ -64,6 +66,8 @@ def test_expanded_anime(given, expected):
     ('<Kill la Kill>', ['Kill la Kill']),
     ('<ヒナまつり>', ['ヒナまつり']),
     ('<Re:Zero> <No Game No Life>', ['Re:Zero', 'No Game No Life']),
+    ('<Gunbuster>, <Diebuster>', ['Gunbuster', 'Diebuster']),
+    ('<Nisekoi>: Words Go Here', ['Nisekoi']),
     ('', []),
     ('<>', []),
     ('< >', []),
@@ -77,7 +81,6 @@ def test_expanded_anime(given, expected):
     ('<partial_after>>', []),
     ('<nested<after>>', []),
     ('<<nested>before>', []),
-    ('<parens_after>(', []),
 ])
 def test_regular_manga(given, expected):
     actual = list(find_requests('manga', given))
@@ -91,6 +94,8 @@ def test_regular_manga(given, expected):
     ('<<Kill la Kill>>', ['Kill la Kill']),
     ('<<ヒナまつり>>', ['ヒナまつり']),
     ('<<Re:Zero>> <<No Game No Life>>', ['Re:Zero', 'No Game No Life']),
+    ('<<Gunbuster>>, <<Diebuster>>', ['Gunbuster', 'Diebuster']),
+    ('<<Nisekoi>>: Words Go Here', ['Nisekoi']),
     ('', []),
     ('<<>>', []),
     ('<< >>', []),
@@ -104,7 +109,6 @@ def test_regular_manga(given, expected):
     ('<<partial_after>>>>', []),
     ('<<nested<<after>>>>', []),
     ('<<<<nested>>before>>', []),
-    ('<<parens_after>>(', []),
 ])
 def test_expanded_manga(given, expected):
     actual = list(find_requests('manga', given, expanded=True))
@@ -118,6 +122,8 @@ def test_expanded_manga(given, expected):
     (']Kill la Kill[', ['Kill la Kill']),
     (']ヒナまつり[', ['ヒナまつり']),
     (']Re:Zero[ ]No Game No Life[', ['Re:Zero', 'No Game No Life']),
+    (']Gunbuster[, ]Diebuster[', ['Gunbuster', 'Diebuster']),
+    (']Nisekoi[: Words Go Here', ['Nisekoi']),
     ('', []),
     ('][', []),
     ('] [', []),
@@ -131,7 +137,6 @@ def test_expanded_manga(given, expected):
     (']partial_after[[', []),
     (']nested]after[[', []),
     (']]nested[before[', []),
-    (']parens_after[(', []),
 ])
 def test_regular_light_novel(given, expected):
     actual = list(find_requests('light_novel', given))
@@ -145,6 +150,8 @@ def test_regular_light_novel(given, expected):
     (']]Kill la Kill[[', ['Kill la Kill']),
     (']]ヒナまつり[[', ['ヒナまつり']),
     (']]Re:Zero[[ ]]No Game No Life[[', ['Re:Zero', 'No Game No Life']),
+    (']]Gunbuster[[, ]]Diebuster[[', ['Gunbuster', 'Diebuster']),
+    (']]Nisekoi[[: Words Go Here', ['Nisekoi']),
     ('', []),
     (']][[', []),
     (']] [[', []),
@@ -158,7 +165,6 @@ def test_regular_light_novel(given, expected):
     (']]partial_after[[[[', []),
     (']]nested]]after[[[[', []),
     (']]]]nested[[before[[', []),
-    (']]parens_after[[(', []),
 ])
 def test_expanded_light_novel(given, expected):
     actual = list(find_requests('light_novel', given, expanded=True))
@@ -172,6 +178,8 @@ def test_expanded_light_novel(given, expected):
     ('|Kill la Kill|', ['Kill la Kill']),
     ('|ヒナまつり|', ['ヒナまつり']),
     ('|Re:Zero| |No Game No Life|', ['Re:Zero', 'No Game No Life']),
+    ('|Gunbuster|, |Diebuster|', ['Gunbuster', 'Diebuster']),
+    ('|Nisekoi|: Words Go Here', ['Nisekoi']),
     ('', []),
     ('||', []),
     ('| |', []),
@@ -185,7 +193,6 @@ def test_expanded_light_novel(given, expected):
     ('|partial_after||', []),
     ('|nested|after||', []),
     ('||nested|before|', []),
-    ('|parens_after|(', []),
 ])
 def test_regular_visual_novel(given, expected):
     actual = list(find_requests('visual_novel', given))
@@ -199,6 +206,8 @@ def test_regular_visual_novel(given, expected):
     ('||Kill la Kill||', ['Kill la Kill']),
     ('||ヒナまつり||', ['ヒナまつり']),
     ('||Re:Zero|| ||No Game No Life||', ['Re:Zero', 'No Game No Life']),
+    ('||Gunbuster||, ||Diebuster||', ['Gunbuster', 'Diebuster']),
+    ('||Nisekoi||: Words Go Here', ['Nisekoi']),
     ('', []),
     ('||||', []),
     ('|| ||', []),
@@ -212,7 +221,6 @@ def test_regular_visual_novel(given, expected):
     ('||partial_after||||', []),
     ('||nested||after||||', []),
     ('||||nested||before||', []),
-    ('||parens_after||(', []),
 ])
 def test_expanded_visual_novel(given, expected):
     actual = list(find_requests('visual_novel', given, expanded=True))
