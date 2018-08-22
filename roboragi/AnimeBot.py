@@ -48,6 +48,9 @@ disableexpanded = ['animesuggest']
 # subreddits I'm actively avoiding
 exiled = ['anime']
 
+# Some blacklisted users (all bots which cause some false positives due to formatting)
+user_blacklist = ['table_it_bot', 'remindmebot', 'sneakpeekbot', 'animesourcebot']
+
 
 # Sets up Reddit for PRAW
 def setupReddit():
@@ -148,8 +151,12 @@ def process_comment(comment, is_edit=False):
     numOfRequest = 0
     numOfExpandedRequest = 0
 
+    # Ignore any blacklisted users
+    if (comment.author.name.lower() in user_blacklist):
+        print('User in blacklist: ' + comment.author.name)
+        commentReply = ''
     # This checks for requests. First up we check all known tags for the !stats request
-    if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
+    elif re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
         username = USERNAME_PATTERN.search(comment.body)
         subreddit = SUBREDDIT_PATTERN.search(comment.body)
 
@@ -303,7 +310,7 @@ def process_comment(comment, is_edit=False):
         if lnArray:
             commentReply += '\n\n'
 
-        # Adding all the manga to the final comment
+        # Adding all the light novels to the final comment
         for i, lnReply in enumerate(lnArray):
             if not (i is 0):
                 commentReply += '\n\n'
@@ -312,7 +319,10 @@ def process_comment(comment, is_edit=False):
                 postedLNTitles.append(lnReply['title'])
                 commentReply += lnReply['comment']
 
-        # Adding all the manga to the final comment
+        if vnArray:
+            commentReply += '\n\n'
+
+        # Adding all the visual novels to the final comment
         for i, vnReply in enumerate(vnArray):
             if not (i is 0):
                 commentReply += '\n\n'
@@ -395,7 +405,7 @@ def start():
     comment_stream = praw.helpers.comment_stream(
         reddit,
         SUBREDDITLIST,
-        limit=250,
+        limit=1000,
         verbosity=0
     )
 
