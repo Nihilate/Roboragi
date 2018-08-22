@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 install_requires = [
-    'praw==3.1.0',
-    'psycopg2',  # TODO: If possible, this should be updated beyond 2.6.1.
-    'pyquery',  # TODO: What version should this be?
-    'requests==2.7.0',
+    'praw==5.4.0',
+    'psycopg2==2.7.5',
+    'pyquery==1.4.0',
+    'requests==2.19.1',
     'six==1.9.0',
 ]
 
