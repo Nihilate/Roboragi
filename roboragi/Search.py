@@ -109,14 +109,14 @@ def buildMangaReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if 'ap' in synonym and synonym['ap']:
                     apsyn = synonym['ap']
 
-                mal['result'] = MAL.getMangaDetails(malsyn[0],malsyn[1]) if malsyn else None
+                mal['result'] = None
                 ani['result'] = Anilist.getMangaDetailsById(anisyn) if anisyn else None
                 kit['result'] = Kitsu.get_manga(kitsyn) if kitsyn else None
                 mu['result'] = MU.getMangaURLById(musyn) if musyn else None
                 ap['result'] = AniP.getMangaURLById(apsyn) if apsyn else None
 
         else:
-            data_sources = [ani, kit, mal]
+            data_sources = [ani, kit]
             aux_sources = [mu, ap]
 
             synonyms = set([searchText])
@@ -214,7 +214,6 @@ def buildMangaReplyWithAuthor(searchText, authorName, isExpanded, baseComment, b
         ap = None
         
         if ani:
-            mal = MAL.getMangaCloseToDescription(searchText, ani['description'])
             ap = AniP.getMangaURL(ani['title_english'], authorName)
         else:
             ap = AniP.getMangaURL(searchText, authorName)
@@ -295,15 +294,15 @@ def buildAnimeReply(searchText, isExpanded, baseComment, blockTracking=False):
                 if 'adb' in synonym and synonym['adb']:
                     adbsyn = synonym['adb']
 
-                mal['result'] = MAL.getAnimeDetails(malsyn[0],malsyn[1]) if malsyn else None
+                mal['result'] = None
                 kit['result'] = Kitsu.get_anime(kitsyn) if kitsyn else None
                 ani['result'] = Anilist.getAnimeDetailsById(anisyn) if anisyn else None
                 ap['result'] = AniP.getAnimeURLById(apsyn) if apsyn else None
                 adb['result'] = AniDB.getAnimeURLById(adbsyn) if adbsyn else None
                 
         else:
-            data_sources = [ani, kit, mal]
-            aux_sources = [ap, adb]
+            data_sources = [ani, kit]
+            aux_sources = [ap]
 
             synonyms = set([searchText])
             titles = set()
@@ -425,14 +424,14 @@ def buildLightNovelReply(searchText, isExpanded, baseComment, blockTracking=Fals
                 if 'lndb' in synonym and synonym['lndb']:
                     lndbsyn = synonym['lndb']
 
-                mal['result'] = MAL.getLightNovelDetails(malsyn[0],malsyn[1]) if malsyn else None
+                mal['result'] = None
                 ani['result'] = Anilist.getMangaDetailsById(anisyn) if anisyn else None
                 kit['result'] = Kitsu.get_light_novel(kitsyn) if kitsyn else None
                 nu['result'] = NU.getLightNovelById(nusyn) if nusyn else None
                 lndb['result'] = LNDB.getLightNovelById(lndbsyn) if lndbsyn else None
                 
         else:
-            data_sources = [ani, kit, mal]
+            data_sources = [ani, kit]
             aux_sources = [nu, lndb]
 
             synonyms = set([searchText])
