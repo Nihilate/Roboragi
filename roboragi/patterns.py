@@ -19,7 +19,7 @@ import re
 def _patterns(tag_characters, expanded=False):
     """ Generate compiled regexes from a set of tag characters. """
     n = 2 if expanded else 1
-    template = r'(?<![\S\{left}])\{left}{{{n}}}(?!\{left})(\S(?:[^\{left}\{right}]*\S)?)(?<!\{right})\{right}{{{n}}}(?![\{right}\w])'  # noqa: E501
+    template = r'(?<![\w\{left}])\{left}{{{n}}}(?!\{left})(\S(?:[^\{left}\{right}]*\S)?)(?<!\{right})\{right}{{{n}}}(?![\{right}\w])'  # noqa: E501
     return {name: re.compile(template.format(left=chars[0], right=chars[1], n=n))  # noqa: E501
             for name, chars in tag_characters.items()}
 

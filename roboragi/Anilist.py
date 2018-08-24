@@ -31,6 +31,7 @@ search_query = '''query ($search: String, $type: MediaType) {
   Page {
     media(search: $search, type: $type) {
       id
+      idMal
       title {
         romaji
         english
@@ -68,6 +69,7 @@ id_query = '''query ($id: Int) {
   Page {
     media(id: $id) {
       id
+      idMal
       title {
         romaji
         english
@@ -109,6 +111,7 @@ def morph_to_v1(raw):
         try:
             morphed = {}
             morphed["id"] = raw_result["id"]
+            morphed["id_mal"] = raw_result["idMal"]
             morphed["title_romaji"] = raw_result["title"]["romaji"]
             morphed["title_english"] = raw_result["title"]["english"]
             morphed["title_japanese"] = raw_result["title"]["native"]

@@ -27,7 +27,7 @@ session = requests.Session()
 session.headers = {'Accept': 'application/vnd.api+json', 'Content-Type': 'application/vnd.api+json'}
 
 
-def search(endpoint, search_term, parser):
+def search(endpoint, search_term, parser, use_first_result=False):
     try:
         response = session.get(BASE_URL + endpoint + search_term, timeout=4)
         response.raise_for_status()
@@ -37,10 +37,12 @@ def search(endpoint, search_term, parser):
         if not results:
             return None
 
-        closest_result = get_closest(results, search_term)
-
-        return closest_result
-    except Exception as e:
+        if use_first_result:
+            return results[0]
+        else:
+            closest_result = get_closest(results, search_term)
+            return closest_result
+    except Exception:
         return None
     finally:
         session.close()
@@ -81,21 +83,21 @@ def search_light_novel(search_term):
 
 def get_anime(search_term):
     try:
-      return search(ANIME_GET_FILTER, search_term, parse_anime)[0]
+      return search(ANIME_GET_FILTER, search_term, parse_anime, True)
     except:
       return None
 
 
 def get_manga(search_term):
     try:
-      return search(MANGA_GET_FILTER, search_term, parse_manga)[0]
+      return search(MANGA_GET_FILTER, search_term, parse_manga, True)
     except:
       return None
 
 
 def get_light_novel(search_term):
     try:
-      return search(MANGA_GET_FILTER, search_term, parse_light_novel)[0]
+      return search(MANGA_GET_FILTER, search_term, parse_light_novel, True)
     except:
       return None
 

@@ -19,9 +19,11 @@ Acts as the "main" file and ties all the other functionality together.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import praw
+import prawcore
 import re
 import traceback
 import time
+import datetime
 
 import Search
 import CommentBuilder
@@ -40,7 +42,13 @@ REDDITAPPSECRET = Config.redditappsecret
 REFRESHTOKEN = Config.refreshtoken
 SUBREDDITLIST = Config.get_formatted_subreddit_list()
 
-reddit = praw.Reddit(user_agent=USERNAME)
+reddit = praw.Reddit(
+            client_id=REDDITAPPID,
+            client_secret=REDDITAPPSECRET,
+            password=PASSWORD,
+            user_agent=USERAGENT,
+            username=USERNAME
+        )
 
 # the subreddits where expanded requests are disabled
 disableexpanded = ['animesuggest']
@@ -48,25 +56,13 @@ disableexpanded = ['animesuggest']
 # subreddits I'm actively avoiding
 exiled = ['anime']
 
-
-# Sets up Reddit for PRAW
-def setupReddit():
-    try:
-        print('Setting up Reddit')
-        reddit.set_oauth_app_info(
-            client_id=REDDITAPPID,
-            client_secret=REDDITAPPSECRET,
-            redirect_uri='http://127.0.0.1:65010/' 'authorize_callback'
-        )
-        reddit.refresh_access_information(REFRESHTOKEN)
-        print('Reddit successfully set up')
-    except Exception as e:
-        print('Error with setting up Reddit: ' + str(e))
+# Some blacklisted users (all bots which cause some false positives due to formatting)
+user_blacklist = ['table_it_bot', 'remindmebot', 'sneakpeekbot', 'animesourcebot']
 
 
 def process_pms():
     """ function for processing edit requests via pm """
-    for msg in reddit.get_unread(limit=None):
+    for msg in reddit.inbox.unread(limit=None):
         usernameMention = msg.subject == 'username mention'
         usernameInBody = msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower()
 
@@ -88,7 +84,7 @@ def process_pms():
             continue
 
         try:
-            mentionedComment = reddit.get_info(thing_id=msg.name)
+            mentionedComment = reddit.comment(msg.id)
             mentionedComment.refresh()
 
             replies = mentionedComment.replies
@@ -115,7 +111,7 @@ def process_pms():
                         mentionedComment.reply(commentReply)
                         print('Comment made.\n')
 
-                    msg.mark_as_read()
+                    msg.mark_read()
 
                     if not (DatabaseHandler.commentExists(mentionedComment.id)):
                         DatabaseHandler.addComment(
@@ -124,7 +120,7 @@ def process_pms():
                             msg.subreddit,
                             True
                         )
-            except praw.errors.Forbidden:
+            except prawcore.exceptions.Forbidden:
                 print('Edit request from banned '
                       'subreddit: {0}\n'.format(msg.subreddit))
 
@@ -148,8 +144,12 @@ def process_comment(comment, is_edit=False):
     numOfRequest = 0
     numOfExpandedRequest = 0
 
+    # Ignore any blacklisted users
+    if (comment.author.name.lower() in user_blacklist):
+        print('User in blacklist: ' + comment.author.name)
+        commentReply = ''
     # This checks for requests. First up we check all known tags for the !stats request
-    if re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
+    elif re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
         username = USERNAME_PATTERN.search(comment.body)
         subreddit = SUBREDDIT_PATTERN.search(comment.body)
 
@@ -189,7 +189,7 @@ def process_comment(comment, is_edit=False):
 
         # Determine whether we'll build an expanded reply just once.
         subredditName = str(comment.subreddit).lower()
-        isExpanded = (forceNormal or (subredditName in disableexpanded))
+        isExpanded = False if (forceNormal or (subredditName in disableexpanded)) else True
 
         # The final comment reply. We add stuff to this progressively.
         commentReply = ''
@@ -303,7 +303,7 @@ def process_comment(comment, is_edit=False):
         if lnArray:
             commentReply += '\n\n'
 
-        # Adding all the manga to the final comment
+        # Adding all the light novels to the final comment
         for i, lnReply in enumerate(lnArray):
             if not (i is 0):
                 commentReply += '\n\n'
@@ -312,7 +312,10 @@ def process_comment(comment, is_edit=False):
                 postedLNTitles.append(lnReply['title'])
                 commentReply += lnReply['comment']
 
-        # Adding all the manga to the final comment
+        if vnArray:
+            commentReply += '\n\n'
+
+        # Adding all the visual novels to the final comment
         for i, vnReply in enumerate(vnArray):
             if not (i is 0):
                 commentReply += '\n\n'
@@ -392,45 +395,33 @@ def start():
 
     # This opens a constant stream of comments. It will loop until there's a
     # major error (usually this means the Reddit access token needs refreshing)
-    comment_stream = praw.helpers.comment_stream(
-        reddit,
-        SUBREDDITLIST,
-        limit=250,
-        verbosity=0
-    )
+    subreddits = reddit.subreddit(SUBREDDITLIST)
 
-    for comment in comment_stream:
+    for comment in subreddits.stream.comments(pause_after=0):
+        if comment:
+            # check if it's time to check the PMs
+            if (time.time() - last_checked_pms) > TIME_BETWEEN_PM_CHECKS:
+                process_pms()
+                last_checked_pms = time.time()
 
-        # check if it's time to check the PMs
-        if (time.time() - last_checked_pms) > TIME_BETWEEN_PM_CHECKS:
-            process_pms()
-            last_checked_pms = time.time()
+            # Is the comment valid (i.e. it's not made by Roboragi and I haven't
+            # seen it already). If no, try to add it to the "already seen pile" and
+            # skip to the next comment. If yes, keep going.
+            if not (Search.isValidComment(comment, reddit)):
+                try:
+                    if not (DatabaseHandler.commentExists(comment.id)):
+                        DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, False)
+                except:
+                    pass
+                continue
 
-        # Is the comment valid (i.e. it's not made by Roboragi and I haven't
-        # seen it already). If no, try to add it to the "already seen pile" and
-        # skip to the next comment. If yes, keep going.
-        if not (Search.isValidComment(comment, reddit)):
-            try:
-                if not (DatabaseHandler.commentExists(comment.id)):
-                    DatabaseHandler.addComment(
-                        comment.id,
-                        comment.author.name,
-                        comment.subreddit,
-                        False
-                    )
-            except Exception:
-                pass
-            continue
-
-        process_comment(comment)
+            print(str(comment.id) + ' ' + str(comment.author.name) + ' ' + str(comment.subreddit) + ' ' + str(datetime.datetime.fromtimestamp(comment.created).isoformat()))
+            process_comment(comment)
 
 
 if __name__ == '__main__':
     # ------------------------------------#
     # Here's the stuff that actually gets run
-
-    # Initialise Reddit.
-    setupReddit()
 
     # Loop the comment stream until the Reddit access token expires. Then get a
     # new access token and start the stream again.
