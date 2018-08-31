@@ -18,14 +18,13 @@ Handles all MangaUpdates information
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pyquery import PyQuery as pq
-import requests
 import difflib
-import traceback
-import pprint
-import collections
+
+import requests
+from pyquery import PyQuery as pq
 
 req = requests.Session()
+
 
 def findClosestManga(searchText, mangaList):
     try:
@@ -44,6 +43,7 @@ def findClosestManga(searchText, mangaList):
     except:
         return None
 
+
 def getMangaURL(searchText):
     try:
         payload = {'search': searchText}
@@ -60,22 +60,23 @@ def getMangaURL(searchText):
             genres = pq(thing).find('.col2').text()
             year = pq(thing).find('.col3').text()
             rating = pq(thing).find('.col4').text()
-            
+
             if title:
-                data = { 'title': title,
+                data = {'title': title,
                         'url': url,
                         'genres': genres,
                         'year': year,
-                        'rating': rating }
+                        'rating': rating}
 
                 mangaList.append(data)
 
         closest = findClosestManga(searchText, mangaList)
         return closest['url']
-    
+
     except:
         req.close()
         return None
+
 
 def getMangaURLById(mangaId):
     return 'https://www.mangaupdates.com/series.html?id=' + str(mangaId)

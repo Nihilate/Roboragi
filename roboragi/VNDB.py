@@ -17,17 +17,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import Config
-import socket
+import difflib
 import json
+import socket
 import time
 import traceback
-import json
-import pprint
-import difflib
+
+import Config
 
 cache = {'get': []}
-cachetime = 720 #cache stuff for 12 minutes
+cachetime = 720  # cache stuff for 12 minutes
 
 username = Config.vndbuser
 password = Config.vndbpassword
@@ -36,23 +35,27 @@ client_name = 'RoboragiRedditBot'
 client_version = '1.0'
 client_protocol = 1
 
+
 class vndbException(Exception):
     pass
+
 
 class VNDB(object):
     """ Python interface for vndb's api (vndb.org), featuring cache """
     protocol = 1
+
     def __init__(self):
         self.sock = socket.socket()
         self.sock.connect(('api.vndb.org', 19534))
 
-        self.sendCommand('login', {'protocol': client_protocol, 'client': client_name, 'clientver': float(client_version)})
+        self.sendCommand('login',
+                         {'protocol': client_protocol, 'client': client_name, 'clientver': float(client_version)})
 
         res = self.getRawResponse()
         if res.find('error ') == 0:
             raise vndbException(json.loads(' '.join(res.split(' ')[1:]))['msg'])
-        
-    def close(self, debug=False):
+
+    def close(self):
         self.sock.close()
 
     def get(self, type, flags, filters, options):
@@ -67,7 +70,7 @@ class VNDB(object):
         for item in cache['get']:
             if (item['query'] == args) and (time.time() < (item['time'] + cachetime)):
                 return item['results']
-                
+
         self.sendCommand('get', args)
         res = self.getResponse()[1]
         cache['get'].append({'time': time.time(), 'query': args, 'results': res})
@@ -85,9 +88,9 @@ class VNDB(object):
             whole += ' ' + args
         elif isinstance(args, dict):
             whole += ' ' + json.dumps(args)
-        
+
         self.sock.send('{0}\x04'.format(whole).encode())
-    
+
     def getResponse(self):
         """ Returns a tuple of the response to a command that was previously sent
         
@@ -100,14 +103,14 @@ class VNDB(object):
         cmdname = res.split(' ')[0]
         if len(res.split(' ')) > 1:
             args = json.loads(' '.join(res.split(' ')[1:]))
-            
+
         if cmdname == 'error':
             if args['id'] == 'throttled':
                 raise vndbException('Throttled, limit of 100 commands per 10 minutes')
             else:
                 raise vndbException(args['msg'])
         return (cmdname, args)
-    
+
     def getRawResponse(self):
         """ Returns a raw response to a command that was previously sent 
         
@@ -122,8 +125,8 @@ class VNDB(object):
             whole += self.sock.recv(4096).decode()
             if '\x04' in whole: finished = True
         return whole.replace('\x04', '').strip()
-    
-    def parseResults(self,results):
+
+    def parseResults(self, results):
         parsed_results = []
         for result in results['items']:
             try:
@@ -132,7 +135,8 @@ class VNDB(object):
                 parsed_result['title'] = result['title']
                 parsed_result['synonyms'] = result['aliases'].split('\n') if result['aliases'] else []
                 parsed_result['url'] = 'https://vndb.org/v' + str(result['id'])
-                parsed_result['wikipedia_url'] = 'https://wikipedia.org/wiki/' + result['links']['wikipedia'] if result['links']['wikipedia'] else None
+                parsed_result['wikipedia_url'] = 'https://wikipedia.org/wiki/' + result['links']['wikipedia'] if \
+                result['links']['wikipedia'] else None
                 parsed_result['description'] = result['description']
                 parsed_result['length'] = self.parseLength(result['length'])
                 parsed_result['release_year'] = result['released'][:4] if result['released'] else None
@@ -142,7 +146,7 @@ class VNDB(object):
                 traceback.print_exc()
         return parsed_results
 
-    def parseLength(self,length):
+    def parseLength(self, length):
         if length == 1:
             return 'Very Short'
         elif length == 2:
@@ -180,19 +184,19 @@ class VNDB(object):
                     return vn
 
         return None
-    
-    def getVisualNovelDetails(self,searchText):
+
+    def getVisualNovelDetails(self, searchText):
         try:
             results = self.get('vn', 'basic,details', '(search~"{0}")'.format(searchText), '')
             parsed_results = self.parseResults(results)
             closest = self.getClosest(searchText, parsed_results)
-            
+
             return closest
         except:
             traceback.print_exc()
             return None
 
-    def getVisualNovelDetailsById(self,id):
+    def getVisualNovelDetailsById(self, id):
         try:
             results = self.get('vn', 'basic,details', '(id="{0}")'.format(str(id)), '')
             parsed_results = self.parseResults(results)
