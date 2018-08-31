@@ -110,7 +110,7 @@ def buildAnimeComment(isExpanded, ani, ap, kit):
             kitURL = kit['url']
 
             if not title:
-                title = kit['title_romaji'] if 'title_romaji' in kit else kit['title_english']
+                title = kit['title_romaji'] if kit['title_romaji'] else kit['title_english']
             if not desc:
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
@@ -298,7 +298,7 @@ def buildMangaComment(isExpanded, ani, mu, ap, kit):
             kitURL = kit['url']
 
             if not title:
-                title = kit['title_romaji'] if 'title_romaji' in kit else kit['title_english']
+                title = kit['title_romaji'] if kit['title_romaji'] else kit['title_english']
             if not desc:
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
@@ -488,7 +488,7 @@ def buildLightNovelComment(isExpanded, ani, nu, lndb, kit):
             kitURL = kit['url']
 
             if not title:
-                title = kit['title_romaji'] if 'title_romaji' in kit else kit['title_english']
+                title = kit['title_romaji'] if kit['title_romaji'] else kit['title_english']
             if not desc:
                 desc = kit['description'] if 'description' in kit else None
             if not cType:
