@@ -18,14 +18,13 @@ Handles all NovelUpdates information
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pyquery import PyQuery as pq
-import requests
 import difflib
-import traceback
-import pprint
-import collections
+
+import requests
+from pyquery import PyQuery as pq
 
 req = requests.Session()
+
 
 def getLightNovelURL(searchText):
     try:
@@ -42,16 +41,17 @@ def getLightNovelURL(searchText):
             url = pq(thing).find('.w-blog-entry-link').attr('href')
 
             if title:
-                data = { 'title': title,
-                        'url': url }
+                data = {'title': title,
+                        'url': url}
                 lnList.append(data)
 
         closest = findClosestLightNovel(searchText, lnList)
         return closest['url']
-    
+
     except:
         req.close()
         return None
+
 
 def findClosestLightNovel(searchText, lnList):
     try:
@@ -79,6 +79,7 @@ def findClosestLightNovel(searchText, lnList):
         return None
     except:
         return None
+
 
 def getLightNovelById(lnId):
     return 'http://www.novelupdates.com/series/' + str(lnId)

@@ -18,14 +18,13 @@ Handles all LNDB information
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pyquery import PyQuery as pq
-import requests
 import difflib
-import traceback
-import pprint
-import collections
+
+import requests
+from pyquery import PyQuery as pq
 
 req = requests.Session()
+
 
 def getLightNovelURL(searchText):
     try:
@@ -36,10 +35,10 @@ def getLightNovelURL(searchText):
         lndb = pq(html.text)
 
         if 'light_novel' in html.url:
-            #we've immediately hit a result
+            # we've immediately hit a result
             return html.url
         else:
-            #scan the search page for stuff
+            # scan the search page for stuff
 
             lnList = []
 
@@ -48,16 +47,17 @@ def getLightNovelURL(searchText):
                 url = pq(thing).find('a').attr('href')
 
                 if title:
-                    data = { 'title': title,
-                            'url': url }
+                    data = {'title': title,
+                            'url': url}
                     lnList.append(data)
 
             closest = findClosestLightNovel(searchText, lnList)
             return closest['url']
-    
+
     except Exception as e:
         req.close()
         return None
+
 
 def findClosestLightNovel(searchText, lnList):
     try:
@@ -75,6 +75,7 @@ def findClosestLightNovel(searchText, lnList):
         return None
     except:
         return None
+
 
 def getLightNovelById(lnId):
     return 'http://lndb.info/light_novel/' + str(lnId)

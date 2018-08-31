@@ -18,18 +18,18 @@ Acts as the "main" file and ties all the other functionality together.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
+import re
+import time
+import traceback
+
+import CommentBuilder
+import Config
+import DatabaseHandler
+import Reference
+import Search
 import praw
 import prawcore
-import re
-import traceback
-import time
-import datetime
-
-import Search
-import CommentBuilder
-import DatabaseHandler
-import Config
-import Reference
 from patterns import find_requests, USERNAME_PATTERN, SUBREDDIT_PATTERN
 
 TIME_BETWEEN_PM_CHECKS = 60  # in seconds
@@ -43,12 +43,12 @@ REFRESHTOKEN = Config.refreshtoken
 SUBREDDITLIST = Config.get_formatted_subreddit_list()
 
 reddit = praw.Reddit(
-            client_id=REDDITAPPID,
-            client_secret=REDDITAPPSECRET,
-            password=PASSWORD,
-            user_agent=USERAGENT,
-            username=USERNAME
-        )
+    client_id=REDDITAPPID,
+    client_secret=REDDITAPPSECRET,
+    password=PASSWORD,
+    user_agent=USERAGENT,
+    username=USERNAME
+)
 
 # the subreddits where expanded requests are disabled
 disableexpanded = ['animesuggest']
@@ -336,7 +336,7 @@ def process_comment(comment, is_edit=False):
         if num_so_far >= 30:
             commentReply += ("\n\nI'm limited to 30 requests at once and have "
                              "had to cut off some, sorry for the "
-                             "inconvinience!\n\n")
+                             "inconvenience!\n\n")
 
         commentReply += Config.getSignature(comment.permalink)
 
@@ -407,7 +407,7 @@ def start():
             # Is the comment valid (i.e. it's not made by Roboragi and I haven't
             # seen it already). If no, try to add it to the "already seen pile" and
             # skip to the next comment. If yes, keep going.
-            if not (Search.isValidComment(comment, reddit)):
+            if not (Search.isValidComment(comment)):
                 try:
                     if not (DatabaseHandler.commentExists(comment.id)):
                         DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, False)
@@ -415,7 +415,8 @@ def start():
                     pass
                 continue
 
-            print(str(comment.id) + ' ' + str(comment.author.name) + ' ' + str(comment.subreddit) + ' ' + str(datetime.datetime.fromtimestamp(comment.created).isoformat()))
+            print(str(comment.id) + ' ' + str(comment.author.name) + ' ' + str(comment.subreddit) + ' ' + str(
+                datetime.datetime.fromtimestamp(comment.created).isoformat()))
             process_comment(comment)
 
 
