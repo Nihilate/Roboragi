@@ -114,7 +114,6 @@ def parse_anime(results):
 
     for entry in results:
         try:
-            print(entry['attributes']['titles'])
             anime_list.append(dict(id=entry['id'],
                                    url='https://kitsu.io/anime/' + entry['attributes']['slug'],
                                    title_romaji=get_title_by_language_codes(entry['attributes']['titles'], ROMAJI_LANGUAGE_CODES),
@@ -136,7 +135,6 @@ def parse_manga(results):
 
     for entry in results:
         try:
-            print(entry['attributes']['titles'])
             manga = dict(id=entry['id'],
                          url='https://kitsu.io/manga/' + entry['attributes']['slug'],
                          title_romaji=get_title_by_language_codes(entry['attributes']['titles'], ROMAJI_LANGUAGE_CODES),
@@ -194,6 +192,5 @@ def get_titles(result):
 def get_title_by_language_codes(titles, language_codes):
     for language_code in language_codes:
         if language_code in titles:
-            print(language_code)
             return titles[language_code]
     return None
