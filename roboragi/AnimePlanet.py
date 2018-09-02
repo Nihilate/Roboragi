@@ -14,9 +14,19 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import difflib
+from sys import version_info
 
 import requests
 from pyquery import PyQuery as pq
+
+PY2 = version_info == 2
+
+if PY2:
+    from urllib import quote
+    from urlparse import urljoin
+else:
+    from urllib.parse import quote, urljoin
+
 
 BASE_URL = "https://www.anime-planet.com"
 
@@ -31,7 +41,8 @@ def getAnimeURL(searchText):
     try:
         searchText = sanitiseSearchText(searchText)
 
-        html = req.get(BASE_URL + "/anime/all?name=" + searchText.replace(" ", "%20"), timeout=10)
+        url = urljoin(BASE_URL, '/anime/all?name=' + quote(searchText))
+        html = req.get(url, timeout=10)
         req.close()
         ap = pq(html.text)
 
@@ -43,7 +54,10 @@ def getAnimeURL(searchText):
                 entryDetails = pq(pq(entry).find('a').attr('title'))
 
                 entryTitle = pq(entryDetails).find('h5').text()
-                altTitle = pq(entryDetails).find('.aka').text().replace('Alt title: ', '')
+                altTitle = pq(entryDetails) \
+                    .find('.aka') \
+                    .text() \
+                    .replace('Alt title: ', '')
                 entryURL = pq(entry).find('a').attr('href')
 
                 anime = {}
@@ -52,13 +66,24 @@ def getAnimeURL(searchText):
                 anime['url'] = BASE_URL + entryURL
                 animeList.append(anime)
 
+            searchText = searchText.lower()
+
             try:
-                closestName = \
-                    difflib.get_close_matches(searchText.lower(), [x['title'].lower() for x in animeList], 1, 0.85)[0]
-            except Exception as e:
-                closestName = \
-                    difflib.get_close_matches(searchText.lower(), [x['alt_title'].lower() for x in animeList], 1, 0.85)[
-                        0]
+                matches = difflib.get_close_matches(
+                    word=searchText,
+                    possibilities=[a['title'].lower() for a in animeList],
+                    n=1,
+                    cutoff=0.85
+                )
+            except Exception:
+                matches = difflib.get_close_matches(
+                    word=searchText,
+                    possibilities=[a['alt_title'].lower() for a in animeList],
+                    n=1,
+                    cutoff=0.85
+                )
+
+            closestName = matches[0]
 
             for anime in animeList:
                 if anime['title'].lower() == closestName:
@@ -66,20 +91,26 @@ def getAnimeURL(searchText):
                 elif anime['alt_title'].lower() == closestName:
                     return anime['url']
 
-        # Else if it's taken us right to the series page, get the url from the meta tag
+        # Else if it's taken us right to the series page, get the url from the
+        # meta tag
         else:
             return ap.find("meta[property='og:url']").attr('content')
         return None
 
-    except:
+    except Exception:
         req.close()
         return None
 
 
-# Probably doesn't need to be split into two functions given how similar they are, but it might be worth keeping separate for the sake of issues between anime/manga down the line
 def getMangaURL(searchText, authorName=None):
+    """
+    Probably doesn't need to be split into two functions given how similar they
+    are, but it might be worth keeping separate for the sake of issues between
+    anime/manga down the line
+    """
     try:
-        html = req.get(BASE_URL + "/manga/all?name=" + searchText.replace(" ", "%20"), timeout=10)
+        url = urljoin(BASE_URL, '/manga/all?name=' + quote(searchText))
+        html = req.get(url, timeout=10)
         req.close()
 
         ap = pq(html.text)
@@ -92,7 +123,10 @@ def getMangaURL(searchText, authorName=None):
                 entryDetails = pq(pq(entry).find('a').attr('title'))
 
                 entryTitle = pq(entryDetails).find('h5').text()
-                altTitle = pq(entryDetails).find('.aka').text().replace('Alt title: ', '')
+                altTitle = pq(entryDetails) \
+                    .find('.aka') \
+                    .text() \
+                    .replace('Alt title: ', '')
                 entryURL = pq(entry).find('a').attr('href')
 
                 manga = {}
@@ -101,13 +135,24 @@ def getMangaURL(searchText, authorName=None):
                 manga['url'] = BASE_URL + entryURL
                 mangaList.append(manga)
 
+            searchText = searchText.lower()
+
             try:
-                closestName = \
-                    difflib.get_close_matches(searchText.lower(), [x['title'].lower() for x in mangaList], 1, 0.85)[0]
-            except Exception as e:
-                closestName = \
-                    difflib.get_close_matches(searchText.lower(), [x['alt_title'].lower() for x in mangaList], 1, 0.85)[
-                        0]
+                matches = difflib.get_close_matches(
+                    word=searchText,
+                    possibilities=[x['title'].lower() for x in mangaList],
+                    n=1,
+                    cutoff=0.85
+                )
+            except Exception:
+                matches = difflib.get_close_matches(
+                    word=searchText,
+                    possibilities=[x['alt_title'].lower() for x in mangaList],
+                    n=1,
+                    cutoff=0.85
+                )
+
+            closestName = matches[0]
 
             for manga in mangaList:
                 if manga['title'].lower() == closestName:
@@ -115,12 +160,13 @@ def getMangaURL(searchText, authorName=None):
                 elif manga['alt_title'].lower() == closestName:
                     return manga['url']
 
-        # Else if it's taken us right to the series page, get the url from the meta tag
+        # Else if it's taken us right to the series page, get the url from the
+        # meta tag
         else:
             return ap.find("meta[property='og:url']").attr('content')
         return None
 
-    except:
+    except Exception:
         req.close()
         return None
 
