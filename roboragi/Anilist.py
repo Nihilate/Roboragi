@@ -291,8 +291,8 @@ def getClosestAnime(searchText, animeList):
         if closestNameFromList:
             closestNameFromList = closestNameFromList.lower()
             for anime in animeList:
-                title_english = anime.get('title_english', '').lower()
-                title_romaji = anime.get('title_english', '').lower()
+                title_english = (anime.get('title_english') or '').lower()
+                title_romaji = (anime.get('title_romaji') or '').lower()
                 if title_english == closestNameFromList:
                     return anime
                 elif title_romaji == closestNameFromList:
@@ -356,10 +356,10 @@ def getClosestManga(searchText, mangaList, isLN=False):
                 mangaList.remove(manga)
 
         for manga in mangaList:
-            title_english = manga.get('title_english', '').lower() or None
-            title_romaji = manga.get('title_romaji', '').lower() or None
-            mangaNameList.append(title_english)
-            mangaNameList.append(title_romaji)
+            title_english = manga.get('title_english')
+            title_romaji = manga.get('title_romaji')
+            mangaNameList.append(title_english.lower()) if title_english else None
+            mangaNameList.append(title_romaji.lower()) if title_romaji else None
 
             for synonym in manga['synonyms']:
                 mangaNameList.append(synonym.lower())
@@ -379,8 +379,8 @@ def getClosestManga(searchText, mangaList, isLN=False):
             closestNameFromList = closestNameFromList.lower()
             for manga in mangaList:
                 if not ('one shot' in manga['type'].lower()):
-                    title_english = manga.get('title_english', '').lower()
-                    title_romaji = manga.get('title_english', '').lower()
+                    title_english = (manga.get('title_english') or '').lower()
+                    title_romaji = (manga.get('title_romaji') or '').lower()
                     if title_english == closestNameFromList:
                         return manga
                     if title_romaji == closestNameFromList:
