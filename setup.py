@@ -2,15 +2,16 @@ from setuptools import setup, find_packages
 
 install_requires = [
     'praw==5.4.0',
-    'psycopg2==2.7.5',
+    'psycopg2-binary==2.7.5',
     'pyquery==1.4.0',
     'requests==2.19.1',
-    'six==1.9.0',
+    'six==1.10.0',
 ]
 
 dev_requires = [
     'flake8',
     'pytest',
+    'pytest-cov',
 ]
 
 setup(
