@@ -358,10 +358,10 @@ def getClosestManga(searchText, mangaList, isLN=False):
         for manga in mangaList:
             title_english = manga.get('title_english')
             title_romaji = manga.get('title_romaji')
-            mangaNameList.append(title_english.lower())\
-                if title_english else None
-            mangaNameList.append(title_romaji.lower())\
-                if title_romaji else None
+            if title_english:
+            	mangaNameList.append(title_english.lower())
+            if title_romaji:
+            	mangaNameList.append(title_romaji.lower())
 
             for synonym in manga['synonyms']:
                 mangaNameList.append(synonym.lower())
