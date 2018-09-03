@@ -1,0 +1,14 @@
+{
+  "name": "pytests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "coverage_html.js",
+  "scripts": {
+    "fix": "node ./fix-styles.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vsts-coverage-styles": "^1.0.7"
+  }
+}
