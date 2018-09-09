@@ -327,9 +327,9 @@ def getUserStats(username, top_media_number=5):
     (i.e. ALL subreddits).
     """
     try:
-        basicUserStatDict = {}
         username = str(username).lower()
 
+        # ---- Get total user comments. ---------------------------------------
         select_total_user_comments = """
         SELECT COUNT(1)
           FROM comments
@@ -339,15 +339,16 @@ def getUserStats(username, top_media_number=5):
 
         cur.execute(select_total_user_comments, total_user_comment_values)
         totalUserComments = int(cur.fetchone()[0])
-        basicUserStatDict['totalUserComments'] = totalUserComments
 
+        # ---- Get total comments. --------------------------------------------
         cur.execute("SELECT COUNT(1) FROM comments")
         totalNumComments = int(cur.fetchone()[0])
-        basicUserStatDict['totalUserCommentsAsPercentage'] = _percentage(
+        totalUserCommentsAsPercentage = _percentage(
             totalUserComments,
             totalNumComments
         )
 
+        # ---- Get total user requests. ---------------------------------------
         select_total_user_requests = """
         SELECT COUNT(*)
           FROM requests
@@ -357,15 +358,16 @@ def getUserStats(username, top_media_number=5):
 
         cur.execute(select_total_user_requests, total_user_request_values)
         totalUserRequests = int(cur.fetchone()[0])
-        basicUserStatDict['totalUserRequests'] = totalUserRequests
 
+        # ---- Get total requests. --------------------------------------------
         cur.execute("SELECT COUNT(1) FROM requests")
         totalNumRequests = int(cur.fetchone()[0])
-        basicUserStatDict['totalUserRequestsAsPercentage'] = _percentage(
+        totalUserRequestsAsPercentage = _percentage(
             totalUserRequests,
             totalNumRequests
         )
 
+        # ---- Get overall request rank. --------------------------------------
         select_overall_request_rank = """
         SELECT row
           FROM (SELECT requester, COUNT(1), ROW_NUMBER()
@@ -378,8 +380,8 @@ def getUserStats(username, top_media_number=5):
 
         cur.execute(select_overall_request_rank, overall_request_rank_values)
         overallRequestRank = int(cur.fetchone()[0])
-        basicUserStatDict['overallRequestRank'] = overallRequestRank
 
+        # ---- Get unique requests. -------------------------------------------
         select_unique_requests = """
         SELECT COUNT(DISTINCT (name, type))
           FROM requests
@@ -389,8 +391,8 @@ def getUserStats(username, top_media_number=5):
 
         cur.execute(select_unique_requests, unique_request_values)
         uniqueRequests = int(cur.fetchone()[0])
-        basicUserStatDict['uniqueRequests'] = uniqueRequests
 
+        # ---- Get favourite subreddit stats. ---------------------------------
         select_favourite_subreddit_stats = """
         SELECT r.subreddit, COUNT(r.subreddit), total.totalcount
           FROM requests r
@@ -412,11 +414,12 @@ def getUserStats(username, top_media_number=5):
         favouriteSubreddit = str(favouriteSubredditStats[0])
         favouriteSubredditCount = int(favouriteSubredditStats[1])
         favouriteSubredditOverallCount = int(favouriteSubredditStats[2])
-        basicUserStatDict['favouriteSubreddit'] = favouriteSubreddit
-        basicUserStatDict['favouriteSubredditCount'] = favouriteSubredditCount
-        basicUserStatDict['favouriteSubredditCountAsPercentage'] = (float(
-            favouriteSubredditCount) / favouriteSubredditOverallCount) * 100
+        favouriteSubredditCountAsPercentage = _percentage(
+            favouriteSubredditCount,
+            favouriteSubredditOverallCount
+        )
 
+        # ---- Get top requests. ----------------------------------------------
         select_top_requests = """
         SELECT name, type, COUNT(name)
           FROM requests
@@ -428,17 +431,26 @@ def getUserStats(username, top_media_number=5):
 
         cur.execute(select_top_requests, top_request_values)
         topRequests = cur.fetchall()
-        basicUserStatDict['topRequests'] = []
-        for request in topRequests:
-            basicUserStatDict['topRequests'].append(request)
 
         conn.commit()
-        return basicUserStatDict
 
     except Exception:
         cur.execute('ROLLBACK')
         conn.commit()
         return None
+
+    return dict(
+        totalUserComments=totalUserComments,
+        totalUserCommentsAsPercentage=totalUserCommentsAsPercentage,
+        totalUserRequests=totalUserRequests,
+        totalUserRequestsAsPercentage=totalUserRequestsAsPercentage,
+        overallRequestRank=overallRequestRank,
+        uniqueRequests=uniqueRequests,
+        favouriteSubreddit=favouriteSubreddit,
+        favouriteSubredditCount=favouriteSubredditCount,
+        favouriteSubredditCountAsPercentage=favouriteSubredditCountAsPercentage,  # noqa: E501 Such a long variable name! >_<
+        topRequests=[request for request in topRequests],
+    )
 
 
 def getSubredditStats(
