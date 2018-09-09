@@ -463,9 +463,9 @@ def getSubredditStats(
     specific subreddit.
     """
     try:
-        basicSubredditDict = {}
         subredditName = subredditName.lower()
 
+        # ---- Get total comments. --------------------------------------------
         select_total_comments = """
         SELECT COUNT(*)
           FROM comments
@@ -475,11 +475,12 @@ def getSubredditStats(
 
         cur.execute(select_total_comments, total_comments_values)
         totalComments = int(cur.fetchone()[0])
-        basicSubredditDict['totalComments'] = totalComments
 
+        # ---- Get total requests. --------------------------------------------
         cur.execute("SELECT COUNT(*) FROM requests;")
         total = int(cur.fetchone()[0])
 
+        # ---- Get subreddit total. -------------------------------------------
         select_subreddit_total = """
         SELECT COUNT(*)
           FROM requests
@@ -489,11 +490,11 @@ def getSubredditStats(
 
         cur.execute(select_subreddit_total, subreddit_total_values)
         sTotal = int(cur.fetchone()[0])
-        basicSubredditDict['total'] = sTotal
 
         if sTotal == 0:
             return None
 
+        # ---- Get distinct names. --------------------------------------------
         select_distinct_names = """
         SELECT COUNT(DISTINCT (name, type))
           FROM requests
@@ -503,16 +504,14 @@ def getSubredditStats(
 
         cur.execute(select_distinct_names, distinct_name_values)
         dNames = int(cur.fetchone()[0])
-        basicSubredditDict['uniqueNames'] = dNames
 
-        totalAsPercentage = (float(sTotal) / total) * 100
-        basicSubredditDict['totalAsPercentage'] = totalAsPercentage
+        totalAsPercentage = _percentage(sTotal, total)
 
         meanValue = float(sTotal) / dNames
-        basicSubredditDict['meanValuePerRequest'] = meanValue
 
         variance = 0
 
+        # ---- Get subreddit requests by name and type. -----------------------
         select_subreddit_requests_by_name_and_type = """
         SELECT name, type, COUNT(name)
           FROM requests
@@ -530,8 +529,8 @@ def getSubredditStats(
 
         variance = variance / dNames
         stdDev = sqrt(variance)
-        basicSubredditDict['standardDeviation'] = stdDev
 
+        # ---- Get top requests. ----------------------------------------------
         select_top_requests = """
         SELECT name, type, COUNT(name)
           FROM requests
@@ -543,10 +542,8 @@ def getSubredditStats(
 
         cur.execute(select_top_requests, top_requests_values)
         topRequests = cur.fetchall()
-        basicSubredditDict['topRequests'] = []
-        for request in topRequests:
-            basicSubredditDict['topRequests'].append(request)
 
+        # ---- Get top requesters. --------------------------------------------
         select_top_requesters = """
         SELECT requester, COUNT(requester)
           FROM requests
@@ -558,14 +555,21 @@ def getSubredditStats(
 
         cur.execute(select_top_requesters, top_requester_values)
         topRequesters = cur.fetchall()
-        basicSubredditDict['topRequesters'] = []
-        for requester in topRequesters:
-            basicSubredditDict['topRequesters'].append(requester)
 
         conn.commit()
 
-        return basicSubredditDict
     except Exception:
         cur.execute('ROLLBACK')
         conn.commit()
         return None
+
+    return dict(
+        totalComments=totalComments,
+        total=sTotal,
+        uniqueNames=dNames,
+        totalAsPercentage=totalAsPercentage,
+        meanValuePerRequest=meanValue,
+        standardDeviation=stdDev,
+        topRequests=[request for request in topRequests],
+        topRequesters=[requester for requester in topRequesters],
+    )
