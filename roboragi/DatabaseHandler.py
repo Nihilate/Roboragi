@@ -39,7 +39,11 @@ except ImportError:
     pass
 
 conn = psycopg2.connect(
-    "dbname='" + DBNAME + "' user='" + DBUSER + "' host='" + DBHOST + "' password='" + DBPASSWORD + "'")
+    user=DBUSER,
+    password=DBPASSWORD,
+    host=DBHOST,
+    dbname=DBNAME
+)
 cur = conn.cursor()
 
 
@@ -47,7 +51,11 @@ cur = conn.cursor()
 def setup():
     try:
         conn = psycopg2.connect(
-            "dbname='" + DBNAME + "' user='" + DBUSER + "' host='" + DBHOST + "' password='" + DBPASSWORD + "'")
+            user=DBUSER,
+            password=DBPASSWORD,
+            host=DBHOST,
+            dbname=DBNAME
+        )
     except:
         print("Unable to connect to the database")
 
