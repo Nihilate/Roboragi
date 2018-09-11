@@ -16,6 +16,7 @@
 import pytest
 
 from roboragi.Kitsu import (
+    get_synonyms,
     get_title_by_language_codes,
     ENGLISH_LANGUAGE_CODES,
     ROMAJI_LANGUAGE_CODES,
@@ -34,6 +35,18 @@ ALL_LANGUAGE_TITLES = dict(
     **ROMAJI_TITLES,
     **JAPANESE_TITLES,
 )
+
+
+def test_get_synonyms_dedupes_synonyms():
+    given = dict(synonyms=[
+        'Samurai Champloo',
+        'Samurai Champloo',
+        'One Punch Man',
+        'One Punch Man'
+    ])
+    expected = set(('Samurai Champloo', 'One Punch Man'))
+
+    assert get_synonyms(result=given) == expected
 
 
 @pytest.mark.parametrize('language_codes,titles,expected', [
