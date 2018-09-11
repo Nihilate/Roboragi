@@ -17,6 +17,7 @@ import pytest
 
 from roboragi.Kitsu import (
     get_synonyms,
+    get_titles,
     get_title_by_language_codes,
     ENGLISH_LANGUAGE_CODES,
     ROMAJI_LANGUAGE_CODES,
@@ -47,6 +48,43 @@ def test_get_synonyms_dedupes_synonyms():
     expected = set(('Samurai Champloo', 'One Punch Man'))
 
     assert get_synonyms(result=given) == expected
+
+
+def test_get_titles_dedupes_titles():
+    given = dict(
+        title_english='Samurai Champloo',
+        title_romaji='Samurai Champloo',
+    )
+    expected = set(('Samurai Champloo',))
+
+    assert get_titles(result=given) == expected
+
+
+def test_get_titles_can_ignore_missing_english_titles():
+    given = dict(
+        title_english=None,
+        title_romaji='Samurai Champloo'
+    )
+    expected = set(('Samurai Champloo',))
+
+    assert get_titles(result=given) == expected
+
+
+def test_get_titles_can_ignore_missing_romaji_titles():
+    given = dict(
+        title_english='Samurai Champloo',
+        title_romaji=None,
+    )
+    expected = set(('Samurai Champloo',))
+
+    assert get_titles(result=given) == expected
+
+
+def test_get_titles_returns_empty_set_with_no_titles():
+    given = dict(title_english=None, title_romaji=None)
+    expected = set()
+
+    assert get_titles(result=given) == expected
 
 
 @pytest.mark.parametrize('language_codes,titles,expected', [
