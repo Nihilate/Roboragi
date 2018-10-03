@@ -1,0 +1,12 @@
+# This is the logging config, if no filename is passed in,
+# the logger will default to a consolestream
+# If a filename is passed in, max bytes will determine how big
+# the file will get before rolling over to the next file
+# Backup_count will determine how many historical files are kept
+# https://docs.python.org/3/howto/logging.html#logging-advanced-tutorial
+logging:
+  format: '%(asctime)s %(levelname)s %(name)s: %(message)s'
+  filename: ''
+  level: 'WARNING'
+  max_bytes: 500000
+  backup_count: 5
