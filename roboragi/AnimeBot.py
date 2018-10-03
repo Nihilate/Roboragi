@@ -32,6 +32,9 @@ import praw
 import prawcore
 from patterns import find_requests, USERNAME_PATTERN, SUBREDDIT_PATTERN
 
+import yaml
+import logging.config
+
 TIME_BETWEEN_PM_CHECKS = 60  # in seconds
 
 USERNAME = Config.username
@@ -41,6 +44,12 @@ REDDITAPPID = Config.redditappid
 REDDITAPPSECRET = Config.redditappsecret
 REFRESHTOKEN = Config.refreshtoken
 SUBREDDITLIST = Config.get_formatted_subreddit_list()
+
+with open("../config/example_config.yml", 'r') as yml_config:
+            logging_config = yaml.load(yml_config)
+
+logging.config.dictConfig(logging_config['logging_config'])
+logger = logging.getLogger('roboragi')
 
 reddit = praw.Reddit(
     client_id=REDDITAPPID,
@@ -125,7 +134,8 @@ def process_pms():
                       'subreddit: {0}\n'.format(msg.subreddit))
 
         except Exception as e:
-            print(e)
+            logger.debug(traceback.print_exc())
+            logger.warn(e)
 
 
 def process_comment(comment, is_edit=False):
@@ -358,8 +368,9 @@ def process_comment(comment, is_edit=False):
             except praw.errors.Forbidden:
                 print('Request from banned '
                       'subreddit: {0}\n'.format(comment.subreddit))
-            except Exception:
-                traceback.print_exc()
+            except Exception as e:
+                logger.debug(traceback.print_exc())
+                logger.warn(e)
 
             comment_author = comment.author.name if comment.author else '!UNKNOWN!'
 
@@ -370,8 +381,9 @@ def process_comment(comment, is_edit=False):
                     comment.subreddit,
                     True
                 )
-            except Exception:
-                traceback.print_exc()
+            except Exception as e:
+                logger.debug(traceback.print_exc())
+                logger.warn(e)
     else:
         try:
             if is_edit:
@@ -385,8 +397,9 @@ def process_comment(comment, is_edit=False):
                     comment.subreddit,
                     False
                 )
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            logger.debug(traceback.print_exc())
+            logger.warn(e)
 
 
 def start():
@@ -429,6 +442,7 @@ if __name__ == '__main__':
     while 1:
         try:
             start()
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            logger.debug(traceback.print_exc())
+            logger.warn(e)
             pass
