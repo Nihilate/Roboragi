@@ -1,0 +1,42 @@
+# This is the logging config, for info on usage, view
+# https://docs.python.org/3/howto/logging.html#configuring-logging
+# Or for a more detailed view
+# https://docs.python.org/3/library/logging.config.html#configuration-dictionary-schema
+# To get an idea of what handlers are available look here:
+# https://docs.python.org/3/library/logging.handlers.html#module-logging.handlers
+
+logging_config:
+  version: 1
+  formatters:
+    raw:
+      format: '%(message)s'
+    simple:
+      format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+      stream: ext://sys.stdout
+    warningFile:
+      class: logging.handlers.RotatingFileHandler
+      level: WARNING
+      formatter: simple
+      filename: ../logs/warnings.log
+      maxBytes: 2048
+      backupCount: 3
+    infoFile:
+      class: logging.handlers.RotatingFileHandler
+      level: INFO
+      formatter: simple
+      filename: ../logs/info.log
+      maxBytes: 2048
+      backupCount: 1
+  loggers:
+    roboragi:
+      level: DEBUG
+      handlers: [console, warningFile, infoFile]
+      propagate: no
+  root:
+    level: DEBUG
+    handlers: [console] 
