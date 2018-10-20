@@ -33,21 +33,30 @@ def findClosestManga(searchText, mangaList):
         for manga in mangaList:
             nameList.append(manga['title'].lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.85)
+        closestNameFromList = difflib.get_close_matches(
+            word=searchText.lower(),
+            possibilities=nameList,
+            n=1,
+            cutoff=0.85
+        )
 
         for manga in mangaList:
             if manga['title'].lower() == closestNameFromList[0].lower():
                 return manga
 
         return None
-    except:
+    except Exception:
         return None
 
 
 def getMangaURL(searchText):
     try:
         payload = {'search': searchText}
-        html = req.get('https://mangaupdates.com/series.html', params=payload, timeout=10)
+        html = req.get(
+            url='https://mangaupdates.com/series.html',
+            params=payload,
+            timeout=10
+        )
         req.close()
 
         mu = pq(html.text)
@@ -73,7 +82,7 @@ def getMangaURL(searchText):
         closest = findClosestManga(searchText, mangaList)
         return closest['url']
 
-    except:
+    except Exception:
         req.close()
         return None
 
