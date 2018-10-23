@@ -23,14 +23,15 @@ sqlCur = sqlConn.cursor()
 
 def is_april_fools_2016(username):
     try:
-        sqlCur.execute("SELECT 1 FROM aprilfools2016 WHERE username = ? LIMIT 1", [username])
+        query = "SELECT 1 FROM aprilfools2016 WHERE username = ? LIMIT 1"
+        sqlCur.execute(query, [username])
         result = sqlCur.fetchone()
 
         if result:
             return True
         else:
             return False
-    except Exception as e:
+    except Exception:
         return False
 
 
