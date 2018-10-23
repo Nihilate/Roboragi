@@ -29,7 +29,10 @@ req = requests.Session()
 def getLightNovelURL(searchText):
     try:
         searchText = searchText.replace(' ', '+')
-        html = req.get('http://lndb.info/search?text=' + searchText, timeout=10)
+        html = req.get(
+            url=f"http://lndb.info/search?text={searchText}",
+            timeout=10
+        )
         req.close()
 
         lndb = pq(html.text)
@@ -54,7 +57,7 @@ def getLightNovelURL(searchText):
             closest = findClosestLightNovel(searchText, lnList)
             return closest['url']
 
-    except Exception as e:
+    except Exception:
         req.close()
         return None
 
@@ -66,14 +69,19 @@ def findClosestLightNovel(searchText, lnList):
         for ln in lnList:
             nameList.append(ln['title'].lower())
 
-        closestNameFromList = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.80)
+        closestNameFromList = difflib.get_close_matches(
+            word=searchText.lower(),
+            possibilities=nameList,
+            n=1,
+            cutoff=0.80
+        )
 
         for ln in lnList:
             if ln['title'].lower() == closestNameFromList[0].lower():
                 return ln
 
         return None
-    except:
+    except Exception:
         return None
 
 
