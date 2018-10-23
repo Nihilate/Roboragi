@@ -29,7 +29,10 @@ ROMAJI_LANGUAGE_CODES = ['en_jp']
 JAPANESE_LANGUAGE_CODES = ['ja_jp']
 
 session = requests.Session()
-session.headers = {'Accept': 'application/vnd.api+json', 'Content-Type': 'application/vnd.api+json'}
+session.headers = {
+    'Accept': 'application/vnd.api+json',
+    'Content-Type': 'application/vnd.api+json'
+}
 
 
 def search(endpoint, search_term, parser, use_first_result=False):
@@ -57,22 +60,29 @@ def get_closest(results, search_term):
     name_list = []
 
     for result in results:
-        synonyms = [synonym.lower() for synonym in (get_titles(result) | get_synonyms(result))]
+        title_and_synonyms = get_titles(result) | get_synonyms(result)
+        synonyms = [synonym.lower() for synonym in title_and_synonyms]
         if synonyms:
             name_list.extend(synonyms)
 
-    closest_name_from_list = difflib.get_close_matches(search_term.lower(), name_list, 1, 0.90)[0]
+    matches = difflib.get_close_matches(
+        word=search_term.lower(),
+        possibilities=name_list,
+        n=1,
+        cutoff=0.90
+    )
+    closest_name_from_list = matches[0].lower()
 
     for result in results:
         if result['title_romaji']:
-            if result['title_romaji'].lower() == closest_name_from_list.lower():
+            if result['title_romaji'].lower() == closest_name_from_list:
                 return result
         elif result['title_english']:
-            if result['title_english'].lower() == closest_name_from_list.lower():
+            if result['title_english'].lower() == closest_name_from_list:
                 return result
         else:
             for synonym in result['synonyms']:
-                if synonym.lower() == closest_name_from_list.lower():
+                if synonym.lower() == closest_name_from_list:
                     return result
 
 
@@ -91,21 +101,21 @@ def search_light_novel(search_term):
 def get_anime(search_term):
     try:
         return search(ANIME_GET_FILTER, search_term, parse_anime, True)
-    except:
+    except Exception:
         return None
 
 
 def get_manga(search_term):
     try:
         return search(MANGA_GET_FILTER, search_term, parse_manga, True)
-    except:
+    except Exception:
         return None
 
 
 def get_light_novel(search_term):
     try:
         return search(MANGA_GET_FILTER, search_term, parse_light_novel, True)
-    except:
+    except Exception:
         return None
 
 
@@ -114,16 +124,50 @@ def parse_anime(results):
 
     for entry in results:
         try:
-            anime_list.append(dict(id=entry['id'],
-                                   url='https://kitsu.io/anime/' + entry['attributes']['slug'],
-                                   title_romaji=get_title_by_language_codes(entry['attributes']['titles'], ROMAJI_LANGUAGE_CODES),
-                                   title_english=get_title_by_language_codes(entry['attributes']['titles'], ENGLISH_LANGUAGE_CODES),
-                                   title_japanese=get_title_by_language_codes(entry['attributes']['titles'], JAPANESE_LANGUAGE_CODES),
-                                   synonyms=set(entry['attributes']['abbreviatedTitles']) if entry['attributes']['abbreviatedTitles'] else set(),
-                                   episode_count=(int(entry['attributes']['episodeCount']) if entry['attributes']['episodeCount'] else None),
-                                   type=entry['attributes']['showType'],
-                                   description=entry['attributes']['synopsis'],
-                                   nsfw=entry['attributes']['nsfw']))
+            id_ = entry['id']
+            slug = entry['attributes']['slug']
+            url = f"https://kitsu.io/anime/{slug}"
+            title_romaji = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=ROMAJI_LANGUAGE_CODES
+            )
+            title_english = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=ENGLISH_LANGUAGE_CODES
+            )
+            title_japanese = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=JAPANESE_LANGUAGE_CODES
+            )
+
+            if entry['attributes']['abbreviatedTitles']:
+                synonyms = set(entry['attributes']['abbreviatedTitles'])
+            else:
+                synonyms = set()
+
+            if entry['attributes']['episodeCount']:
+                episode_count = int(entry['attributes']['episodeCount'])
+            else:
+                episode_count = None
+
+            type_ = entry['attributes']['showType']
+            description = entry['attributes']['synopsis']
+            nsfw = entry['attributes']['nsfw']
+
+            anime = dict(
+                id=id_,
+                url=url,
+                title_romaji=title_romaji,
+                title_english=title_english,
+                title_japanese=title_japanese,
+                synonyms=synonyms,
+                episode_count=episode_count,
+                type=type_,
+                description=description,
+                nsfw=nsfw,
+            )
+
+            anime_list.append(anime)
         except AttributeError:
             pass
 
@@ -135,18 +179,53 @@ def parse_manga(results):
 
     for entry in results:
         try:
-            manga = dict(id=entry['id'],
-                         url='https://kitsu.io/manga/' + entry['attributes']['slug'],
-                         title_romaji=get_title_by_language_codes(entry['attributes']['titles'], ROMAJI_LANGUAGE_CODES),
-                         title_english=get_title_by_language_codes(entry['attributes']['titles'], ENGLISH_LANGUAGE_CODES),
-                         synonyms=set(entry['attributes']['abbreviatedTitles']) if entry['attributes']['abbreviatedTitles'] else set(),
-                         volume_count=(int(entry['attributes']['volumeCount']) if entry['attributes']['volumeCount'] else None),
-                         chapter_count=(int(entry['attributes']['chapterCount']) if entry['attributes']['chapterCount'] else None),
-                         type=entry['attributes']['mangaType'],
-                         description=entry['attributes']['synopsis'])
+            type_ = entry['attributes']['mangaType']
+            # Avoid all the processsing below if the type is "novel".
+            if type_.lower() == 'novel':
+                continue
 
-            if manga['type'].lower() != 'novel':
-                manga_list.append(manga)
+            id_ = entry['id']
+            slug = entry['attributes']['slug']
+            url = f"https://kitsu.io/manga/{slug}"
+            title_romaji = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=ROMAJI_LANGUAGE_CODES
+            )
+            title_english = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=ENGLISH_LANGUAGE_CODES
+            )
+
+            if entry['attributes']['abbreviatedTitles']:
+                synonyms = set(entry['attributes']['abbreviatedTitles'])
+            else:
+                synonyms = set()
+
+            if entry['attributes']['volumeCount']:
+                volume_count = int(entry['attributes']['volumeCount'])
+            else:
+                volume_count = None
+
+            if entry['attributes']['chapterCount']:
+                chapter_count = int(entry['attributes']['chapterCount'])
+            else:
+                chapter_count = None
+
+            description = entry['attributes']['synopsis']
+
+            manga = dict(
+                id=id_,
+                url=url,
+                title_romaji=title_romaji,
+                title_english=title_english,
+                synonyms=synonyms,
+                volume_count=volume_count,
+                chapter_count=chapter_count,
+                type=entry['attributes']['mangaType'],
+                description=description,
+            )
+
+            manga_list.append(manga)
         except AttributeError:
             pass
 
@@ -158,18 +237,53 @@ def parse_light_novel(results):
 
     for entry in results:
         try:
-            ln = dict(id=entry['id'],
-                      url='https://kitsu.io/manga/' + entry['attributes']['slug'],
-                      title_romaji=get_title_by_language_codes(entry['attributes']['titles'], ROMAJI_LANGUAGE_CODES),
-                      title_english=get_title_by_language_codes(entry['attributes']['titles'], ENGLISH_LANGUAGE_CODES),
-                      synonyms=set(entry['attributes']['abbreviatedTitles']) if entry['attributes']['abbreviatedTitles'] else set(),
-                      volume_count=(int(entry['attributes']['volumeCount']) if entry['attributes']['volumeCount'] else None),
-                      chapter_count=(int(entry['attributes']['chapterCount']) if entry['attributes']['chapterCount'] else None),
-                      type=entry['attributes']['mangaType'],
-                      description=entry['attributes']['synopsis'])
+            type_ = entry['attributes']['mangaType']
+            # Avoid all the processsing below if the type is not "novel".
+            if type_.lower() != 'novel':
+                continue
 
-            if ln['type'].lower() == 'novel':
-                ln_list.append(ln)
+            id_ = entry['id']
+            slug = entry['attributes']['slug']
+            url = f"https://kitsu.io/manga/{slug}"
+            title_romaji = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=ROMAJI_LANGUAGE_CODES
+            )
+            title_english = get_title_by_language_codes(
+                titles=entry['attributes']['titles'],
+                language_codes=ENGLISH_LANGUAGE_CODES
+            )
+
+            if entry['attributes']['abbreviatedTitles']:
+                synonyms = set(entry['attributes']['abbreviatedTitles'])
+            else:
+                synonyms = set()
+
+            if entry['attributes']['volumeCount']:
+                volume_count = int(entry['attributes']['volumeCount'])
+            else:
+                volume_count = None
+
+            if entry['attributes']['chapterCount']:
+                chapter_count = int(entry['attributes']['chapterCount'])
+            else:
+                chapter_count = None
+
+            description = entry['attributes']['synopsis']
+
+            ln = dict(
+                id=id_,
+                url=url,
+                title_romaji=title_romaji,
+                title_english=title_english,
+                synonyms=synonyms,
+                volume_count=volume_count,
+                chapter_count=chapter_count,
+                type=type_,
+                description=description,
+            )
+
+            ln_list.append(ln)
         except AttributeError:
             pass
 
