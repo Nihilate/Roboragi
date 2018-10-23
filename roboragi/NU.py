@@ -29,7 +29,10 @@ req = requests.Session()
 def getLightNovelURL(searchText):
     try:
         searchText = searchText.replace(' ', '+')
-        html = requests.get('http://www.novelupdates.com/?s=' + searchText, timeout=10)
+        html = requests.get(
+            url=f"http://www.novelupdates.com/?s={searchText}",
+            timeout=10
+        )
         req.close()
 
         nu = pq(html.text)
@@ -48,7 +51,7 @@ def getLightNovelURL(searchText):
         closest = findClosestLightNovel(searchText, lnList)
         return closest['url']
 
-    except:
+    except Exception:
         req.close()
         return None
 
@@ -64,8 +67,17 @@ def findClosestLightNovel(searchText, lnList):
             if '(wn)' not in ln['title'].lower():
                 nameListWithoutWN.append(ln['title'].lower())
 
-        closestNameFromListWithoutWN = difflib.get_close_matches(searchText.lower(), nameListWithoutWN, 1, 0.80)
-        closestNameFromListWithWN = difflib.get_close_matches(searchText.lower(), nameList, 1, 0.80)
+        closestNameFromListWithoutWN = difflib.get_close_matches(
+            word=searchText.lower(),
+            possibilities=nameListWithoutWN,
+            n=1,
+            cutoff=0.80
+        )
+        closestNameFromListWithWN = difflib.get_close_matches(
+            word=searchText.lower(), possibilities=nameList,
+            n=1,
+            cutoff=0.80
+        )
 
         if closestNameFromListWithoutWN:
             nameToUse = closestNameFromListWithoutWN[0].lower()
@@ -77,7 +89,7 @@ def findClosestLightNovel(searchText, lnList):
                 return ln
 
         return None
-    except:
+    except Exception:
         return None
 
 
