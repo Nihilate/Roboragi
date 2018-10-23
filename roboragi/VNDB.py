@@ -48,19 +48,25 @@ class VNDB(object):
         self.sock = socket.socket()
         self.sock.connect(('api.vndb.org', 19534))
 
-        self.sendCommand('login',
-                         {'protocol': client_protocol, 'client': client_name, 'clientver': float(client_version)})
+        login_args = dict(
+            protocol=client_protocol,
+            client=client_name,
+            clientver=float(client_version),
+        )
+
+        self.sendCommand('login', login_args)
 
         res = self.getRawResponse()
         if res.find('error ') == 0:
-            raise vndbException(json.loads(' '.join(res.split(' ')[1:]))['msg'])
+            msg = json.loads(' '.join(res.split(' ')[1:]))['msg']
+            raise vndbException(msg)
 
     def close(self):
         self.sock.close()
 
     def get(self, type, flags, filters, options):
         """ Gets a VN/producer
-        
+
         Example:
         >>> results = vndb.get('vn', 'basic', '(title="Clannad")', '')
         >>> results['items'][0]['image']
@@ -68,17 +74,23 @@ class VNDB(object):
         """
         args = '{0} {1} {2} {3}'.format(type, flags, filters, options)
         for item in cache['get']:
-            if (item['query'] == args) and (time.time() < (item['time'] + cachetime)):
+            item_query = item['query']
+            cached_time = item['time'] + cachetime
+            if item_query == args and time.time() < cached_time:
                 return item['results']
 
         self.sendCommand('get', args)
         res = self.getResponse()[1]
-        cache['get'].append({'time': time.time(), 'query': args, 'results': res})
+        cache['get'].append(dict(
+            time=time.time(),
+            query=args,
+            results=res
+        ))
         return res
 
     def sendCommand(self, command, args=None):
         """ Sends a command
-        
+
         Example
         >>> self.sendCommand('test', {'this is an': 'argument'})
         """
@@ -92,8 +104,9 @@ class VNDB(object):
         self.sock.send('{0}\x04'.format(whole).encode())
 
     def getResponse(self):
-        """ Returns a tuple of the response to a command that was previously sent
-        
+        """
+        Returns a tuple of the response to a command that was previously sent
+
         Example
         >>> self.sendCommand('test')
         >>> self.getResponse()
@@ -106,14 +119,15 @@ class VNDB(object):
 
         if cmdname == 'error':
             if args['id'] == 'throttled':
-                raise vndbException('Throttled, limit of 100 commands per 10 minutes')
+                msg = 'Throttled, limit of 100 commands per 10 minutes'
+                raise vndbException(msg)
             else:
                 raise vndbException(args['msg'])
         return (cmdname, args)
 
     def getRawResponse(self):
-        """ Returns a raw response to a command that was previously sent 
-        
+        """ Returns a raw response to a command that was previously sent
+
         Example:
         >>> self.sendCommand('test')
         >>> self.getRawResponse()
@@ -123,26 +137,47 @@ class VNDB(object):
         whole = ''
         while not finished:
             whole += self.sock.recv(4096).decode()
-            if '\x04' in whole: finished = True
+            if '\x04' in whole:
+                finished = True
         return whole.replace('\x04', '').strip()
 
     def parseResults(self, results):
         parsed_results = []
         for result in results['items']:
             try:
-                parsed_result = {}
-                parsed_result['id'] = result['id']
-                parsed_result['title'] = result['title']
-                parsed_result['synonyms'] = result['aliases'].split('\n') if result['aliases'] else []
-                parsed_result['url'] = 'https://vndb.org/v' + str(result['id'])
-                parsed_result['wikipedia_url'] = 'https://wikipedia.org/wiki/' + result['links']['wikipedia'] if \
-                result['links']['wikipedia'] else None
-                parsed_result['description'] = result['description']
-                parsed_result['length'] = self.parseLength(result['length'])
-                parsed_result['release_year'] = result['released'][:4] if result['released'] else None
+                id_ = result['id']
+                title = result['title']
+                url = f"https://vndb.org/v{id_}"
+                description = result['description']
+                length = self.parseLength(result['length'])
 
-                parsed_results.append(parsed_result)
-            except:
+                if result['aliases']:
+                    synonyms = result['aliases'].split('\n')
+                else:
+                    synonyms = []
+
+                wikipedia = result['links']['wikipedia']
+                if wikipedia:
+                    wikipedia_url = f"https://wikipedia.org/wiki/{wikipedia}"
+                else:
+                    wikipedia_url = None
+
+                if result['released']:
+                    released = result['released'][:4]
+                else:
+                    released = None
+
+                parsed_results.append(dict(
+                    id=id_,
+                    title=title,
+                    synonyms=synonyms,
+                    url=url,
+                    wikipedia_url=wikipedia_url,
+                    description=description,
+                    length=length,
+                    release_year=released,
+                ))
+            except Exception:
                 traceback.print_exc()
         return parsed_results
 
@@ -162,7 +197,12 @@ class VNDB(object):
     def getClosest(self, searchText, listOfVNs):
         titleList = [vn['title'].lower() for vn in listOfVNs if vn['title']]
 
-        closestFromTitles = difflib.get_close_matches(searchText.lower(), titleList, 1, 0.95)
+        closestFromTitles = difflib.get_close_matches(
+            word=searchText.lower(),
+            possibilities=titleList,
+            n=1,
+            cutoff=0.95
+        )
 
         if closestFromTitles:
             titleToFind = closestFromTitles[0]
@@ -175,33 +215,49 @@ class VNDB(object):
             for synonym in vn['synonyms']:
                 synonymList.append(synonym.lower())
 
-        closestFromSynonyms = difflib.get_close_matches(searchText.lower(), synonymList, 1, 0.95)
+        closestFromSynonyms = difflib.get_close_matches(
+            word=searchText.lower(),
+            possibilities=synonymList,
+            n=1,
+            cutoff=0.95
+        )
 
         if closestFromSynonyms:
             synonymToFind = closestFromSynonyms[0]
             for vn in listOfVNs:
-                if synonymToFind.lower() in [synonym.lower() for synonym in vn['synonyms']]:
+                synonyms = [synonym.lower() for synonym in vn['synonyms']]
+                if synonymToFind.lower() in synonyms:
                     return vn
 
         return None
 
     def getVisualNovelDetails(self, searchText):
         try:
-            results = self.get('vn', 'basic,details', '(search~"{0}")'.format(searchText), '')
+            results = self.get(
+                type='vn',
+                flags='basic,details',
+                filters='(search~"{0}")'.format(searchText),
+                options=''
+            )
             parsed_results = self.parseResults(results)
             closest = self.getClosest(searchText, parsed_results)
 
             return closest
-        except:
+        except Exception:
             traceback.print_exc()
             return None
 
     def getVisualNovelDetailsById(self, id):
         try:
-            results = self.get('vn', 'basic,details', '(id="{0}")'.format(str(id)), '')
+            results = self.get(
+                type='vn',
+                flags='basic,details',
+                filters='(id="{0}")'.format(str(id)),
+                options=''
+            )
             parsed_results = self.parseResults(results)
 
             return parsed_results[0] if parsed_results else None
-        except:
+        except Exception:
             traceback.print_exc()
             return None
