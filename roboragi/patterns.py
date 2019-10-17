@@ -15,52 +15,62 @@
 
 import re
 
+from typing import Dict, Tuple, Pattern, ValuesView, Generator
 
-def _patterns(tag_characters, expanded=False):
+
+def _patterns(
+    tag_characters: Dict[str, Tuple[str, str]], expanded: bool = False
+) -> Dict[str, Pattern[str]]:
     """ Generate compiled regexes from a set of tag characters. """
-    n = 2 if expanded else 1
-    template = r'(?<![\w\{left}])\{left}{{{n}}}(?!\{left})(\S(?:[^\{left}\{right}]*\S)?)(?<!\{right})\{right}{{{n}}}(?![\{right}\w])'  # noqa: E501
-    return {name: re.compile(template.format(left=chars[0], right=chars[1], n=n))  # noqa: E501
-            for name, chars in tag_characters.items()}
+    n: int = 2 if expanded else 1
+    template: str = r"(?<![\w\{left}])\{left}{{{n}}}(?!\{left})(\S(?:[^\{left}\{right}]*\S)?)(?<!\{right})\{right}{{{n}}}(?![\{right}\w])"  # noqa: E501
+    return {
+        name: re.compile(
+            template.format(left=chars[0], right=chars[1], n=n)
+        )  # noqa: E501
+        for name, chars in tag_characters.items()
+    }
 
 
-def _all_patterns(patterns, flags=re.M):
+def _all_patterns(
+    patterns: ValuesView[Pattern[str]], flags: int = re.M
+) -> Pattern[str]:
     """ Generate a single compiled regex from all the given patterns. """
-    patterns = '|'.join('(?:' + r.pattern + ')' for r in patterns)
-    return re.compile(pattern=patterns, flags=flags)
+    all_patterns: str = "|".join("(?:" + r.pattern + ")" for r in patterns)
+    return re.compile(pattern=all_patterns, flags=flags)
 
 
-USERNAME_PATTERN = re.compile(
-    pattern=r'[uU]\/([A-Za-z0-9_-]+?)(>|}|$)',
-    flags=re.S
+USERNAME_PATTERN: Pattern[str] = re.compile(
+    pattern=r"[uU]\/([A-Za-z0-9_-]+?)(>|}|$)", flags=re.S
 )
 
-SUBREDDIT_PATTERN = re.compile(
-    pattern=r'[rR]\/([A-Za-z0-9_]+?)(>|}|$)',
-    flags=re.S
+SUBREDDIT_PATTERN: Pattern[str] = re.compile(
+    pattern=r"[rR]\/([A-Za-z0-9_]+?)(>|}|$)", flags=re.S
 )
 
-TAG_CHARACTERS = {
-    'anime': ('{', '}'),
-    'manga': ('<', '>'),
-    'light_novel': (']', '['),
-    'visual_novel': ('|', '|'),
+TAG_CHARACTERS: Dict[str, Tuple[str, str]] = {
+    "anime": ("{", "}"),
+    "manga": ("<", ">"),
+    "light_novel": ("]", "["),
+    "visual_novel": ("|", "|"),
 }
-REGULAR_PATTERNS = _patterns(TAG_CHARACTERS)
-REGULAR_PATTERNS['all'] = _all_patterns(REGULAR_PATTERNS.values())
-EXPANDED_PATTERNS = _patterns(TAG_CHARACTERS, expanded=True)
-EXPANDED_PATTERNS['all'] = _all_patterns(EXPANDED_PATTERNS.values())
+REGULAR_PATTERNS: Dict[str, Pattern[str]] = _patterns(TAG_CHARACTERS)
+REGULAR_PATTERNS["all"] = _all_patterns(REGULAR_PATTERNS.values())
+EXPANDED_PATTERNS: Dict[str, Pattern[str]] = _patterns(TAG_CHARACTERS, expanded=True)
+EXPANDED_PATTERNS["all"] = _all_patterns(EXPANDED_PATTERNS.values())
 
 
-def _find(string, pattern):
+def _find(string: str, pattern: Pattern[str]):
     for matches in pattern.finditer(string):
         for match in matches.groups():
             if match is not None:
                 yield match
 
 
-def find_requests(type, string, expanded=False):
-    patterns = EXPANDED_PATTERNS if expanded else REGULAR_PATTERNS
+def find_requests(type: str, string: str, expanded: bool = False) -> Generator:
+    patterns: Dict[
+        str, Pattern[str]
+    ] = EXPANDED_PATTERNS if expanded else REGULAR_PATTERNS
     try:
         return _find(string, patterns[type])
     except KeyError:
