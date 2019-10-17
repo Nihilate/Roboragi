@@ -4,7 +4,7 @@ install_requires = [
     'praw==5.4.0',
     'psycopg2-binary==2.7.5',
     'pyquery==1.4.0',
-    'requests==2.19.1',
+    'requests==2.20.0',
     'six==1.10.0',
 ]
 
