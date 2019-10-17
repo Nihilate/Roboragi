@@ -3,4 +3,4 @@ psycopg2-binary==2.7.5
 pyquery==1.4.0
 requests==2.19.1
 six==1.10.0
-PyYaml==3.13
+PyYaml==5.1
