@@ -1,7 +1,7 @@
-'''
+"""
 NovelUpdates.py
 Handles all NovelUpdates information
-'''
+"""
 
 # Copyright (C) 2018  Nihilate
 #
@@ -28,10 +28,9 @@ req = requests.Session()
 
 def getLightNovelURL(searchText):
     try:
-        searchText = searchText.replace(' ', '+')
+        searchText = searchText.replace(" ", "+")
         html = requests.get(
-            url=f"http://www.novelupdates.com/?s={searchText}",
-            timeout=10
+            url=f"http://www.novelupdates.com/?s={searchText}", timeout=10
         )
         req.close()
 
@@ -39,17 +38,16 @@ def getLightNovelURL(searchText):
 
         lnList = []
 
-        for thing in nu.find('.w-blog-entry'):
-            title = pq(thing).find('.w-blog-entry-title').text()
-            url = pq(thing).find('.w-blog-entry-link').attr('href')
+        for thing in nu.find(".w-blog-entry"):
+            title = pq(thing).find(".w-blog-entry-title").text()
+            url = pq(thing).find(".w-blog-entry-link").attr("href")
 
             if title:
-                data = {'title': title,
-                        'url': url}
+                data = {"title": title, "url": url}
                 lnList.append(data)
 
         closest = findClosestLightNovel(searchText, lnList)
-        return closest['url']
+        return closest["url"]
 
     except Exception:
         req.close()
@@ -62,21 +60,16 @@ def findClosestLightNovel(searchText, lnList):
         nameListWithoutWN = []
 
         for ln in lnList:
-            nameList.append(ln['title'].lower())
+            nameList.append(ln["title"].lower())
 
-            if '(wn)' not in ln['title'].lower():
-                nameListWithoutWN.append(ln['title'].lower())
+            if "(wn)" not in ln["title"].lower():
+                nameListWithoutWN.append(ln["title"].lower())
 
         closestNameFromListWithoutWN = difflib.get_close_matches(
-            word=searchText.lower(),
-            possibilities=nameListWithoutWN,
-            n=1,
-            cutoff=0.80
+            word=searchText.lower(), possibilities=nameListWithoutWN, n=1, cutoff=0.80
         )
         closestNameFromListWithWN = difflib.get_close_matches(
-            word=searchText.lower(), possibilities=nameList,
-            n=1,
-            cutoff=0.80
+            word=searchText.lower(), possibilities=nameList, n=1, cutoff=0.80
         )
 
         if closestNameFromListWithoutWN:
@@ -85,7 +78,7 @@ def findClosestLightNovel(searchText, lnList):
             nameToUse = closestNameFromListWithWN[0].lower()
 
         for ln in lnList:
-            if ln['title'].lower() == nameToUse:
+            if ln["title"].lower() == nameToUse:
                 return ln
 
         return None
@@ -94,4 +87,4 @@ def findClosestLightNovel(searchText, lnList):
 
 
 def getLightNovelById(lnId):
-    return 'http://www.novelupdates.com/series/' + str(lnId)
+    return "http://www.novelupdates.com/series/" + str(lnId)

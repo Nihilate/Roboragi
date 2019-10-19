@@ -1,7 +1,7 @@
-'''
+"""
 AnimeBot.py
 Acts as the "main" file and ties all the other functionality together.
-'''
+"""
 
 # Copyright (C) 2018  Nihilate
 #
@@ -45,45 +45,47 @@ REDDITAPPSECRET = Config.redditappsecret
 REFRESHTOKEN = Config.refreshtoken
 SUBREDDITLIST = Config.get_formatted_subreddit_list()
 
-with open("../config/example_config.yml", 'r') as yml_config:
-            logging_config = yaml.load(yml_config)
+with open("../config/example_config.yml", "r") as yml_config:
+    logging_config = yaml.load(yml_config)
 
-logging.config.dictConfig(logging_config['logging_config'])
-logger = logging.getLogger('roboragi')
+logging.config.dictConfig(logging_config["logging_config"])
+logger = logging.getLogger("roboragi")
 
 reddit = praw.Reddit(
     client_id=REDDITAPPID,
     client_secret=REDDITAPPSECRET,
     password=PASSWORD,
     user_agent=USERAGENT,
-    username=USERNAME
+    username=USERNAME,
 )
 
 # the subreddits where expanded requests are disabled
-disableexpanded = ['animesuggest']
+disableexpanded = ["animesuggest"]
 
 # subreddits I'm actively avoiding
-exiled = ['anime']
+exiled = ["anime"]
 
 # Some blacklisted users (all bots which cause some false positives due to formatting)
-user_blacklist = ['table_it_bot', 'remindmebot', 'sneakpeekbot', 'animesourcebot']
+user_blacklist = ["table_it_bot", "remindmebot", "sneakpeekbot", "animesourcebot"]
 
 
 def process_pms():
     """ function for processing edit requests via pm """
     for msg in reddit.inbox.unread(limit=None):
-        usernameMention = msg.subject == 'username mention'
-        usernameInBody = msg.subject == 'comment reply' and 'u/roboragi' in msg.body.lower()
+        usernameMention = msg.subject == "username mention"
+        usernameInBody = (
+            msg.subject == "comment reply" and "u/roboragi" in msg.body.lower()
+        )
 
         # This PM doesn't meet the response criteria. Skip it.
         if not (usernameMention or usernameInBody):
             continue
 
         # Figure out if there might be any tags in the message body.
-        hasCurlies = '{' in msg.body and '}' in msg.body
-        hasPointies = '<' in msg.body and '>' in msg.body
-        hasSquares = ']' in msg.body and '[' in msg.body
-        hasVerticalBars = '|' in msg.body
+        hasCurlies = "{" in msg.body and "}" in msg.body
+        hasPointies = "<" in msg.body and ">" in msg.body
+        hasSquares = "]" in msg.body and "[" in msg.body
+        hasVerticalBars = "|" in msg.body
 
         # There are no tags to process in the message body. Skip this PM.
         if not any((hasCurlies, hasPointies, hasSquares, hasVerticalBars)):
@@ -102,23 +104,23 @@ def process_pms():
             commentToEdit = None
 
             for reply in replies:
-                if (reply.author.name == 'Roboragi'):
+                if reply.author.name == "Roboragi":
                     ownComments.append(reply)
 
             for comment in ownComments:
-                if 'http://www.reddit.com/r/Roboragi/wiki/index' in comment.body:
+                if "http://www.reddit.com/r/Roboragi/wiki/index" in comment.body:
                     commentToEdit = comment
 
             commentReply = process_comment(mentionedComment, True)
 
             try:
-                if (commentReply):
+                if commentReply:
                     if commentToEdit:
                         commentToEdit.edit(commentReply)
-                        print('Comment edited.\n')
+                        print("Comment edited.\n")
                     else:
                         mentionedComment.reply(commentReply)
-                        print('Comment made.\n')
+                        print("Comment made.\n")
 
                     msg.mark_read()
 
@@ -127,11 +129,12 @@ def process_pms():
                             mentionedComment.id,
                             mentionedComment.author.name,
                             msg.subreddit,
-                            True
+                            True,
                         )
             except prawcore.exceptions.Forbidden:
-                print('Edit request from banned '
-                      'subreddit: {0}\n'.format(msg.subreddit))
+                print(
+                    "Edit request from banned " "subreddit: {0}\n".format(msg.subreddit)
+                )
 
         except Exception as e:
             logger.debug(traceback.print_exc())
@@ -155,18 +158,21 @@ def process_comment(comment, is_edit=False):
     numOfExpandedRequest = 0
 
     # Ignore any blacklisted users
-    if (comment.author.name.lower() in user_blacklist):
-        print('User in blacklist: ' + comment.author.name)
-        commentReply = ''
+    if comment.author.name.lower() in user_blacklist:
+        print("User in blacklist: " + comment.author.name)
+        commentReply = ""
     # This checks for requests. First up we check all known tags for the !stats request
-    elif re.search('({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)', comment.body, re.S) is not None:
+    elif (
+        re.search(
+            "({!stats.*?}|{{!stats.*?}}|<!stats.*?>|<<!stats.*?>>)", comment.body, re.S
+        )
+        is not None
+    ):
         username = USERNAME_PATTERN.search(comment.body)
         subreddit = SUBREDDIT_PATTERN.search(comment.body)
 
         if username:
-            commentReply = CommentBuilder.buildStatsComment(
-                username=username.group(1)
-            )
+            commentReply = CommentBuilder.buildStatsComment(username=username.group(1))
         elif subreddit:
             commentReply = CommentBuilder.buildStatsComment(
                 subreddit=subreddit.group(1)
@@ -187,11 +193,11 @@ def process_comment(comment, is_edit=False):
 
         forceNormal = False
 
-        for match in find_requests('all', comment.body, expanded=True):
+        for match in find_requests("all", comment.body, expanded=True):
             numOfRequest += 1
             numOfExpandedRequest += 1
 
-        for match in find_requests('all', comment.body):
+        for match in find_requests("all", comment.body):
             numOfRequest += 1
 
         if (numOfExpandedRequest >= 1) and (numOfRequest > 1):
@@ -199,82 +205,84 @@ def process_comment(comment, is_edit=False):
 
         # Determine whether we'll build an expanded reply just once.
         subredditName = str(comment.subreddit).lower()
-        isExpanded = False if (forceNormal or (subredditName in disableexpanded)) else True
+        isExpanded = (
+            False if (forceNormal or (subredditName in disableexpanded)) else True
+        )
 
         # The final comment reply. We add stuff to this progressively.
-        commentReply = ''
+        commentReply = ""
 
         # Expanded Anime
-        for match in find_requests('anime', comment.body, expanded=True):
+        for match in find_requests("anime", comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildAnimeReply(match, isExpanded, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     animeArray.append(reply)
 
         # Normal Anime
-        for match in find_requests('anime', comment.body):
+        for match in find_requests("anime", comment.body):
             if num_so_far < 30:
                 reply = Search.buildAnimeReply(match, False, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     animeArray.append(reply)
 
         # Expanded Manga
         # NORMAL EXPANDED
-        for match in find_requests('manga', comment.body, expanded=True):
+        for match in find_requests("manga", comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildMangaReply(match, isExpanded, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     mangaArray.append(reply)
 
         # Normal Manga
         # NORMAL
-        for match in find_requests('manga', comment.body):
+        for match in find_requests("manga", comment.body):
             if num_so_far < 30:
                 reply = Search.buildMangaReply(match, False, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     mangaArray.append(reply)
 
         # Expanded LN
-        for match in find_requests('light_novel', comment.body, expanded=True):
+        for match in find_requests("light_novel", comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildLightNovelReply(match, isExpanded, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     lnArray.append(reply)
 
         # Normal LN
-        for match in find_requests('light_novel', comment.body):
+        for match in find_requests("light_novel", comment.body):
             if num_so_far < 30:
                 reply = Search.buildLightNovelReply(match, False, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     lnArray.append(reply)
 
         # Expanded VN
-        for match in find_requests('visual_novel', comment.body, expanded=True):
+        for match in find_requests("visual_novel", comment.body, expanded=True):
             if num_so_far < 30:
                 reply = Search.buildVisualNovelReply(match, isExpanded, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     vnArray.append(reply)
 
         # Normal VN
-        for match in find_requests('visual_novel', comment.body):
+        for match in find_requests("visual_novel", comment.body):
             if num_so_far < 30:
                 reply = Search.buildVisualNovelReply(match, False, comment)
 
-                if (reply is not None):
+                if reply is not None:
                     num_so_far = num_so_far + 1
                     vnArray.append(reply)
 
@@ -292,61 +300,63 @@ def process_comment(comment, is_edit=False):
         # adding a '>', then recombine them
         for i, animeReply in enumerate(animeArray):
             if not (i is 0):
-                commentReply += '\n\n'
+                commentReply += "\n\n"
 
-            if not (animeReply['title'] in postedAnimeTitles):
-                postedAnimeTitles.append(animeReply['title'])
-                commentReply += animeReply['comment']
+            if not (animeReply["title"] in postedAnimeTitles):
+                postedAnimeTitles.append(animeReply["title"])
+                commentReply += animeReply["comment"]
 
         if mangaArray:
-            commentReply += '\n\n'
+            commentReply += "\n\n"
 
         # Adding all the manga to the final comment
         for i, mangaReply in enumerate(mangaArray):
             if not (i is 0):
-                commentReply += '\n\n'
+                commentReply += "\n\n"
 
-            if not (mangaReply['title'] in postedMangaTitles):
-                postedMangaTitles.append(mangaReply['title'])
-                commentReply += mangaReply['comment']
+            if not (mangaReply["title"] in postedMangaTitles):
+                postedMangaTitles.append(mangaReply["title"])
+                commentReply += mangaReply["comment"]
 
         if lnArray:
-            commentReply += '\n\n'
+            commentReply += "\n\n"
 
         # Adding all the light novels to the final comment
         for i, lnReply in enumerate(lnArray):
             if not (i is 0):
-                commentReply += '\n\n'
+                commentReply += "\n\n"
 
-            if not (lnReply['title'] in postedLNTitles):
-                postedLNTitles.append(lnReply['title'])
-                commentReply += lnReply['comment']
+            if not (lnReply["title"] in postedLNTitles):
+                postedLNTitles.append(lnReply["title"])
+                commentReply += lnReply["comment"]
 
         if vnArray:
-            commentReply += '\n\n'
+            commentReply += "\n\n"
 
         # Adding all the visual novels to the final comment
         for i, vnReply in enumerate(vnArray):
             if not (i is 0):
-                commentReply += '\n\n'
+                commentReply += "\n\n"
 
-            if not (vnReply['title'] in postedVNTitles):
-                postedVNTitles.append(vnReply['title'])
-                commentReply += vnReply['comment']
+            if not (vnReply["title"] in postedVNTitles):
+                postedVNTitles.append(vnReply["title"])
+                commentReply += vnReply["comment"]
 
         # If there are more than 10 requests, shorten them all
         lenRequests = sum(map(len, (animeArray, mangaArray, lnArray, vnArray)))
-        if not (commentReply is '') and (lenRequests >= 10):
+        if not (commentReply is "") and (lenRequests >= 10):
             commentReply = re.sub(r"\^\((.*?)\)", "", commentReply, flags=re.M)
 
     # If there was actually something found, add the signature and post the
     # comment to Reddit. Then, add the comment to the "already seen" database.
-    if commentReply is not '':
+    if commentReply is not "":
 
         if num_so_far >= 30:
-            commentReply += ("\n\nI'm limited to 30 requests at once and have "
-                             "had to cut off some, sorry for the "
-                             "inconvenience!\n\n")
+            commentReply += (
+                "\n\nI'm limited to 30 requests at once and have "
+                "had to cut off some, sorry for the "
+                "inconvenience!\n\n"
+            )
 
         commentReply += Config.getSignature(comment.permalink)
 
@@ -356,8 +366,7 @@ def process_comment(comment, is_edit=False):
         total_found = sum(map(len, (animeArray, mangaArray, lnArray, vnArray)))
 
         if total_found != total_expected:
-            commentReply += '&#32;|&#32;({0}/{1})'.format(total_found,
-                                                          total_expected)
+            commentReply += "&#32;|&#32;({0}/{1})".format(total_found, total_expected)
 
         if is_edit:
             return commentReply
@@ -366,20 +375,18 @@ def process_comment(comment, is_edit=False):
                 comment.reply(commentReply)
                 print("Comment made.\n")
             except praw.errors.Forbidden:
-                print('Request from banned '
-                      'subreddit: {0}\n'.format(comment.subreddit))
+                print(
+                    "Request from banned " "subreddit: {0}\n".format(comment.subreddit)
+                )
             except Exception as e:
                 logger.debug(traceback.print_exc())
                 logger.warn(e)
 
-            comment_author = comment.author.name if comment.author else '!UNKNOWN!'
+            comment_author = comment.author.name if comment.author else "!UNKNOWN!"
 
             try:
                 DatabaseHandler.addComment(
-                    comment.id,
-                    comment_author,
-                    comment.subreddit,
-                    True
+                    comment.id, comment_author, comment.subreddit, True
                 )
             except Exception as e:
                 logger.debug(traceback.print_exc())
@@ -389,13 +396,10 @@ def process_comment(comment, is_edit=False):
             if is_edit:
                 return None
             else:
-                comment_author = comment.author.name if comment.author else '!UNKNOWN!'
+                comment_author = comment.author.name if comment.author else "!UNKNOWN!"
 
                 DatabaseHandler.addComment(
-                    comment.id,
-                    comment_author,
-                    comment.subreddit,
-                    False
+                    comment.id, comment_author, comment.subreddit, False
                 )
         except Exception as e:
             logger.debug(traceback.print_exc())
@@ -423,17 +427,26 @@ def start():
             if not (Search.isValidComment(comment)):
                 try:
                     if not (DatabaseHandler.commentExists(comment.id)):
-                        DatabaseHandler.addComment(comment.id, comment.author.name, comment.subreddit, False)
+                        DatabaseHandler.addComment(
+                            comment.id, comment.author.name, comment.subreddit, False
+                        )
                 except:
                     pass
                 continue
 
-            print(str(comment.id) + ' ' + str(comment.author.name) + ' ' + str(comment.subreddit) + ' ' + str(
-                datetime.datetime.fromtimestamp(comment.created).isoformat()))
+            print(
+                str(comment.id)
+                + " "
+                + str(comment.author.name)
+                + " "
+                + str(comment.subreddit)
+                + " "
+                + str(datetime.datetime.fromtimestamp(comment.created).isoformat())
+            )
             process_comment(comment)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # ------------------------------------#
     # Here's the stuff that actually gets run
 

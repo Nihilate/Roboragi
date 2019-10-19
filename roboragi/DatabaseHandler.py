@@ -1,8 +1,8 @@
-'''
+"""
 DatabaseHandler.py
 Handles all connections to the database. The database runs on PostgreSQL and is
 connected to via psycopg2.
-'''
+"""
 
 # Copyright (C) 2018  Nihilate
 #
@@ -24,10 +24,10 @@ from math import sqrt
 
 import psycopg2
 
-DBNAME = ''
-DBUSER = ''
-DBPASSWORD = ''
-DBHOST = ''
+DBNAME = ""
+DBUSER = ""
+DBPASSWORD = ""
+DBHOST = ""
 
 try:
     import Config
@@ -39,12 +39,7 @@ try:
 except ImportError:
     pass
 
-conn = psycopg2.connect(
-    user=DBUSER,
-    password=DBPASSWORD,
-    host=DBHOST,
-    dbname=DBNAME
-)
+conn = psycopg2.connect(user=DBUSER, password=DBPASSWORD, host=DBHOST, dbname=DBNAME)
 cur = conn.cursor()
 
 
@@ -55,10 +50,7 @@ def setup():
     """
     try:
         conn = psycopg2.connect(
-            user=DBUSER,
-            password=DBPASSWORD,
-            host=DBHOST,
-            dbname=DBNAME
+            user=DBUSER, password=DBPASSWORD, host=DBHOST, dbname=DBNAME
         )
     except Exception:
         print("Unable to connect to the database")
@@ -82,7 +74,7 @@ def setup():
         conn.commit()
     except Exception:
         # traceback.print_exc()
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
 
     create_comments_table = """
@@ -100,7 +92,7 @@ def setup():
         conn.commit()
     except Exception:
         # traceback.print_exc()
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
 
 
@@ -108,6 +100,7 @@ setup()
 
 
 # --------------------------------------#
+
 
 def _percentage(dividend, divisor):
     """ Return a percentage """
@@ -133,7 +126,7 @@ def addComment(commentid, requester, subreddit, hadRequest):
         conn.commit()
     except Exception:
         traceback.print_exc()
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
 
 
@@ -155,7 +148,7 @@ def commentExists(commentid):
             return True
     except Exception:
         traceback.print_exc()
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
         return True
 
@@ -174,12 +167,12 @@ def addRequest(name, rType, requester, subreddit):
     try:
         subreddit = str(subreddit).lower()
 
-        if ('nihilate' not in subreddit):
+        if "nihilate" not in subreddit:
             cur.execute(query, values)
             conn.commit()
     except Exception:
         # traceback.print_exc()
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
 
 
@@ -193,11 +186,11 @@ def getBasicStats(top_media_number=5, top_username_number=5):
 
         cur.execute("SELECT COUNT(1) FROM comments")
         totalComments = int(cur.fetchone()[0])
-        basicStatDict['totalComments'] = totalComments
+        basicStatDict["totalComments"] = totalComments
 
         cur.execute("SELECT COUNT(1) FROM requests;")
         total = int(cur.fetchone()[0])
-        basicStatDict['total'] = total
+        basicStatDict["total"] = total
 
         cur.execute(
             """
@@ -207,7 +200,7 @@ def getBasicStats(top_media_number=5, top_username_number=5):
             """
         )
         dNames = int(cur.fetchone()[0])
-        basicStatDict['uniqueNames'] = dNames
+        basicStatDict["uniqueNames"] = dNames
 
         cur.execute(
             """
@@ -217,10 +210,10 @@ def getBasicStats(top_media_number=5, top_username_number=5):
             """
         )
         dSubreddits = int(cur.fetchone()[0])
-        basicStatDict['uniqueSubreddits'] = dSubreddits
+        basicStatDict["uniqueSubreddits"] = dSubreddits
 
         meanValue = float(total) / dNames
-        basicStatDict['meanValuePerRequest'] = meanValue
+        basicStatDict["meanValuePerRequest"] = meanValue
 
         variance = 0
         cur.execute("SELECT name, count(name) FROM requests GROUP by name")
@@ -229,7 +222,7 @@ def getBasicStats(top_media_number=5, top_username_number=5):
 
         variance = variance / dNames
         stdDev = sqrt(variance)
-        basicStatDict['standardDeviation'] = stdDev
+        basicStatDict["standardDeviation"] = stdDev
 
         select_top_requests = """
         SELECT name, type, COUNT(name)
@@ -241,9 +234,9 @@ def getBasicStats(top_media_number=5, top_username_number=5):
 
         cur.execute(select_top_requests, top_request_values)
         topRequests = cur.fetchall()
-        basicStatDict['topRequests'] = []
+        basicStatDict["topRequests"] = []
         for request in topRequests:
-            basicStatDict['topRequests'].append(request)
+            basicStatDict["topRequests"].append(request)
 
         select_top_requesters = """
         SELECT requester, COUNT(requester)
@@ -255,16 +248,16 @@ def getBasicStats(top_media_number=5, top_username_number=5):
 
         cur.execute(select_top_requesters, top_requester_values)
         topRequesters = cur.fetchall()
-        basicStatDict['topRequesters'] = []
+        basicStatDict["topRequesters"] = []
         for requester in topRequesters:
-            basicStatDict['topRequesters'].append(requester)
+            basicStatDict["topRequesters"].append(requester)
 
         conn.commit()
         return basicStatDict
 
     except Exception:
         traceback.print_exc()
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
         return None
 
@@ -292,7 +285,7 @@ def getRequestStats(requestName, type):
 
         cur.execute(select_request_total, request_total_values)
         requestTotal = int(cur.fetchone()[0])
-        basicRequestDict['total'] = requestTotal
+        basicRequestDict["total"] = requestTotal
 
         if requestTotal == 0:
             return None
@@ -307,16 +300,16 @@ def getRequestStats(requestName, type):
 
         cur.execute(select_unique_subreddits, unique_subreddit_values)
         dSubreddits = int(cur.fetchone()[0])
-        basicRequestDict['uniqueSubreddits'] = dSubreddits
+        basicRequestDict["uniqueSubreddits"] = dSubreddits
 
         totalAsPercentage = (float(requestTotal) / total) * 100
-        basicRequestDict['totalAsPercentage'] = totalAsPercentage
+        basicRequestDict["totalAsPercentage"] = totalAsPercentage
 
         conn.commit()
         return basicRequestDict
 
     except Exception:
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
         return None
 
@@ -343,10 +336,7 @@ def getUserStats(username, top_media_number=5):
         # ---- Get total comments. --------------------------------------------
         cur.execute("SELECT COUNT(1) FROM comments")
         totalNumComments = int(cur.fetchone()[0])
-        totalUserCommentsAsPercentage = _percentage(
-            totalUserComments,
-            totalNumComments
-        )
+        totalUserCommentsAsPercentage = _percentage(totalUserComments, totalNumComments)
 
         # ---- Get total user requests. ---------------------------------------
         select_total_user_requests = """
@@ -362,10 +352,7 @@ def getUserStats(username, top_media_number=5):
         # ---- Get total requests. --------------------------------------------
         cur.execute("SELECT COUNT(1) FROM requests")
         totalNumRequests = int(cur.fetchone()[0])
-        totalUserRequestsAsPercentage = _percentage(
-            totalUserRequests,
-            totalNumRequests
-        )
+        totalUserRequestsAsPercentage = _percentage(totalUserRequests, totalNumRequests)
 
         # ---- Get overall request rank. --------------------------------------
         select_overall_request_rank = """
@@ -406,17 +393,13 @@ def getUserStats(username, top_media_number=5):
         """
         favourite_subreddit_stats_values = (username,)
 
-        cur.execute(
-            select_favourite_subreddit_stats,
-            favourite_subreddit_stats_values
-        )
+        cur.execute(select_favourite_subreddit_stats, favourite_subreddit_stats_values)
         favouriteSubredditStats = cur.fetchone()
         favouriteSubreddit = str(favouriteSubredditStats[0])
         favouriteSubredditCount = int(favouriteSubredditStats[1])
         favouriteSubredditOverallCount = int(favouriteSubredditStats[2])
         favouriteSubredditCountAsPercentage = _percentage(
-            favouriteSubredditCount,
-            favouriteSubredditOverallCount
+            favouriteSubredditCount, favouriteSubredditOverallCount
         )
 
         # ---- Get top requests. ----------------------------------------------
@@ -435,7 +418,7 @@ def getUserStats(username, top_media_number=5):
         conn.commit()
 
     except Exception:
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
         return None
 
@@ -453,11 +436,7 @@ def getUserStats(username, top_media_number=5):
     )
 
 
-def getSubredditStats(
-    subredditName,
-    top_media_number=5,
-    top_username_number=5
-):
+def getSubredditStats(subredditName, top_media_number=5, top_username_number=5):
     """
     Similar to getBasicStats - returns an object which contains data about a
     specific subreddit.
@@ -522,7 +501,7 @@ def getSubredditStats(
 
         cur.execute(
             select_subreddit_requests_by_name_and_type,
-            subreddit_requests_by_name_and_type_values
+            subreddit_requests_by_name_and_type_values,
         )
         for entry in cur.fetchall():
             variance += (entry[2] - meanValue) * (entry[2] - meanValue)
@@ -559,7 +538,7 @@ def getSubredditStats(
         conn.commit()
 
     except Exception:
-        cur.execute('ROLLBACK')
+        cur.execute("ROLLBACK")
         conn.commit()
         return None
 

@@ -1,7 +1,7 @@
-'''
+"""
 LNDB.py
 Handles all LNDB information
-'''
+"""
 
 # Copyright (C) 2018  Nihilate
 #
@@ -28,16 +28,13 @@ req = requests.Session()
 
 def getLightNovelURL(searchText):
     try:
-        searchText = searchText.replace(' ', '+')
-        html = req.get(
-            url=f"http://lndb.info/search?text={searchText}",
-            timeout=10
-        )
+        searchText = searchText.replace(" ", "+")
+        html = req.get(url=f"http://lndb.info/search?text={searchText}", timeout=10)
         req.close()
 
         lndb = pq(html.text)
 
-        if 'light_novel' in html.url:
+        if "light_novel" in html.url:
             # we've immediately hit a result
             return html.url
         else:
@@ -45,17 +42,16 @@ def getLightNovelURL(searchText):
 
             lnList = []
 
-            for thing in lndb.find('#bodylightnovelscontentid table tr'):
-                title = pq(thing).find('a').text()
-                url = pq(thing).find('a').attr('href')
+            for thing in lndb.find("#bodylightnovelscontentid table tr"):
+                title = pq(thing).find("a").text()
+                url = pq(thing).find("a").attr("href")
 
                 if title:
-                    data = {'title': title,
-                            'url': url}
+                    data = {"title": title, "url": url}
                     lnList.append(data)
 
             closest = findClosestLightNovel(searchText, lnList)
-            return closest['url']
+            return closest["url"]
 
     except Exception:
         req.close()
@@ -67,17 +63,14 @@ def findClosestLightNovel(searchText, lnList):
         nameList = []
 
         for ln in lnList:
-            nameList.append(ln['title'].lower())
+            nameList.append(ln["title"].lower())
 
         closestNameFromList = difflib.get_close_matches(
-            word=searchText.lower(),
-            possibilities=nameList,
-            n=1,
-            cutoff=0.80
+            word=searchText.lower(), possibilities=nameList, n=1, cutoff=0.80
         )
 
         for ln in lnList:
-            if ln['title'].lower() == closestNameFromList[0].lower():
+            if ln["title"].lower() == closestNameFromList[0].lower():
                 return ln
 
         return None
@@ -86,4 +79,4 @@ def findClosestLightNovel(searchText, lnList):
 
 
 def getLightNovelById(lnId):
-    return 'http://lndb.info/light_novel/' + str(lnId)
+    return "http://lndb.info/light_novel/" + str(lnId)

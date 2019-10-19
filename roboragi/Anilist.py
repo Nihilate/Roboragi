@@ -25,9 +25,9 @@ import requests
 
 req = requests.Session()
 
-uri = 'https://graphql.anilist.co'
+uri = "https://graphql.anilist.co"
 
-search_query = '''query ($search: String, $type: MediaType) {
+search_query = """query ($search: String, $type: MediaType) {
   Page {
     media(search: $search, type: $type) {
       id
@@ -63,9 +63,9 @@ search_query = '''query ($search: String, $type: MediaType) {
       }
     }
   }
-}'''
+}"""
 
-id_query = '''query ($id: Int) {
+id_query = """query ($id: Int) {
   Page {
     media(id: $id) {
       id
@@ -101,7 +101,7 @@ id_query = '''query ($id: Int) {
       }
     }
   }
-}'''
+}"""
 
 
 def morph_to_v1(raw):
@@ -110,10 +110,14 @@ def morph_to_v1(raw):
 
     for raw_result in raw_results:
         try:
-            airing = dict(
-                countdown=raw_result["nextAiringEpisode"]["timeUntilAiring"],
-                next_episode=raw_result["nextAiringEpisode"]["episode"],
-            ) if raw_result["nextAiringEpisode"] else None
+            airing = (
+                dict(
+                    countdown=raw_result["nextAiringEpisode"]["timeUntilAiring"],
+                    next_episode=raw_result["nextAiringEpisode"]["episode"],
+                )
+                if raw_result["nextAiringEpisode"]
+                else None
+            )
             morphed = dict(
                 id=raw_result["id"],
                 id_mal=raw_result["idMal"],
@@ -143,51 +147,48 @@ def morph_to_v1(raw):
 
 def map_media_format(media_format):
     mapped_formats = {
-        'TV': 'TV',
-        'TV_SHORT': 'TV Short',
-        'MOVIE': 'Movie',
-        'SPECIAL': 'Special',
-        'OVA': 'OVA',
-        'ONA': 'ONA',
-        'MUSIC': 'Music',
-        'MANGA': 'Manga',
-        'NOVEL': 'Novel',
-        'ONE_SHOT': 'One Shot',
+        "TV": "TV",
+        "TV_SHORT": "TV Short",
+        "MOVIE": "Movie",
+        "SPECIAL": "Special",
+        "OVA": "OVA",
+        "ONA": "ONA",
+        "MUSIC": "Music",
+        "MANGA": "Manga",
+        "NOVEL": "Novel",
+        "ONE_SHOT": "One Shot",
     }
     return mapped_formats[media_format]
 
 
 def map_media_status(media_status):
     mapped_status = {
-        'FINISHED': 'Finished',
-        'RELEASING': 'Releasing',
-        'NOT_YET_RELEASED': 'Not Yet Released',
-        'CANCELLED': 'Special'
+        "FINISHED": "Finished",
+        "RELEASING": "Releasing",
+        "NOT_YET_RELEASED": "Not Yet Released",
+        "CANCELLED": "Special",
     }
     return mapped_status[media_status]
 
 
 def getSynonyms(request):
     synonyms = []
-    synonyms.extend(request.get('synonyms'))
+    synonyms.extend(request.get("synonyms"))
     return synonyms
 
 
 def getTitles(request):
     titles = []
-    titles.append(request.get('title_english'))
-    titles.append(request.get('title_romaji'))
+    titles.append(request.get("title_english"))
+    titles.append(request.get("title_romaji"))
     return titles
 
 
 def detailsBySearch(searchText, mediaType):
     try:
-        search_variables = {
-            'search': searchText,
-            'type': mediaType
-        }
+        search_variables = {"search": searchText, "type": mediaType}
 
-        payload = {'query': search_query, 'variables': search_variables}
+        payload = {"query": search_query, "variables": search_variables}
         request = req.post(uri, json=payload)
         req.close()
 
@@ -201,11 +202,9 @@ def detailsBySearch(searchText, mediaType):
 
 def detailsById(idToFind):
     try:
-        id_variables = {
-            'id': int(idToFind)
-        }
+        id_variables = {"id": int(idToFind)}
 
-        payload = {'query': id_query, 'variables': id_variables}
+        payload = {"query": id_query, "variables": id_variables}
         request = req.post(uri, json=payload)
         req.close()
 
@@ -223,7 +222,7 @@ def getAnimeDetails(searchText):
     given searchtext
     """
     try:
-        results = detailsBySearch(searchText, 'ANIME')
+        results = detailsBySearch(searchText, "ANIME")
 
         # Of the given list of shows, we try to find the one we think is
         # closest to our search term
@@ -265,24 +264,21 @@ def getClosestAnime(searchText, animeList):
         # against shows with multiple adaptations and similar synonyms
         # (e.g. Haiyore Nyaruko-San)
         for anime in animeList:
-            if 'title_english' in anime and anime['title_english']:
-                animeNameList.append(anime['title_english'].lower())
-                animeNameListNoSyn.append(anime['title_english'].lower())
+            if "title_english" in anime and anime["title_english"]:
+                animeNameList.append(anime["title_english"].lower())
+                animeNameListNoSyn.append(anime["title_english"].lower())
 
-            if 'title_romaji' in anime and anime['title_romaji']:
-                animeNameList.append(anime['title_romaji'].lower())
-                animeNameListNoSyn.append(anime['title_romaji'].lower())
+            if "title_romaji" in anime and anime["title_romaji"]:
+                animeNameList.append(anime["title_romaji"].lower())
+                animeNameListNoSyn.append(anime["title_romaji"].lower())
 
-            if 'synonyms' in anime and anime['synonyms']:
-                for synonym in anime['synonyms']:
+            if "synonyms" in anime and anime["synonyms"]:
+                for synonym in anime["synonyms"]:
                     animeNameList.append(synonym.lower())
 
         try:
             matches = difflib.get_close_matches(
-                word=searchText.lower(),
-                possibilities=animeNameList,
-                n=1,
-                cutoff=0.95,
+                word=searchText.lower(), possibilities=animeNameList, n=1, cutoff=0.95
             )
             closestNameFromList = matches[0]
         except Exception:
@@ -291,17 +287,18 @@ def getClosestAnime(searchText, animeList):
         if closestNameFromList:
             closestNameFromList = closestNameFromList.lower()
             for anime in animeList:
-                title_english = (anime.get('title_english') or '').lower()
-                title_romaji = (anime.get('title_romaji') or '').lower()
+                title_english = (anime.get("title_english") or "").lower()
+                title_romaji = (anime.get("title_romaji") or "").lower()
                 if title_english == closestNameFromList:
                     return anime
                 elif title_romaji == closestNameFromList:
                     return anime
                 else:
-                    for synonym in anime['synonyms']:
+                    for synonym in anime["synonyms"]:
                         synonym = synonym.lower()
                         if (synonym == closestNameFromList) and (
-                                synonym not in animeNameListNoSyn):
+                            synonym not in animeNameListNoSyn
+                        ):
                             return anime
 
         return None
@@ -319,7 +316,7 @@ def getMangaDetails(searchText, isLN=False):
     Returns the closest manga series given a specific search term
     """
     try:
-        results = detailsBySearch(searchText, 'MANGA')
+        results = detailsBySearch(searchText, "MANGA")
 
         closestManga = getClosestManga(searchText, results, isLN)
 
@@ -350,28 +347,25 @@ def getClosestManga(searchText, mangaList, isLN=False):
         mangaNameList = []
 
         for manga in mangaList:
-            if isLN and 'novel' not in manga['type'].lower():
+            if isLN and "novel" not in manga["type"].lower():
                 mangaList.remove(manga)
-            elif not isLN and 'novel' in manga['type'].lower():
+            elif not isLN and "novel" in manga["type"].lower():
                 mangaList.remove(manga)
 
         for manga in mangaList:
-            title_english = manga.get('title_english')
-            title_romaji = manga.get('title_romaji')
+            title_english = manga.get("title_english")
+            title_romaji = manga.get("title_romaji")
             if title_english:
                 mangaNameList.append(title_english.lower())
             if title_romaji:
                 mangaNameList.append(title_romaji.lower())
 
-            for synonym in manga['synonyms']:
+            for synonym in manga["synonyms"]:
                 mangaNameList.append(synonym.lower())
 
         try:
             matches = difflib.get_close_matches(
-                word=searchText.lower(),
-                possibilities=mangaNameList,
-                n=1,
-                cutoff=0.90,
+                word=searchText.lower(), possibilities=mangaNameList, n=1, cutoff=0.90
             )
             closestNameFromList = matches[0]
         except Exception:
@@ -380,16 +374,16 @@ def getClosestManga(searchText, mangaList, isLN=False):
         if closestNameFromList:
             closestNameFromList = closestNameFromList.lower()
             for manga in mangaList:
-                if not ('one shot' in manga['type'].lower()):
-                    title_english = (manga.get('title_english') or '').lower()
-                    title_romaji = (manga.get('title_romaji') or '').lower()
+                if not ("one shot" in manga["type"].lower()):
+                    title_english = (manga.get("title_english") or "").lower()
+                    title_romaji = (manga.get("title_romaji") or "").lower()
                     if title_english == closestNameFromList:
                         return manga
                     if title_romaji == closestNameFromList:
                         return manga
 
             for manga in mangaList:
-                for synonym in manga['synonyms']:
+                for synonym in manga["synonyms"]:
                     if synonym.lower() == closestNameFromList:
                         return manga
 

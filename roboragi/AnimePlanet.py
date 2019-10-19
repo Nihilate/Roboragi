@@ -34,14 +34,14 @@ req = requests.Session()
 
 
 def sanitiseSearchText(searchText):
-    return searchText.replace('(TV)', 'TV')
+    return searchText.replace("(TV)", "TV")
 
 
 def getAnimeURL(searchText):
     try:
         searchText = sanitiseSearchText(searchText)
 
-        url = urljoin(BASE_URL, '/anime/all?name=' + quote(searchText))
+        url = urljoin(BASE_URL, "/anime/all?name=" + quote(searchText))
         html = req.get(url, timeout=10)
         req.close()
         ap = pq(html.text)
@@ -49,21 +49,20 @@ def getAnimeURL(searchText):
         animeList = []
 
         # If it's taken us to the search page
-        if 'https://www.anime-planet.com/anime/all?' in html.url.lower():
-            for entry in ap.find('.cardDeck li'):
-                entryDetails = pq(pq(entry).find('a').attr('title'))
+        if "https://www.anime-planet.com/anime/all?" in html.url.lower():
+            for entry in ap.find(".cardDeck li"):
+                entryDetails = pq(pq(entry).find("a").attr("title"))
 
-                entryTitle = pq(entryDetails).find('h5').text()
-                altTitle = pq(entryDetails) \
-                    .find('.aka') \
-                    .text() \
-                    .replace('Alt title: ', '')
-                entryURL = pq(entry).find('a').attr('href')
+                entryTitle = pq(entryDetails).find("h5").text()
+                altTitle = (
+                    pq(entryDetails).find(".aka").text().replace("Alt title: ", "")
+                )
+                entryURL = pq(entry).find("a").attr("href")
 
                 anime = {}
-                anime['title'] = entryTitle
-                anime['alt_title'] = altTitle
-                anime['url'] = BASE_URL + entryURL
+                anime["title"] = entryTitle
+                anime["alt_title"] = altTitle
+                anime["url"] = BASE_URL + entryURL
                 animeList.append(anime)
 
             searchText = searchText.lower()
@@ -71,30 +70,30 @@ def getAnimeURL(searchText):
             try:
                 matches = difflib.get_close_matches(
                     word=searchText,
-                    possibilities=[a['title'].lower() for a in animeList],
+                    possibilities=[a["title"].lower() for a in animeList],
                     n=1,
-                    cutoff=0.85
+                    cutoff=0.85,
                 )
             except Exception:
                 matches = difflib.get_close_matches(
                     word=searchText,
-                    possibilities=[a['alt_title'].lower() for a in animeList],
+                    possibilities=[a["alt_title"].lower() for a in animeList],
                     n=1,
-                    cutoff=0.85
+                    cutoff=0.85,
                 )
 
             closestName = matches[0]
 
             for anime in animeList:
-                if anime['title'].lower() == closestName:
-                    return anime['url']
-                elif anime['alt_title'].lower() == closestName:
-                    return anime['url']
+                if anime["title"].lower() == closestName:
+                    return anime["url"]
+                elif anime["alt_title"].lower() == closestName:
+                    return anime["url"]
 
         # Else if it's taken us right to the series page, get the url from the
         # meta tag
         else:
-            return ap.find("meta[property='og:url']").attr('content')
+            return ap.find("meta[property='og:url']").attr("content")
         return None
 
     except Exception:
@@ -109,7 +108,7 @@ def getMangaURL(searchText, authorName=None):
     anime/manga down the line
     """
     try:
-        url = urljoin(BASE_URL, '/manga/all?name=' + quote(searchText))
+        url = urljoin(BASE_URL, "/manga/all?name=" + quote(searchText))
         html = req.get(url, timeout=10)
         req.close()
 
@@ -118,21 +117,20 @@ def getMangaURL(searchText, authorName=None):
         mangaList = []
 
         # If it's taken us to the search page
-        if 'https://www.anime-planet.com/manga/all?' in html.url.lower():
-            for entry in ap.find('.card'):
-                entryDetails = pq(pq(entry).find('a').attr('title'))
+        if "https://www.anime-planet.com/manga/all?" in html.url.lower():
+            for entry in ap.find(".card"):
+                entryDetails = pq(pq(entry).find("a").attr("title"))
 
-                entryTitle = pq(entryDetails).find('h5').text()
-                altTitle = pq(entryDetails) \
-                    .find('.aka') \
-                    .text() \
-                    .replace('Alt title: ', '')
-                entryURL = pq(entry).find('a').attr('href')
+                entryTitle = pq(entryDetails).find("h5").text()
+                altTitle = (
+                    pq(entryDetails).find(".aka").text().replace("Alt title: ", "")
+                )
+                entryURL = pq(entry).find("a").attr("href")
 
                 manga = {}
-                manga['title'] = entryTitle
-                manga['alt_title'] = altTitle
-                manga['url'] = BASE_URL + entryURL
+                manga["title"] = entryTitle
+                manga["alt_title"] = altTitle
+                manga["url"] = BASE_URL + entryURL
                 mangaList.append(manga)
 
             searchText = searchText.lower()
@@ -140,30 +138,30 @@ def getMangaURL(searchText, authorName=None):
             try:
                 matches = difflib.get_close_matches(
                     word=searchText,
-                    possibilities=[x['title'].lower() for x in mangaList],
+                    possibilities=[x["title"].lower() for x in mangaList],
                     n=1,
-                    cutoff=0.85
+                    cutoff=0.85,
                 )
             except Exception:
                 matches = difflib.get_close_matches(
                     word=searchText,
-                    possibilities=[x['alt_title'].lower() for x in mangaList],
+                    possibilities=[x["alt_title"].lower() for x in mangaList],
                     n=1,
-                    cutoff=0.85
+                    cutoff=0.85,
                 )
 
             closestName = matches[0]
 
             for manga in mangaList:
-                if manga['title'].lower() == closestName:
-                    return manga['url']
-                elif manga['alt_title'].lower() == closestName:
-                    return manga['url']
+                if manga["title"].lower() == closestName:
+                    return manga["url"]
+                elif manga["alt_title"].lower() == closestName:
+                    return manga["url"]
 
         # Else if it's taken us right to the series page, get the url from the
         # meta tag
         else:
-            return ap.find("meta[property='og:url']").attr('content')
+            return ap.find("meta[property='og:url']").attr("content")
         return None
 
     except Exception:
@@ -172,8 +170,8 @@ def getMangaURL(searchText, authorName=None):
 
 
 def getAnimeURLById(animeId):
-    return 'https://www.anime-planet.com/anime/' + str(animeId)
+    return "https://www.anime-planet.com/anime/" + str(animeId)
 
 
 def getMangaURLById(mangaId):
-    return 'https://www.anime-planet.com/manga/' + str(mangaId)
+    return "https://www.anime-planet.com/manga/" + str(mangaId)
