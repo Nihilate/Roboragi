@@ -19,14 +19,15 @@ Handles all LNDB information
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import difflib
+from typing import Any, Dict, List, Sequence
 
 import requests
-from pyquery import PyQuery as pq
+from pyquery import PyQuery as pq  # type: ignore
 
 req = requests.Session()
 
 
-def getLightNovelURL(searchText):
+def getLightNovelURL(searchText: str) -> str:
     try:
         searchText = searchText.replace(' ', '+')
         html = req.get(
@@ -43,33 +44,32 @@ def getLightNovelURL(searchText):
         else:
             # scan the search page for stuff
 
-            lnList = []
+            lnList: List[Dict[str, str]] = []
 
             for thing in lndb.find('#bodylightnovelscontentid table tr'):
-                title = pq(thing).find('a').text()
-                url = pq(thing).find('a').attr('href')
+                title: str = pq(thing).find('a').text()
+                url: str = pq(thing).find('a').attr('href')
 
                 if title:
-                    data = {'title': title,
-                            'url': url}
+                    data: Dict[str, str] = {'title': title, 'url': url}
                     lnList.append(data)
 
-            closest = findClosestLightNovel(searchText, lnList)
+            closest: Dict[str, str] = findClosestLightNovel(searchText, lnList)
             return closest['url']
 
     except Exception:
         req.close()
-        return None
+        return ""
 
 
-def findClosestLightNovel(searchText, lnList):
+def findClosestLightNovel(searchText: str, lnList: List[Dict[str, str]]) -> Dict[str, str]:
     try:
-        nameList = []
+        nameList: List[str] = []
 
         for ln in lnList:
             nameList.append(ln['title'].lower())
 
-        closestNameFromList = difflib.get_close_matches(
+        closestNameFromList: List[Any] = difflib.get_close_matches(
             word=searchText.lower(),
             possibilities=nameList,
             n=1,
@@ -80,10 +80,10 @@ def findClosestLightNovel(searchText, lnList):
             if ln['title'].lower() == closestNameFromList[0].lower():
                 return ln
 
-        return None
+        return {}
     except Exception:
-        return None
+        return {}
 
 
-def getLightNovelById(lnId):
+def getLightNovelById(lnId: int) -> str:
     return 'http://lndb.info/light_novel/' + str(lnId)
