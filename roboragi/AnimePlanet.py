@@ -15,9 +15,10 @@
 
 import difflib
 from sys import version_info
+from typing import Optional
 
 import requests
-from pyquery import PyQuery as pq
+from pyquery import PyQuery as pq  # type: ignore
 
 PY2 = version_info == 2
 
@@ -33,11 +34,11 @@ BASE_URL = "https://www.anime-planet.com"
 req = requests.Session()
 
 
-def sanitiseSearchText(searchText):
+def sanitiseSearchText(searchText: str) -> str:
     return searchText.replace('(TV)', 'TV')
 
 
-def getAnimeURL(searchText):
+def getAnimeURL(searchText: str):
     try:
         searchText = sanitiseSearchText(searchText)
 
@@ -102,7 +103,7 @@ def getAnimeURL(searchText):
         return None
 
 
-def getMangaURL(searchText, authorName=None):
+def getMangaURL(searchText: str, authorName: str = None) -> Optional[str]:
     """
     Probably doesn't need to be split into two functions given how similar they
     are, but it might be worth keeping separate for the sake of issues between
@@ -171,9 +172,9 @@ def getMangaURL(searchText, authorName=None):
         return None
 
 
-def getAnimeURLById(animeId):
+def getAnimeURLById(animeId: str) -> str:
     return 'https://www.anime-planet.com/anime/' + str(animeId)
 
 
-def getMangaURLById(mangaId):
+def getMangaURLById(mangaId: str) -> str:
     return 'https://www.anime-planet.com/manga/' + str(mangaId)
