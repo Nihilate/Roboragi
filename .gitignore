@@ -65,3 +65,8 @@ oauth.ini
 .idea
 
 .pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
